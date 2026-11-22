@@ -4,6 +4,15 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.3-alpha] - 2026-11-22
+
+### ✨ Nuevas Características
+- **Botón de Minimapa Nativo:** Creado botón circular en el minimapa con icono nativo de cabeza de gnomo (`INV_Misc_Head_Gnome_01`), borde oficial de Blizzard y efecto de brillo al pasar el ratón.
+- **Interacción y Tooltip:**
+  - Clic izquierdo: Abre o cierra el panel del dashboard.
+  - Clic derecho o Shift+Arrastrar: Permite mover libremente el botón alrededor del borde del minimapa en 360°, guardando la posición en los ajustes.
+  - Tooltip: Muestra información de ayuda y el contador total de gnomos abatidos en tiempo real.
+
 ## [0.1.2-alpha] - 2026-11-22
 
 ### 🐛 Correcciones

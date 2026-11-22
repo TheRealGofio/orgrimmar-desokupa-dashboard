@@ -117,6 +117,9 @@ end
 
 function ODD.UI:Initialize()
     Dashboard:Create()
+    if ODD.UI.MinimapBtn and ODD.UI.MinimapBtn.Initialize then
+        ODD.UI.MinimapBtn:Initialize()
+    end
 end
 
 function ODD.UI:Toggle()
