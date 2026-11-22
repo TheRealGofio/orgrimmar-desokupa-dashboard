@@ -1,0 +1,54 @@
+local addonName, addonTable = ...
+local ODD = addonTable.ODD or _G["ODD"]
+
+ODD.Database = ODD.Database or {}
+local Schema = {}
+ODD.Database.Schema = Schema
+
+Schema.CURRENT_VERSION = 1
+
+Schema.DefaultGlobalDB = {
+    schemaVersion = 1,
+    settings = {
+        debugMode = false,
+        sharePresence = true,
+        shareProfile = true,
+        shareStats = true,
+        shareTrades = false,
+        muteGuildAnnouncements = false, -- Si está marcado, silencia por completo el envío de anuncios al chat de hermandad
+    },
+    profiles = {},     -- perfiles conocidos de hermandad indexados por GUID/nombre
+    rosterCache = {
+        updatedAt = 0,
+        members = {},
+    },
+    syncMeta = {
+        lastSyncTimestamp = 0,
+    }
+}
+
+Schema.DefaultCharacterDB = {
+    schemaVersion = 1,
+    identity = {
+        guid = nil,
+        name = nil,
+        realm = nil,
+        class = nil,
+        race = nil,
+        mainCharacter = nil,
+        customRole = nil,
+    },
+    observations = {
+        gnomes = {
+            kills = 0,
+            records = {},
+        },
+        pvp = {
+            matches = {},
+        },
+        professions = {
+            scannedAt = 0,
+            skills = {},
+        }
+    }
+}

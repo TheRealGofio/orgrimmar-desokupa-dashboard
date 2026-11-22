@@ -1,0 +1,10 @@
+# Archivos temporales de desarrollo
+*.zip
+*.bak
+*.tmp
+.vscode/
+.idea/
+
+# Carpetas internas de IA
+.system_generated/
+scratch/

@@ -1,0 +1,59 @@
+## Interface: 16001
+## Title: Orgrimmar Desokupa Dashboard (ODD)
+## Notes: Dashboard y analiticas para hermandades de la Horda en WoW Forever.
+## Author: Orgrimmar Desokupa Team
+## Version: 0.1.0-alpha
+## SavedVariables: ODDDB
+## SavedVariablesPerCharacter: ODDCharacterDB
+
+# Localizacion
+Localization\esES.lua
+Localization\enUS.lua
+
+# Nucleo y entorno
+Core\Init.lua
+Core\Capabilities.lua
+Core\Events.lua
+
+# Base de datos y esquema
+Database\Schema.lua
+Database\Migrations.lua
+Database\Database.lua
+
+# Adaptadores de API nativa (deteccion y llamadas seguras)
+API\Forever.lua
+API\Guild.lua
+
+# Dominio base Fase 1
+Guild\Profiles.lua
+Guild\Roster.lua
+
+# Gnomometro Fase 3
+Gnomes\Tracker.lua
+Achievements\Rankings.lua
+Achievements\Medals.lua
+
+# PvP Fase 4
+PvP\Tracker.lua
+
+# Talleres / Profesiones Fase 4
+Professions\Scanner.lua
+
+# Red y Transporte Fase 2
+Network\Codec.lua
+Network\Protocol.lua
+Network\Fragments.lua
+Network\Queue.lua
+Network\Sync.lua
+
+# Comandos e Interfaz
+UI\Toast.lua
+UI\Components.lua
+UI\Tabs\HQTab.lua
+UI\Tabs\GnomometerTab.lua
+UI\Tabs\PvPTab.lua
+UI\Tabs\WorkshopsTab.lua
+UI\Tabs\RosterTab.lua
+UI\Tabs\SettingsTab.lua
+UI\Dashboard.lua
+Commands\Slash.lua
