@@ -1,26 +1,36 @@
-# Release Notes: Orgrimmar Desokupa Dashboard v0.1.0-alpha
+# Release Notes: Orgrimmar Desokupa Dashboard v0.1.1-alpha
 
-## Novedades en esta versión
+## 🪓 Novedades de la versión 0.1.1-alpha
 
-- **Marco Temático Ornamental Horda / Orgrimmar:** Arte personalizado con madera envejecida, remaches de hierro forjado, pinchos y cabezas de gnomo derrotados como trofeos de caza en las esquinas.
-- **Renderizado prioritario en la interfaz:** La ventana y el marco utilizan `FrameStrata = HIGH` y `Toplevel`, asegurando que el dashboard siempre permanezca visible al frente de la interfaz.
-- **Visualizador 3D nativo del personaje:** Previsualización del modelo 3D en tiempo real con fondo 100% transparente y soporte para rotación interactiva en 360° con el ratón.
-- **Refresco automático por pestaña:** Eliminados los botones manuales innecesarios; las pestañas de **Roster** y **Talleres** solicitan y actualizan automáticamente la información en cuanto se hace clic en ellas.
-- **Gnomómetro y 19 Logros:** Sistema de tracking estricto de bajas de gnomos en mundo abierto (deduplicación por cooldown, validación GUID/raza) con avisos informativos en pantalla (toasts) y sonido nativo del juego.
-- **Frente PvP y Talleres:** Estadísticas de honor e historial de BGs, junto a un directorio de artesanos con recetas y niveles de oficio.
-- **Sincronización P2P:** Comunicación bidireccional entre miembros de la hermandad mediante canales de addon protegidos con control de tráfico (token bucket).
-- **Comando de reinicio:** `/odd reset` para purgar datos locales o temporales en un solo paso.
+### 🎨 Arte y Experiencia de Usuario
+- **Marco Temático Horda / Orgrimmar:** Maderas toscas, pinchos, remaches de hierro y cabezas cómicas de gnomos abatidos como trofeos de caza en las esquinas.
+- **Transparencia Alfa 32-bit:** Recorte limpio sin fondos ni halos blancos.
+- **Prioridad Visual en Pantalla:** Configurado `FrameStrata = HIGH` y `Toplevel(true)` para mantenerse siempre al frente de la interfaz.
+- **Modelo 3D del Personaje en Vivo:** Previsualización del personaje con fondo transparente y rotación interactiva 360° con el ratón.
+- **Espaciado en Roster:** Separación limpia entre el estado `[ON]` / `[OFF]` y los nombres.
+
+### ⚡ Automatización Completa
+- Retirados los botones manuales de refresco y escaneo: ahora el **Roster**, los **Talleres** y la **Sincronización P2P** se actualizan de forma instantánea y automática al cambiar de pestaña.
+- Corrección de duplicados en la lista de artesanos (el jugador local ya no aparece duplicado).
+
+### 🏆 Catálogo de 33 Logros de Gnomos
+- Incorporados logros de emboscada (*Pisotón Desprevenido* al comer/beber, *Pisa-flores* en mecazancudo).
+- Nuevos logros territoriales (*Durotar/Baldíos, Tuercespina, Trabalomas, Dun Morogh/Gnomeregan, Bahía del Botín/Trinquete y Desokupa Global*).
+- Logros de racha rápida (*Doble Desahucio, Desokupación Exprés, Jornada Laboral Completa*).
+- Cooperación de hermandad (*Comité de Desahucio Masivo*).
+- Iconos corregidos y validados con el cliente de WoW.
+
+### 🧹 Mantenimiento
+- Nuevo comando `/odd reset` para purgar datos locales de forma instantánea.
 
 ---
 
-## Instalación
+## 📦 Instalación
 
-### Opción 1: A través de WowUp (Recomendado)
-1. Abre WowUp.
-2. Ve a **Get Addons** > **Install from URL**.
-3. Pega el enlace: `https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard`
-4. Selecciona la carpeta de **WoW Forever** e instala.
+### Con WowUp (Recomendado)
+1. Abre WowUp > **Get Addons** > **Install from URL**.
+2. Pega: `https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard`
+3. Selecciona tu carpeta de **WoW Forever** e instala.
 
-### Opción 2: Instalación Manual
-Descarga el archivo adjunto `OrgrimmarDesokupaDashboard-v0.1.0-alpha.zip` y descomprímelo dentro de tu carpeta:
-`World of Warcraft\_forever_\Interface\AddOns\`
+### Manual
+Descarga el archivo `OrgrimmarDesokupaDashboard-v0.1.1-alpha.zip` y descomprímelo en `World of Warcraft\_forever_\Interface\AddOns\`.
