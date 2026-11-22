@@ -49,8 +49,16 @@ local MEDAL_DEFS = {
     -- 5. Caza Territorial
     { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3 },
     { id = "gnome_zones_5", name = "Limpieza Territorial", desc = "Abate gnomos en al menos 5 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map08", reqZones = 5 },
+    { id = "gnome_horde_turf", name = "¡A mi casa no entras!", desc = "Abate a un gnomo dentro de Durotar o Los Baldíos.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqHordeTurf = true },
+    { id = "gnome_stv", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZoneName = "Tuercespina", reqZoneCount = 5 },
+    { id = "gnome_hillsbrad", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZoneName = "Trabalomas", reqZoneCount = 5 },
 
-    -- 6. Partidas PvP
+    -- 6. Situaciones Especiales
+    { id = "gnome_eating", name = "Pisotón Desprevenido", desc = "Abate a un gnomo mientras esté comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Misc_Fork&Knife", reqEating = 1 },
+    { id = "gnome_mounted", name = "Pisa-flores", desc = "Abate a un gnomo que se desplace en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider", reqMounted = 1 },
+    { id = "gnome_guild_group", name = "Cuadrilla de Desahucio", desc = "Abate a un gnomo estando en grupo con al menos un compañero de la hermandad.", icon = "Interface\\Icons\\Spell_Holy_PrayerOfSpirit", reqGuildGroup = 1 },
+
+    -- 7. Partidas PvP
     { id = "bg_10", name = "Veterano de Batalla", desc = "Participa en 10 Campos de Batalla observados.", icon = "Interface\\Icons\\Achievement_BG_winWSG", reqBG = 10 },
 }
 
@@ -89,6 +97,12 @@ function Medals:GetPlayerMedals()
     local hasSkull = false
     local maxVictimLevel = 0
     local grayKills = 0
+    local hasHordeTurf = false
+    local stvKills = 0
+    local hillsbradKills = 0
+    local eatingKills = 0
+    local mountedKills = 0
+    local guildGroupKills = 0
 
     for _, r in ipairs(records) do
         if r.victimClass then
@@ -99,6 +113,25 @@ function Medals:GetPlayerMedals()
         end
         if r.zone then
             killedZones[r.zone] = true
+            local zLower = r.zone:lower()
+            if zLower:find("durotar") or zLower:find("baldíos") or zLower:find("baldios") or zLower:find("barrens") then
+                hasHordeTurf = true
+            end
+            if zLower:find("tuercespina") or zLower:find("stranglethorn") then
+                stvKills = stvKills + 1
+            end
+            if zLower:find("trabalomas") or zLower:find("hillsbrad") then
+                hillsbradKills = hillsbradKills + 1
+            end
+        end
+        if r.wasEating then
+            eatingKills = eatingKills + 1
+        end
+        if r.wasMounted then
+            mountedKills = mountedKills + 1
+        end
+        if r.inGuildGroup then
+            guildGroupKills = guildGroupKills + 1
         end
         if r.victimLevel == "??" then
             hasSkull = true
@@ -156,6 +189,27 @@ function Medals:GetPlayerMedals()
             progress = zoneCount
             maxReq = def.reqZones
             completed = (zoneCount >= def.reqZones)
+        elseif def.reqHordeTurf then
+            progress = hasHordeTurf and 1 or 0
+            maxReq = 1
+            completed = (progress >= 1)
+        elseif def.reqZoneName then
+            local count = (def.reqZoneName == "Tuercespina") and stvKills or hillsbradKills
+            progress = count
+            maxReq = def.reqZoneCount or 1
+            completed = (progress >= maxReq)
+        elseif def.reqEating then
+            progress = eatingKills
+            maxReq = def.reqEating
+            completed = (progress >= maxReq)
+        elseif def.reqMounted then
+            progress = mountedKills
+            maxReq = def.reqMounted
+            completed = (progress >= maxReq)
+        elseif def.reqGuildGroup then
+            progress = guildGroupKills
+            maxReq = def.reqGuildGroup
+            completed = (progress >= maxReq)
         elseif def.reqBG then
             progress = bgMatches
             maxReq = def.reqBG

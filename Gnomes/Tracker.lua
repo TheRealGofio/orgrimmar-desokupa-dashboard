@@ -13,6 +13,10 @@ local KILL_COOLDOWN_WINDOW = 60 -- Cooldown de 60 segundos por víctima para evi
 -- Historial reciente para deduplicación: [targetGUID] = timestamp
 local recentKills = {}
 
+-- Caché de combate a corto plazo para capturar estados previos a recibir daño
+-- [guid] = { wasEating = bool, wasMounted = bool, timestamp = number }
+local combatAuraCache = {}
+
 -- Comprueba si el jugador está en mundo abierto (excluye BGs, Arenas, Mazmorras y Bandas)
 function Tracker:IsWorldPvP()
     local inInstance, instanceType = IsInInstance()
@@ -25,6 +29,48 @@ function Tracker:IsWorldPvP()
     end
 
     return true
+end
+
+-- Escanea el objetivo actual para detectar estados de interés antes de que sufra daño
+function Tracker:CheckTargetAuras()
+    if not UnitExists("target") or not UnitCanAttack("player", "target") then return end
+    local guid = UnitGUID("target")
+    if not guid or ODD.API.Forever:IsSecret(guid) then return end
+
+    local raceName, raceFile, raceId = UnitRace("target")
+    local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    if not isGnome then return end
+
+    local wasEating = false
+    local wasMounted = false
+
+    -- Inspeccionar auras del gnomo
+    for i = 1, 40 do
+        local name, icon = UnitAura("target", i, "HELPFUL")
+        if not name then break end
+
+        local lowerName = name:lower()
+        -- Detección de comer o beber
+        if lowerName:find("beber") or lowerName:find("drink") 
+           or lowerName:find("comer") or lowerName:find("food") 
+           or lowerName:find("restauraci") or lowerName:find("refreshment") then
+            wasEating = true
+        end
+
+        -- Detección de montura / mecazancudo
+        if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+           or lowerName:find("zancudo") or lowerName:find("strider") then
+            wasMounted = true
+        end
+    end
+
+    if wasEating or wasMounted then
+        combatAuraCache[guid] = {
+            wasEating = wasEating or (combatAuraCache[guid] and combatAuraCache[guid].wasEating),
+            wasMounted = wasMounted or (combatAuraCache[guid] and combatAuraCache[guid].wasMounted),
+            timestamp = time()
+        }
+    end
 end
 
 -- Intenta verificar si un GUID o token corresponde a un gnomo y extrae metadata si esta disponible
@@ -96,19 +142,54 @@ function Tracker:OnKillEvent(attackerGUID, targetGUID)
         return
     end
 
+    -- Recuperar estado previo de la víctima desde el caché de combate
+    local auraData = combatAuraCache[targetGUID]
+    local wasEating = false
+    local wasMounted = false
+    if auraData and (now - auraData.timestamp) < 45 then
+        wasEating = auraData.wasEating == true
+        wasMounted = auraData.wasMounted == true
+    end
+
     -- Kill verificada y aceptada
     pcall(function() recentKills[targetGUID] = now end)
 
-    self:RecordVerifiedKill(targetGUID, victimName, victimClass, victimLevel)
+    self:RecordVerifiedKill(targetGUID, victimName, victimClass, victimLevel, wasEating, wasMounted)
 end
 
 -- Persiste la baja en la base de datos del personaje
-function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimLevel)
+function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimLevel, wasEating, wasMounted)
     local charDB = ODD.Database:GetChar()
     if not charDB then return end
 
     local gnomes = charDB.observations.gnomes
     gnomes.kills = (gnomes.kills or 0) + 1
+
+    -- Comprobar si estás en grupo con otro compañero de hermandad
+    local inGuildGroup = false
+    if IsInGroup() then
+        local numGroup = GetNumGroupMembers()
+        local guildMembers = ODD.Guild and ODD.Guild.Roster and ODD.Guild.Roster:GetCachedMembers()
+        local guildMap = {}
+        if guildMembers then
+            for _, gm in ipairs(guildMembers) do
+                local cName = Ambiguate(gm.name or "", "none"):lower()
+                guildMap[cName] = true
+            end
+        end
+
+        local unitPrefix = IsInRaid() and "raid" or "party"
+        for i = 1, numGroup do
+            local uToken = unitPrefix .. i
+            if UnitExists(uToken) and not UnitIsUnit(uToken, "player") then
+                local uName = UnitName(uToken)
+                if uName and guildMap[uName:lower()] then
+                    inGuildGroup = true
+                    break
+                end
+            end
+        end
+    end
 
     local killRecord = {
         killId = string.format("K%d-%s", time(), targetGUID:sub(-6)),
@@ -116,6 +197,9 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
         victimName = victimName,
         victimClass = victimClass,
         victimLevel = victimLevel,
+        wasEating = wasEating,
+        wasMounted = wasMounted,
+        inGuildGroup = inGuildGroup,
         timestamp = time(),
         zone = GetZoneText() or "Desconocida",
         origin = "local_observed",
@@ -170,10 +254,20 @@ end
 
 -- Inicializa la escucha de eventos de combate
 function Tracker:Initialize()
+    -- Escuchar cambio de objetivo y actualización de auras del objetivo
+    ODD.Events:Register("PLAYER_TARGET_CHANGED", function()
+        Tracker:CheckTargetAuras()
+    end)
+    ODD.Events:Register("UNIT_AURA", function(event, unitTarget)
+        if unitTarget == "target" then
+            Tracker:CheckTargetAuras()
+        end
+    end)
+
     -- En WoW Camelot/Forever, PARTY_KILL entrega (event, attackerGUID, targetGUID)
     ODD.Events:Register("PARTY_KILL", function(event, attackerGUID, targetGUID)
         Tracker:OnKillEvent(attackerGUID, targetGUID)
     end)
 
-    ODD:Debug("Módulo Gnomómetro inicializado escuchando PARTY_KILL.")
+    ODD:Debug("Módulo Gnomómetro inicializado escuchando PARTY_KILL y auras.")
 end
