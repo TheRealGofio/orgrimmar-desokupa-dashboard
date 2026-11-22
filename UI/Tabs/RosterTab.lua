@@ -206,15 +206,6 @@ function RosterTab:Create(parent)
         RosterTab:Refresh()
     end)
 
-    -- Botón de refresco manual
-    CreateActionButton(frame, "Refrescar Roster", 430, -76, 120, function()
-        if ODD.Guild and ODD.Guild.Roster then
-            ODD.API.Guild:RequestRoster()
-            ODD.Guild.Roster:Refresh()
-            RosterTab:Refresh()
-        end
-    end)
-
     -- Encabezados de la tabla
     local headerFrame = CreateFrame("Frame", nil, frame)
     headerFrame:SetSize(760, 18)
@@ -250,6 +241,12 @@ function RosterTab:Create(parent)
     scrollFrame:SetScrollChild(rosterScrollChild)
 
     frame:SetScript("OnShow", function()
+        if ODD.API.Guild and ODD.API.Guild.RequestRoster then
+            ODD.API.Guild:RequestRoster()
+        end
+        if ODD.Guild and ODD.Guild.Roster then
+            ODD.Guild.Roster:Refresh()
+        end
         RosterTab:Refresh()
     end)
 

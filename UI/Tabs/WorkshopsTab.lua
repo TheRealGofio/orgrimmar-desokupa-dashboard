@@ -149,28 +149,11 @@ function WorkshopsTab:Create(parent)
     searchLabel:SetText("Buscar:")
 
     searchBox = CreateFrame("EditBox", "ODD_CrafterSearchBox", frame, "InputBoxTemplate")
-    searchBox:SetSize(200, 20)
+    searchBox:SetSize(220, 20)
     searchBox:SetPoint("LEFT", searchLabel, "RIGHT", 8, 0)
     searchBox:SetAutoFocus(false)
     searchBox:SetScript("OnTextChanged", function()
         WorkshopsTab:Refresh()
-    end)
-
-    local rescanBtn = CreateFrame("Button", nil, frame)
-    rescanBtn:SetSize(110, 22)
-    rescanBtn:SetPoint("LEFT", searchBox, "RIGHT", 16, 0)
-    rescanBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
-    local bBg = rescanBtn:CreateTexture(nil, "BACKGROUND")
-    bBg:SetAllPoints(rescanBtn)
-    bBg:SetColorTexture(0.35, 0.12, 0.12, 0.9)
-    local bFs = rescanBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    bFs:SetPoint("CENTER", rescanBtn, "CENTER", 0, 0)
-    bFs:SetText("Re-escanear")
-    rescanBtn:SetScript("OnClick", function()
-        if ODD.Professions and ODD.Professions.Scanner then
-            ODD.Professions.Scanner:ScanLocalProfessions()
-            WorkshopsTab:Refresh()
-        end
     end)
 
     -- ========================================================
@@ -233,6 +216,9 @@ function WorkshopsTab:Create(parent)
     scrollFrame:SetScrollChild(craftersScrollChild)
 
     frame:SetScript("OnShow", function()
+        if ODD.Professions and ODD.Professions.Scanner then
+            ODD.Professions.Scanner:ScanLocalProfessions()
+        end
         WorkshopsTab:Refresh()
     end)
 
