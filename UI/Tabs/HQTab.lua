@@ -150,45 +150,37 @@ function HQTab:Create(parent)
         end
     end)
 
-    -- Botón de sincronización manual y monitor de compañeros
-    local syncBtn = CreateFrame("Button", "ODD_SyncGuildBtn", frame)
-    syncBtn:SetSize(160, 24)
-    syncBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -96)
-    syncBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    -- Estado de sincronización y monitor de compañeros en línea
+    local syncBox = CreateFrame("Frame", nil, frame)
+    syncBox:SetSize(620, 26)
+    syncBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -92)
 
-    local syncBg = syncBtn:CreateTexture(nil, "BACKGROUND")
-    syncBg:SetAllPoints(syncBtn)
-    syncBg:SetColorTexture(0.5, 0.1, 0.1, 0.9)
-    syncBtn.bg = syncBg
+    local pulseDot = syncBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    pulseDot:SetPoint("LEFT", syncBox, "LEFT", 0, 0)
+    pulseDot:SetText("|cFF00FF00[SYNC P2P]|r")
 
-    local syncText = syncBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    syncText:SetPoint("CENTER", syncBtn, "CENTER", 0, 0)
-    syncText:SetText("Sincronizar hermandad")
-
-    syncBtn:SetScript("OnClick", function()
-        if ODD.Network and ODD.Network.Sync then
-            ODD.Network.Sync:TriggerManualSync()
-        end
-    end)
-
-    peerStatus = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    peerStatus:SetPoint("LEFT", syncBtn, "RIGHT", 16, 0)
+    peerStatus = syncBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    peerStatus:SetPoint("LEFT", pulseDot, "RIGHT", 8, 0)
     peerStatus:SetText("Compañeros con ODD en linea: 0")
 
     -- ========================================================
     -- PANEL DE MEDALLAS Y LOGROS INTERNOS
     -- ========================================================
-    local medHeader = ODD.UI.Components:CreateSectionHeader(frame, "Medallas y Logros de Orgrimmar Desokupa:", -136)
+    local medHeader = ODD.UI.Components:CreateSectionHeader(frame, "Medallas y Logros de Orgrimmar Desokupa:", -128)
 
     local scrollFrame = CreateFrame("ScrollFrame", "ODD_MedalsScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 275)
-    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -165)
+    scrollFrame:SetSize(760, 285)
+    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -156)
 
     medalsScrollChild = CreateFrame("Frame", nil, scrollFrame)
     medalsScrollChild:SetSize(740, 1)
     scrollFrame:SetScrollChild(medalsScrollChild)
 
     local function Refresh()
+        if ODD.Network and ODD.Network.Sync then
+            ODD.Network.Sync:RequestGuildSync()
+        end
+
         local profile = ODD.Guild.Profiles:GetLocalProfile()
         local mainText = profile.mainCharacter and string.format(" (Main: %s)", profile.mainCharacter) or ""
         local roleText = profile.customRole and string.format(" [%s]", profile.customRole) or ""
