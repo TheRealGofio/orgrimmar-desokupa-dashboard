@@ -116,6 +116,7 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
         token = "target"
     end
 
+    -- 1. Intento por token activo ("target", "mouseover", etc.)
     if token and UnitExists(token) then
         local raceName, raceFile, raceId = UnitRace(token)
         local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
@@ -127,7 +128,16 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
         return isGnome, raceFile or "Gnome", name, classFile, level
     end
 
-    -- Si el gnomo ya murió y el jugador perdió el target, buscar en el historial de combate reciente
+    -- 2. Intento por GetPlayerInfoByGUID (API nativa de Blizzard para resolver raza por GUID de jugador)
+    if unitGUID and type(GetPlayerInfoByGUID) == "function" and not ODD.API.Forever:IsSecret(unitGUID) then
+        local ok, _, classFilename, localizedRace, englishRace, sex, name, realm = pcall(GetPlayerInfoByGUID, unitGUID)
+        if ok and englishRace then
+            local isGnome = (englishRace:lower() == "gnome" or (localizedRace and localizedRace:lower():find("gnom")))
+            return isGnome, englishRace, name, classFilename, nil
+        end
+    end
+
+    -- 3. Intento por historial de combate reciente observado
     if unitGUID and targetGnomeCache[unitGUID] then
         local cached = targetGnomeCache[unitGUID]
         if (time() - cached.timestamp) < 60 then
@@ -135,8 +145,6 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
         end
     end
 
-    -- Comprobación por GUID si es un jugador de la Alianza
-    -- Si no tenemos target activo pero el evento vino de un Player GUID válido
     return false, "UNVERIFIED", nil, nil, nil
 end
 
@@ -299,11 +307,41 @@ function Tracker:AnnounceToGuild(killRecord, totalKills)
     end
 end
 
+-- Escanea cualquier unidad visible o de placa para recordar gnomos en el entorno
+function Tracker:InspectUnit(token)
+    if not token or type(token) ~= "string" or not UnitExists(token) or not UnitIsPlayer(token) then return end
+    local guid = UnitGUID(token)
+    if not guid or ODD.API.Forever:IsSecret(guid) then return end
+
+    local raceName, raceFile, raceId = UnitRace(token)
+    local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    if not isGnome then return end
+
+    local name = UnitName(token)
+    local _, classFile = UnitClass(token)
+    local level = UnitLevel(token)
+    if level and level <= 0 then level = "??" end
+
+    targetGnomeCache[guid] = {
+        name = name,
+        classFile = classFile,
+        level = level,
+        timestamp = time()
+    }
+end
+
 -- Inicializa la escucha de eventos de combate
 function Tracker:Initialize()
-    -- Escuchar cambio de objetivo y actualización de auras del objetivo
+    -- Escuchar objetivos, ratón y placas de nombre para registrar gnomos visibles
     ODD.Events:Register("PLAYER_TARGET_CHANGED", function()
+        Tracker:InspectUnit("target")
         Tracker:CheckTargetAuras()
+    end)
+    ODD.Events:Register("UPDATE_MOUSEOVER_UNIT", function()
+        Tracker:InspectUnit("mouseover")
+    end)
+    ODD.Events:Register("NAME_PLATE_UNIT_ADDED", function(event, unitToken)
+        Tracker:InspectUnit(unitToken)
     end)
     ODD.Events:Register("UNIT_AURA", function(event, unitTarget)
         if unitTarget == "target" then
@@ -312,9 +350,7 @@ function Tracker:Initialize()
     end)
 
     -- En WoW Camelot/Forever, PARTY_KILL entrega (event, attackerGUID, targetGUID)
-    -- O bien mediante COMBAT_LOG_EVENT_UNFILTERED si PARTY_KILL no trae los parámetros completos
     ODD.Events:Register("PARTY_KILL", function(event, attackerGUID, targetGUID)
-        -- Si attackerGUID no viene como argumento, obtenerlo del jugador o del target
         if not attackerGUID and UnitGUID("player") then
             attackerGUID = UnitGUID("player")
         end
@@ -324,5 +360,12 @@ function Tracker:Initialize()
         Tracker:OnKillEvent(attackerGUID, targetGUID)
     end)
 
-    ODD:Debug("Módulo Gnomómetro inicializado escuchando PARTY_KILL y auras.")
+    -- Fallback: Detección por muerte de objetivo si PARTY_KILL se pierde
+    ODD.Events:Register("UNIT_DIED", function(event, unitTarget)
+        if unitTarget and UnitGUID(unitTarget) then
+            Tracker:OnKillEvent(UnitGUID("player"), UnitGUID(unitTarget))
+        end
+    end)
+
+    ODD:Debug("Módulo Gnomómetro inicializado escuchando PARTY_KILL, placas y GetPlayerInfoByGUID.")
 end

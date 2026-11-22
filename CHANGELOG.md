@@ -4,6 +4,13 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.5-alpha] - 2026-11-22
+
+### 🔍 Detección Infalible de Gnomos (Inspirado en arquitectura GRS)
+- **Resolución nativa por `GetPlayerInfoByGUID`:** Implementada resolución directa de raza y nombre mediante el GUID del jugador muerto, exactamente como hace GRS. Si el gnomo muere, el cliente de WoW sigue conociendo su raza a través de su identificador permanente sin depender de que esté seleccionado en el objetivo.
+- **Escáner pasivo de entorno:** Escucha activa de `NAME_PLATE_UNIT_ADDED`, `UPDATE_MOUSEOVER_UNIT` y `PLAYER_TARGET_CHANGED` para indexar gnomos presentes en el combate.
+- **Doble escucha de muerte:** Activado fallback con `UNIT_DIED` si el evento de grupo `PARTY_KILL` no se dispara.
+
 ## [0.1.4-alpha] - 2026-11-22
 
 ### 🐛 Corrección Crítica en Detección de Bajas
