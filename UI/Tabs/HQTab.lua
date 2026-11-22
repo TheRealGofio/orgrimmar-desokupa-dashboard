@@ -112,22 +112,12 @@ function HQTab:Create(parent)
     oLabel:SetText("Origen: " .. L["STATUS_LOCAL_OBSERVED"])
 
     -- ========================================================
-    -- MODELO 3D NATIVO DEL PERSONAJE
+    -- MODELO 3D NATIVO DEL PERSONAJE (completamente transparente)
     -- ========================================================
     local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame)
     modelFrame:SetSize(115, 115)
     modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -26)
     modelFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
-
-    -- Fondo sutil para el modelo 3D
-    local mBg = modelFrame:CreateTexture(nil, "BACKGROUND")
-    mBg:SetAllPoints(modelFrame)
-    mBg:SetColorTexture(0.08, 0.08, 0.08, 0.6)
-
-    -- Borde estilizado
-    local mBorder = modelFrame:CreateTexture(nil, "OVERLAY")
-    mBorder:SetAllPoints(modelFrame)
-    mBorder:SetColorTexture(0.3, 0.1, 0.1, 0.4)
 
     local function UpdatePlayerModel()
         modelFrame:ClearModel()
