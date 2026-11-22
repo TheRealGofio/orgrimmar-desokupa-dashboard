@@ -49,16 +49,25 @@ local MEDAL_DEFS = {
     -- 5. Caza Territorial
     { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3 },
     { id = "gnome_zones_5", name = "Limpieza Territorial", desc = "Abate gnomos en al menos 5 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map08", reqZones = 5 },
+    { id = "gnome_zones_10", name = "Desokupa Global", desc = "Abate gnomos en al menos 10 zonas diferentes de Azeroth.", icon = "Interface\\Icons\\INV_Misc_Compass_01", reqZones = 10 },
     { id = "gnome_horde_turf", name = "¡A mi casa no entras!", desc = "Abate a un gnomo dentro de Durotar o Los Baldíos.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqHordeTurf = true },
     { id = "gnome_stv", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZoneName = "Tuercespina", reqZoneCount = 5 },
     { id = "gnome_hillsbrad", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZoneName = "Trabalomas", reqZoneCount = 5 },
+    { id = "gnome_home", name = "Visita a Domicilio", desc = "Abate a un gnomo en Dun Morogh o en las puertas de Gnomeregan.", icon = "Interface\\Icons\\Spell_Frost_FrostWard", reqHome = true },
+    { id = "gnome_ports", name = "Control Portuario", desc = "Abate a un gnomo en Bahía del Botín o Trinquete.", icon = "Interface\\Icons\\Spell_Frost_SummonWaterElemental", reqPorts = true },
 
-    -- 6. Situaciones Especiales
+    -- 6. Situaciones Especiales y Racha
     { id = "gnome_eating", name = "Pisotón Desprevenido", desc = "Abate a un gnomo mientras esté comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Misc_Fork&Knife", reqEating = 1 },
     { id = "gnome_mounted", name = "Pisa-flores", desc = "Abate a un gnomo que se desplace en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider", reqMounted = 1 },
-    { id = "gnome_guild_group", name = "Cuadrilla de Desahucio", desc = "Abate a un gnomo estando en grupo con al menos un compañero de la hermandad.", icon = "Interface\\Icons\\Spell_Holy_PrayerOfSpirit", reqGuildGroup = 1 },
+    { id = "gnome_quick_double", name = "Doble Desahucio", desc = "Abate a 2 gnomos con menos de 60 segundos de diferencia.", icon = "Interface\\Icons\\Ability_Rogue_Sprint", reqQuickDiff = 60 },
+    { id = "gnome_quick_triple", name = "Desokupación Exprés", desc = "Abate a 3 gnomos en menos de 5 minutos.", icon = "Interface\\Icons\\Spell_Nature_BloodLust", reqTripleDiff = 300 },
+    { id = "gnome_session_5", name = "Jornada Laboral Completa", desc = "Abate a 5 gnomos durante una misma sesión de juego.", icon = "Interface\\Icons\\INV_Misc_Coin_01", reqSessionKills = 5 },
 
-    -- 7. Partidas PvP
+    -- 7. Cooperación de Hermandad
+    { id = "gnome_guild_group", name = "Cuadrilla de Desahucio", desc = "Abate a un gnomo estando en grupo con al menos un compañero de la hermandad.", icon = "Interface\\Icons\\Spell_Holy_PrayerOfSpirit", reqGuildGroup = 1 },
+    { id = "gnome_guild_group_10", name = "Comité de Desahucio Masivo", desc = "Abate a 10 gnomos estando en grupo con compañeros de hermandad.", icon = "Interface\\Icons\\INV_BannerPVP_03", reqGuildGroup = 10 },
+
+    -- 8. Partidas PvP
     { id = "bg_10", name = "Veterano de Batalla", desc = "Participa en 10 Campos de Batalla observados.", icon = "Interface\\Icons\\Achievement_BG_winWSG", reqBG = 10 },
 }
 
@@ -98,13 +107,20 @@ function Medals:GetPlayerMedals()
     local maxVictimLevel = 0
     local grayKills = 0
     local hasHordeTurf = false
+    local hasHome = false
+    local hasPorts = false
     local stvKills = 0
     local hillsbradKills = 0
     local eatingKills = 0
     local mountedKills = 0
     local guildGroupKills = 0
+    local sessionKills = ODD.Gnomes and ODD.Gnomes.Tracker and ODD.Gnomes.Tracker.sessionKills or 0
 
-    for _, r in ipairs(records) do
+    -- Racha temporal: detectar dobles y triples en records ordenados
+    local hasDoubleQuick = false
+    local hasTripleQuick = false
+
+    for i, r in ipairs(records) do
         if r.victimClass then
             local cUpper = r.victimClass:upper()
             if classCounts[cUpper] then
@@ -116,6 +132,12 @@ function Medals:GetPlayerMedals()
             local zLower = r.zone:lower()
             if zLower:find("durotar") or zLower:find("baldíos") or zLower:find("baldios") or zLower:find("barrens") then
                 hasHordeTurf = true
+            end
+            if zLower:find("dun morogh") or zLower:find("gnomeregan") then
+                hasHome = true
+            end
+            if zLower:find("botín") or zLower:find("botin") or zLower:find("booty bay") or zLower:find("trinquete") or zLower:find("ratchet") then
+                hasPorts = true
             end
             if zLower:find("tuercespina") or zLower:find("stranglethorn") then
                 stvKills = stvKills + 1
@@ -133,6 +155,21 @@ function Medals:GetPlayerMedals()
         if r.inGuildGroup then
             guildGroupKills = guildGroupKills + 1
         end
+
+        -- Comprobar rachas de tiempo con registros anteriores
+        if i >= 2 and r.timestamp and records[i-1].timestamp then
+            local diff1 = math.abs(r.timestamp - records[i-1].timestamp)
+            if diff1 <= 60 then
+                hasDoubleQuick = true
+            end
+        end
+        if i >= 3 and r.timestamp and records[i-2].timestamp then
+            local diff2 = math.abs(r.timestamp - records[i-2].timestamp)
+            if diff2 <= 300 then
+                hasTripleQuick = true
+            end
+        end
+
         if r.victimLevel == "??" then
             hasSkull = true
         else
@@ -210,6 +247,26 @@ function Medals:GetPlayerMedals()
             progress = guildGroupKills
             maxReq = def.reqGuildGroup
             completed = (progress >= maxReq)
+        elseif def.reqHome then
+            progress = hasHome and 1 or 0
+            maxReq = 1
+            completed = (progress >= 1)
+        elseif def.reqPorts then
+            progress = hasPorts and 1 or 0
+            maxReq = 1
+            completed = (progress >= 1)
+        elseif def.reqQuickDiff then
+            progress = hasDoubleQuick and 1 or 0
+            maxReq = 1
+            completed = (progress >= 1)
+        elseif def.reqTripleDiff then
+            progress = hasTripleQuick and 1 or 0
+            maxReq = 1
+            completed = (progress >= 1)
+        elseif def.reqSessionKills then
+            progress = sessionKills
+            maxReq = def.reqSessionKills
+            completed = (sessionKills >= def.reqSessionKills)
         elseif def.reqBG then
             progress = bgMatches
             maxReq = def.reqBG

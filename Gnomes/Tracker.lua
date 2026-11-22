@@ -17,6 +17,9 @@ local recentKills = {}
 -- [guid] = { wasEating = bool, wasMounted = bool, timestamp = number }
 local combatAuraCache = {}
 
+-- Contador de bajas en la sesión actual
+Tracker.sessionKills = 0
+
 -- Comprueba si el jugador está en mundo abierto (excluye BGs, Arenas, Mazmorras y Bandas)
 function Tracker:IsWorldPvP()
     local inInstance, instanceType = IsInInstance()
@@ -164,6 +167,7 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
 
     local gnomes = charDB.observations.gnomes
     gnomes.kills = (gnomes.kills or 0) + 1
+    self.sessionKills = (self.sessionKills or 0) + 1
 
     -- Comprobar si estás en grupo con otro compañero de hermandad
     local inGuildGroup = false
