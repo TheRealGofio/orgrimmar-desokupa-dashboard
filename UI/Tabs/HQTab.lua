@@ -97,7 +97,7 @@ function HQTab:Create(parent)
 
     -- Ficha del personaje local
     local profileBox = CreateFrame("Frame", nil, frame)
-    profileBox:SetSize(760, 48)
+    profileBox:SetSize(620, 48)
     profileBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -36)
     local pBg = profileBox:CreateTexture(nil, "BACKGROUND")
     pBg:SetAllPoints(profileBox)
@@ -110,6 +110,55 @@ function HQTab:Create(parent)
     local oLabel = profileBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     oLabel:SetPoint("BOTTOMLEFT", profileBox, "BOTTOMLEFT", 12, 8)
     oLabel:SetText("Origen: " .. L["STATUS_LOCAL_OBSERVED"])
+
+    -- ========================================================
+    -- MODELO 3D NATIVO DEL PERSONAJE
+    -- ========================================================
+    local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame)
+    modelFrame:SetSize(115, 115)
+    modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -26)
+    modelFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
+
+    -- Fondo sutil para el modelo 3D
+    local mBg = modelFrame:CreateTexture(nil, "BACKGROUND")
+    mBg:SetAllPoints(modelFrame)
+    mBg:SetColorTexture(0.08, 0.08, 0.08, 0.6)
+
+    -- Borde estilizado
+    local mBorder = modelFrame:CreateTexture(nil, "OVERLAY")
+    mBorder:SetAllPoints(modelFrame)
+    mBorder:SetColorTexture(0.3, 0.1, 0.1, 0.4)
+
+    local function UpdatePlayerModel()
+        modelFrame:ClearModel()
+        modelFrame:SetUnit("player")
+        modelFrame:SetPortraitZoom(0) -- Vista de cuerpo completo
+        modelFrame:SetRotation(0)     -- De frente
+    end
+
+    -- Permitir rotar el modelo arrastrando con el ratón
+    modelFrame:EnableMouse(true)
+    local isDragging = false
+    local prevMouseX = 0
+    modelFrame:SetScript("OnMouseDown", function(self, button)
+        if button == "LeftButton" then
+            isDragging = true
+            prevMouseX = GetCursorPosition()
+        end
+    end)
+    modelFrame:SetScript("OnMouseUp", function(self, button)
+        if button == "LeftButton" then
+            isDragging = false
+        end
+    end)
+    modelFrame:SetScript("OnUpdate", function(self)
+        if isDragging then
+            local currentX = GetCursorPosition()
+            local diff = (currentX - prevMouseX) * 0.02
+            self:SetRotation(self:GetFacing() + diff)
+            prevMouseX = currentX
+        end
+    end)
 
     -- Botón de sincronización manual y monitor de compañeros
     local syncBtn = CreateFrame("Button", "ODD_SyncGuildBtn", frame)
@@ -163,6 +212,7 @@ function HQTab:Create(parent)
 
         HQTab:RefreshPresence()
         HQTab:RefreshMedals()
+        UpdatePlayerModel()
     end
 
     frame:SetScript("OnShow", Refresh)
