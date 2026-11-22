@@ -4,6 +4,11 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.2-alpha] - 2026-11-22
+
+### 🐛 Correcciones
+- **Error en `UnitAura` (attempt to call a nil value):** En el motor moderno de WoW Forever, la función clásica global `UnitAura` está retirada. Se ha adaptado la detección de auras a `C_UnitAuras.GetAuraDataByIndex` con compatibilidad hacia atrás segura.
+
 ## [0.1.1-alpha] - 2026-11-22
 
 ### 🪓 Interfaz y Arte

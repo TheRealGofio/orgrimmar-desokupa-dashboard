@@ -47,23 +47,41 @@ function Tracker:CheckTargetAuras()
     local wasEating = false
     local wasMounted = false
 
-    -- Inspeccionar auras del gnomo
-    for i = 1, 40 do
-        local name, icon = UnitAura("target", i, "HELPFUL")
-        if not name then break end
+    -- Inspeccionar auras del gnomo de forma compatible con la API moderna/Forever
+    -- En WoW moderno (10.x/11.x/12.x/Forever), UnitAura clásica está retirada a favor de C_UnitAuras
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        for i = 1, 40 do
+            local aura = C_UnitAuras.GetAuraDataByIndex("target", i, "HELPFUL")
+            if not aura then break end
+            local lowerName = (aura.name or ""):lower()
 
-        local lowerName = name:lower()
-        -- Detección de comer o beber
-        if lowerName:find("beber") or lowerName:find("drink") 
-           or lowerName:find("comer") or lowerName:find("food") 
-           or lowerName:find("restauraci") or lowerName:find("refreshment") then
-            wasEating = true
+            if lowerName:find("beber") or lowerName:find("drink") 
+               or lowerName:find("comer") or lowerName:find("food") 
+               or lowerName:find("restauraci") or lowerName:find("refreshment") then
+                wasEating = true
+            end
+
+            if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+               or lowerName:find("zancudo") or lowerName:find("strider") then
+                wasMounted = true
+            end
         end
+    elseif _G["UnitAura"] then
+        for i = 1, 40 do
+            local name = _G["UnitAura"]("target", i, "HELPFUL")
+            if not name then break end
+            local lowerName = name:lower()
 
-        -- Detección de montura / mecazancudo
-        if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
-           or lowerName:find("zancudo") or lowerName:find("strider") then
-            wasMounted = true
+            if lowerName:find("beber") or lowerName:find("drink") 
+               or lowerName:find("comer") or lowerName:find("food") 
+               or lowerName:find("restauraci") or lowerName:find("refreshment") then
+                wasEating = true
+            end
+
+            if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+               or lowerName:find("zancudo") or lowerName:find("strider") then
+                wasMounted = true
+            end
         end
     end
 
