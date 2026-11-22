@@ -12,7 +12,7 @@ local MEDAL_DEFS = {
     { id = "gnome_5", name = "Control de Plagas", desc = "Abate a 5 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Creature_Poison_01", req = 5 },
     { id = "gnome_10", name = "Cazagnomos", desc = "Abate a 10 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_DecisiveStrike", req = 10 },
     { id = "gnome_25", name = "Fumigador Oficial", desc = "Abate a 25 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Drink_05", req = 25 },
-    { id = "gnome_50", name = "Azote de Gnomeregan", desc = "Abate a 50 gnomos en mundo abierto.", icon = "Interface\\Icons\\Racial_Orc_Berserk", req = 50 },
+    { id = "gnome_50", name = "Azote de Gnomeregan", desc = "Abate a 50 gnomos en mundo abierto.", icon = "Interface\\Icons\\Spell_Shadow_SummonVoidWalker", req = 50 },
     { id = "gnome_75", name = "Rompeengranajes", desc = "Abate a 75 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Misc_Gear_01", req = 75 },
     { id = "gnome_100", name = "Terror de la Alianza", desc = "Abate a 100 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_BannerPVP_02", req = 100 },
     { id = "gnome_250", name = "Exterminador Jefe", desc = "Abate a 250 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_SavageBlow", req = 250 },
@@ -31,7 +31,7 @@ local MEDAL_DEFS = {
     { id = "class_rogue_5", name = "Sentidos Aguzados", desc = "Abate a 5 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_EyeOfTheOwl", reqClass = "ROGUE", reqClassCount = 5 },
     { id = "class_rogue_10", name = "Ni Te Escondas", desc = "Abate a 10 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_CheapShot", reqClass = "ROGUE", reqClassCount = 10 },
 
-    { id = "class_warrior_1", name = "Mordisco al Tobillo Evitado", desc = "Abate a un gnomo Guerrero.", icon = "Interface\\Icons\\Ability_Warrior_ChallengingShout", reqClass = "WARRIOR", reqClassCount = 1 },
+    { id = "class_warrior_1", name = "Mordisco al Tobillo Evitado", desc = "Abate a un gnomo Guerrero.", icon = "Interface\\Icons\\Ability_Racial_Avatar", reqClass = "WARRIOR", reqClassCount = 1 },
     { id = "class_warrior_5", name = "Escudo Roto", desc = "Abate a 5 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_ShieldBreak", reqClass = "WARRIOR", reqClassCount = 5 },
     { id = "class_warrior_10", name = "Peso Pluma Fuera de Combate", desc = "Abate a 10 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_Revenge", reqClass = "WARRIOR", reqClassCount = 10 },
 
@@ -49,7 +49,7 @@ local MEDAL_DEFS = {
     -- 5. Caza Territorial
     { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3 },
     { id = "gnome_zones_5", name = "Limpieza Territorial", desc = "Abate gnomos en al menos 5 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map08", reqZones = 5 },
-    { id = "gnome_zones_10", name = "Desokupa Global", desc = "Abate gnomos en al menos 10 zonas diferentes de Azeroth.", icon = "Interface\\Icons\\INV_Misc_Compass_01", reqZones = 10 },
+    { id = "gnome_zones_10", name = "Desokupa Global", desc = "Abate gnomos en al menos 10 zonas diferentes de Azeroth.", icon = "Interface\\Icons\\INV_Misc_Spyglass_02", reqZones = 10 },
     { id = "gnome_horde_turf", name = "¡A mi casa no entras!", desc = "Abate a un gnomo dentro de Durotar o Los Baldíos.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqHordeTurf = true },
     { id = "gnome_stv", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZoneName = "Tuercespina", reqZoneCount = 5 },
     { id = "gnome_hillsbrad", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZoneName = "Trabalomas", reqZoneCount = 5 },
