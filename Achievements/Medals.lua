@@ -12,7 +12,7 @@ local MEDAL_DEFS = {
     { id = "gnome_5", name = "Control de Plagas", desc = "Abate a 5 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Creature_Poison_01", req = 5 },
     { id = "gnome_10", name = "Cazagnomos", desc = "Abate a 10 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_DecisiveStrike", req = 10 },
     { id = "gnome_25", name = "Fumigador Oficial", desc = "Abate a 25 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Drink_05", req = 25 },
-    { id = "gnome_50", name = "Azote de Gnomeregan", desc = "Abate a 50 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Racial_BloodFury", req = 50 },
+    { id = "gnome_50", name = "Azote de Gnomeregan", desc = "Abate a 50 gnomos en mundo abierto.", icon = "Interface\\Icons\\Racial_Orc_Berserk", req = 50 },
     { id = "gnome_75", name = "Rompeengranajes", desc = "Abate a 75 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Misc_Gear_01", req = 75 },
     { id = "gnome_100", name = "Terror de la Alianza", desc = "Abate a 100 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_BannerPVP_02", req = 100 },
     { id = "gnome_250", name = "Exterminador Jefe", desc = "Abate a 250 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_SavageBlow", req = 250 },
