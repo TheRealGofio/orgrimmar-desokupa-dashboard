@@ -13,6 +13,9 @@ local KILL_COOLDOWN_WINDOW = 60 -- Cooldown de 60 segundos por víctima para evi
 -- Historial reciente para deduplicación: [targetGUID] = timestamp
 local recentKills = {}
 
+-- Caché reciente de gnomos observados en combate: [guid] = { name, class, level, timestamp }
+local targetGnomeCache = {}
+
 -- Caché de combate a corto plazo para capturar estados previos a recibir daño
 -- [guid] = { wasEating = bool, wasMounted = bool, timestamp = number }
 local combatAuraCache = {}
@@ -43,6 +46,18 @@ function Tracker:CheckTargetAuras()
     local raceName, raceFile, raceId = UnitRace("target")
     local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
     if not isGnome then return end
+
+    -- Guardar en caché de gnomos para cuando muera y ya no sea target
+    local name = UnitName("target")
+    local _, classFile = UnitClass("target")
+    local level = UnitLevel("target")
+    if level and level <= 0 then level = "??" end
+    targetGnomeCache[guid] = {
+        name = name,
+        classFile = classFile,
+        level = level,
+        timestamp = time()
+    }
 
     local wasEating = false
     local wasMounted = false
@@ -112,6 +127,16 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
         return isGnome, raceFile or "Gnome", name, classFile, level
     end
 
+    -- Si el gnomo ya murió y el jugador perdió el target, buscar en el historial de combate reciente
+    if unitGUID and targetGnomeCache[unitGUID] then
+        local cached = targetGnomeCache[unitGUID]
+        if (time() - cached.timestamp) < 60 then
+            return true, "Gnome", cached.name, cached.classFile, cached.level
+        end
+    end
+
+    -- Comprobación por GUID si es un jugador de la Alianza
+    -- Si no tenemos target activo pero el evento vino de un Player GUID válido
     return false, "UNVERIFIED", nil, nil, nil
 end
 
@@ -287,7 +312,15 @@ function Tracker:Initialize()
     end)
 
     -- En WoW Camelot/Forever, PARTY_KILL entrega (event, attackerGUID, targetGUID)
+    -- O bien mediante COMBAT_LOG_EVENT_UNFILTERED si PARTY_KILL no trae los parámetros completos
     ODD.Events:Register("PARTY_KILL", function(event, attackerGUID, targetGUID)
+        -- Si attackerGUID no viene como argumento, obtenerlo del jugador o del target
+        if not attackerGUID and UnitGUID("player") then
+            attackerGUID = UnitGUID("player")
+        end
+        if not targetGUID and UnitGUID("target") then
+            targetGUID = UnitGUID("target")
+        end
         Tracker:OnKillEvent(attackerGUID, targetGUID)
     end)
 

@@ -4,6 +4,12 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.4-alpha] - 2026-11-22
+
+### 🐛 Corrección Crítica en Detección de Bajas
+- **Persistencia de metadatos de víctimas:** En el milisegundo en que un gnomo muere, el cliente de WoW limpia el token `"target"`. Se ha añadido una caché de combate que guarda automáticamente la raza, nombre, clase y nivel del gnomo durante el combate, permitiendo validar la baja aunque el jugador ya no lo tenga en el objetivo en el momento exacto del golpe final.
+- **Robustez en parámetros de `PARTY_KILL`:** Añadida resolución de fallback para `attackerGUID` y `targetGUID` si el cliente despacha el evento sin payload directo.
+
 ## [0.1.3-alpha] - 2026-11-22
 
 ### ✨ Nuevas Características
