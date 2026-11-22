@@ -52,21 +52,12 @@ function Dashboard:Create()
     mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
     mainFrame:Hide()
 
-    -- Marco temático ornamental Horda / Orgrimmar (frame_2 limpio)
-    -- Contenedor con eventos de ratón para permitir arrastrar la ventana pinchando en el marco
-    local hordeOverlay = CreateFrame("Frame", nil, mainFrame)
-    hordeOverlay:SetFrameLevel(mainFrame:GetFrameLevel() + 6)
-    hordeOverlay:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
-    hordeOverlay:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
-    hordeOverlay:EnableMouse(true)
-    hordeOverlay:RegisterForDrag("LeftButton")
-    hordeOverlay:SetScript("OnDragStart", function() mainFrame:StartMoving() end)
-    hordeOverlay:SetScript("OnDragStop", function() mainFrame:StopMovingOrSizing() end)
-
-    local hordeFrame = hordeOverlay:CreateTexture(nil, "OVERLAY")
-    hordeFrame:SetAllPoints(hordeOverlay)
+    -- Marco temático ornamental Horda / Orgrimmar
+    -- Textura como BACKGROUND del mainFrame sin capturar clics para no bloquear el contenido
+    local hordeFrame = mainFrame:CreateTexture(nil, "BACKGROUND", nil, -5)
     hordeFrame:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_horde.png")
-    mainFrame.hordeOverlay = hordeOverlay
+    hordeFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
+    hordeFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
     mainFrame.hordeFrame = hordeFrame
 
     -- Título de la ventana
