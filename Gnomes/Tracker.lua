@@ -359,6 +359,11 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     -- Anuncio público por el chat de hermandad (/g)
     self:AnnounceToGuild(killRecord, gnomes.kills)
 
+    -- Reproducir sonido de baja de gnomo
+    if ODD.Audio and ODD.Audio.PlayKillSound then
+        ODD.Audio:PlayKillSound()
+    end
+
     -- Comprobar y notificar logros nuevos (Toast en pantalla + sonido)
     if ODD.Achievements and ODD.Achievements.Medals then
         ODD.Achievements.Medals:CheckNewAchievements()

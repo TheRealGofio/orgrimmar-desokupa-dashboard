@@ -16,6 +16,7 @@ Schema.DefaultGlobalDB = {
         shareStats = true,
         shareTrades = false,
         muteGuildAnnouncements = false, -- Si está marcado, silencia por completo el envío de anuncios al chat de hermandad
+        muteSounds = false,             -- Silenciar todos los efectos de sonido de ODD
         showHUD = false,                -- Mostrar el HUD compacto flotante en pantalla (estilo GRS)
         hudPos = nil,                   -- Posición guardada del HUD
     },

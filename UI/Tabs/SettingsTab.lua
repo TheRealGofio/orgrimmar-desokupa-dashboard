@@ -106,15 +106,16 @@ function SettingsTab:Create(parent)
     CreateCheck("Compartir estadisticas de combate declaradas", "shareStats", -188)
     CreateCheck("Compartir recetas y profesiones conocidas", "shareTrades", -216)
     CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -244)
+    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -272)
 
     -- ========================================================
     -- BLOQUE 3: HUD FLOTANTE EN PANTALLA (ESTILO GRS)
     -- ========================================================
-    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -278)
+    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -304)
 
     local hudToggleBtn = CreateFrame("Button", "ODD_HUDToggleSettingsBtn", frame)
     hudToggleBtn:SetSize(160, 26)
-    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -308)
+    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -332)
     local hBg = hudToggleBtn:CreateTexture(nil, "BACKGROUND")
     hBg:SetAllPoints()
     hBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)

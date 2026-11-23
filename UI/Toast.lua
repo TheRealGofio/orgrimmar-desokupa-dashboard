@@ -74,11 +74,11 @@ function Toast:Show(title, subtitle, iconTexture)
     toastFrame.titleFs:SetText(title or "Logro Obtenido")
     toastFrame.subFs:SetText(subtitle or "")
 
-    -- Sonido nativo oficial de World of Warcraft para logros
-    local playSound = (type(PlaySound) == "function" and PlaySound) or nil
-    if playSound then
-        -- SOUNDKIT.UI_EPICLOOT_TOAST (o fallback a LEVELUP / RAID_WARNING)
-        pcall(playSound, SOUNDKIT and SOUNDKIT.UI_EPICLOOT_TOAST or 888)
+    -- Sonido personalizado de logro (con fallback a sonido nativo)
+    if ODD.Audio and ODD.Audio.PlayAchievementSound then
+        ODD.Audio:PlayAchievementSound()
+    elseif type(PlaySound) == "function" then
+        pcall(PlaySound, SOUNDKIT and SOUNDKIT.UI_EPICLOOT_TOAST or 888)
     end
 
     toastFrame:Show()
