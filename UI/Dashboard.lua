@@ -13,6 +13,7 @@ local tabButtons = {}
 local TAB_DEFS = {
     { name = "HQ", labelKey = "TAB_HQ", creator = function(p) return ODD.UI.HQTab:Create(p) end },
     { name = "Gnomometer", labelKey = "TAB_GNOMOMETER", creator = function(p) return ODD.UI.GnomometerTab:Create(p) end },
+    { name = "Medals", labelKey = "TAB_MEDALS", creator = function(p) return ODD.UI.MedalsTab:Create(p) end },
     { name = "PvP", labelKey = "TAB_PVP", creator = function(p) return ODD.UI.PvPTab:Create(p) end },
     { name = "Workshops", labelKey = "TAB_WORKSHOPS", creator = function(p) return ODD.UI.WorkshopsTab:Create(p) end },
     { name = "Roster", labelKey = "TAB_ROSTER", creator = function(p) return ODD.UI.RosterTab:Create(p) end },
@@ -73,12 +74,12 @@ function Dashboard:Create()
     contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 18, -40)
     contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -18, 50)
 
-    -- Generar botones de pestañas
+    -- Generar botones de pestañas (ancho ajustado a 106px para albergar 7 pestañas)
     local prevBtn = nil
     for i, def in ipairs(TAB_DEFS) do
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
-        btn:SetSize(124, 26)
+        btn:SetSize(106, 26)
         btn:SetFrameLevel(mainFrame:GetFrameLevel() + 10)
         
         -- Textura de fondo nativa

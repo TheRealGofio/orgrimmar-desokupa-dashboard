@@ -12,8 +12,9 @@ if GetLocale and GetLocale() == "enUS" then
     L["CMD_HELP_VERSION"] = "  /odd version - Print installed version and client build."
     L["CMD_UNKNOWN"] = "Unknown command. Type /odd help for commands."
 
-    L["TAB_HQ"] = "Headquarters"
+    L["TAB_HQ"] = "General"
     L["TAB_GNOMOMETER"] = "Gnomometer"
+    L["TAB_MEDALS"] = "Achievements"
     L["TAB_PVP"] = "PvP Front"
     L["TAB_WORKSHOPS"] = "Workshops"
     L["TAB_ROSTER"] = "Roster"

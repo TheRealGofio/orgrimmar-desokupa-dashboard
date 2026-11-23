@@ -7,8 +7,15 @@ ODD.UI.HQTab = HQTab
 
 local pLabel = nil
 local peerStatus = nil
-local medalsScrollChild = nil
-local medalRows = {}
+
+-- Stat Cards
+local statPersonalTotal = nil
+local statGuildTotal = nil
+local statTodayTotal = nil
+local statWeekTotal = nil
+
+local lastKillDetails = nil
+local topKillersList = nil
 
 function HQTab:RefreshPresence()
     if not ODD.Network or not ODD.Network.Sync or not peerStatus then return end
@@ -20,80 +27,159 @@ function HQTab:RefreshPresence()
         table.insert(names, name)
     end
     if count == 0 then
-        peerStatus:SetText("Compañeros con ODD en linea: 0")
+        peerStatus:SetText("Compañeros con ODD en línea: 0")
     else
-        peerStatus:SetText(string.format("Compañeros con ODD en linea: |cFF00FF00%d|r (%s)", count, table.concat(names, ", ")))
+        peerStatus:SetText(string.format("Compañeros con ODD en línea: |cFF00FF00%d|r (%s)", count, table.concat(names, ", ")))
     end
 end
 
-function HQTab:RefreshMedals()
-    if not medalsScrollChild or not ODD.Achievements or not ODD.Achievements.Medals then return end
+-- Calcula eliminaciones locales (totales, hoy, esta semana) y de hermandad
+function HQTab:CalculateStats()
+    local charDB = ODD.Database:GetChar()
+    local gnomes = charDB and charDB.observations and charDB.observations.gnomes
+    local records = (gnomes and gnomes.records) or {}
+    local personalTotal = (gnomes and gnomes.kills) or 0
 
-    local medals = ODD.Achievements.Medals:GetPlayerMedals()
-    for _, r in ipairs(medalRows) do r:Hide() end
+    local now = time()
+    local nowDate = date("*t", now)
 
-    local rowHeight = 36
-    local currentY = 0
+    -- Inicio del día actual (00:00:00)
+    local startOfToday = time({
+        year = nowDate.year,
+        month = nowDate.month,
+        day = nowDate.day,
+        hour = 0,
+        min = 0,
+        sec = 0
+    })
 
-    for i, m in ipairs(medals) do
-        local row = medalRows[i]
-        if not row then
-            row = CreateFrame("Frame", nil, medalsScrollChild)
-            row:SetSize(740, 32)
+    -- Inicio de la semana actual (Lunes a las 00:00:00)
+    -- wday: 1 = Domingo, 2 = Lunes, ..., 7 = Sábado
+    local daysSinceMonday = (nowDate.wday == 1) and 6 or (nowDate.wday - 2)
+    local startOfWeek = startOfToday - (daysSinceMonday * 86400)
 
-            local bg = row:CreateTexture(nil, "BACKGROUND")
-            bg:SetAllPoints(row)
-            row.bg = bg
+    local todayCount = 0
+    local weekCount = 0
+    local lastRecord = nil
 
-            local icon = row:CreateTexture(nil, "ARTWORK")
-            icon:SetSize(26, 26)
-            icon:SetPoint("LEFT", row, "LEFT", 4, 0)
-            row.icon = icon
-
-            local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            title:SetPoint("TOPLEFT", row, "TOPLEFT", 38, -2)
-            row.title = title
-
-            local desc = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-            desc:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 38, 2)
-            row.desc = desc
-
-            local prog = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            prog:SetPoint("RIGHT", row, "RIGHT", -16, 0)
-            row.prog = prog
-
-            medalRows[i] = row
+    for _, r in ipairs(records) do
+        local stamp = r.timestamp or 0
+        if stamp >= startOfToday then
+            todayCount = todayCount + 1
         end
-
-        row:SetPoint("TOPLEFT", medalsScrollChild, "TOPLEFT", 0, currentY)
-        currentY = currentY - rowHeight
-
-        row.icon:SetTexture(m.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-        row.desc:SetText(m.desc)
-
-        if m.completed then
-            row.bg:SetColorTexture(0.1, 0.28, 0.1, 0.45)
-            row.title:SetText(string.format("|cFFFFD100%s|r  |cFF00FF00[Completada]|r", m.name))
-            row.prog:SetText(string.format("|cFF00FF00%d / %d|r", m.progress, m.maxReq))
-            row.icon:SetDesaturated(false)
-        else
-            row.bg:SetColorTexture(0.12, 0.12, 0.12, 0.35)
-            row.title:SetText(string.format("|cFF888888%s|r", m.name))
-            row.prog:SetText(string.format("|cFF888888%d / %d|r", m.progress, m.maxReq))
-            row.icon:SetDesaturated(true)
+        if stamp >= startOfWeek then
+            weekCount = weekCount + 1
         end
-
-        row:Show()
+        if not lastRecord or stamp > (lastRecord.timestamp or 0) then
+            lastRecord = r
+        end
     end
 
-    medalsScrollChild:SetHeight(math.max(1, #medals * rowHeight))
+    -- Total de hermandad: tu total propio + totales declarados por compañeros en ODDDB
+    local guildTotal = personalTotal
+    local myName = UnitName("player") or "Tú"
+    local topContributors = {
+        { name = myName, kills = personalTotal, isSelf = true }
+    }
+
+    local globalDB = ODD.Database:GetGlobal()
+    if globalDB and globalDB.profiles then
+        for name, profile in pairs(globalDB.profiles) do
+            if name ~= myName and profile.gnomeKills and profile.gnomeKills > 0 then
+                guildTotal = guildTotal + profile.gnomeKills
+                table.insert(topContributors, {
+                    name = name,
+                    kills = profile.gnomeKills,
+                    isSelf = false
+                })
+            end
+        end
+    end
+
+    table.sort(topContributors, function(a, b) return a.kills > b.kills end)
+
+    return {
+        personalTotal = personalTotal,
+        guildTotal = guildTotal,
+        todayCount = todayCount,
+        weekCount = weekCount,
+        lastRecord = lastRecord,
+        topContributors = topContributors,
+    }
+end
+
+function HQTab:RefreshStats()
+    local stats = self:CalculateStats()
+
+    if statPersonalTotal then
+        statPersonalTotal:SetText(string.format("|cFFFFD100%d|r", stats.personalTotal))
+    end
+    if statGuildTotal then
+        statGuildTotal:SetText(string.format("|cFF00FFCC%d|r", stats.guildTotal))
+    end
+    if statTodayTotal then
+        statTodayTotal:SetText(string.format("|cFF00FF00%d|r", stats.todayCount))
+    end
+    if statWeekTotal then
+        statWeekTotal:SetText(string.format("|cFFFF8000%d|r", stats.weekCount))
+    end
+
+    if lastKillDetails then
+        if stats.lastRecord then
+            local r = stats.lastRecord
+            local dateStr = date("%Y-%m-%d %H:%M", r.timestamp or time())
+            local extra = ""
+            if r.victimName then
+                extra = string.format(" - |cFFFFD100%s|r (%s Nivel %s)", r.victimName, r.victimClass or "?", tostring(r.victimLevel or "?"))
+            end
+            lastKillDetails:SetText(string.format("Último desalojo: %s en |cFFFFFFFF%s|r%s", dateStr, r.zone or "Mundo Abierto", extra))
+        else
+            lastKillDetails:SetText("Último desalojo: Ninguna baja registrada aún.")
+        end
+    end
+
+    if topKillersList then
+        local lines = {}
+        for i = 1, math.min(6, #stats.topContributors) do
+            local c = stats.topContributors[i]
+            local tag = c.isSelf and " |cFF888888(Tú)|r" or ""
+            table.insert(lines, string.format("%d. |cFFFFFFFF%s|r%s: |cFFFFD100%d|r bajas", i, c.name, tag, c.kills))
+        end
+        topKillersList:SetText(table.concat(lines, "\n"))
+    end
+end
+
+-- Helper para crear tarjetas de estadísticas destacadas
+local function CreateStatCard(parent, title, x, y, width, height)
+    local card = CreateFrame("Frame", nil, parent)
+    card:SetSize(width, height)
+    card:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+
+    local bg = card:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(card)
+    bg:SetColorTexture(0.12, 0.12, 0.12, 0.65)
+
+    local border = card:CreateTexture(nil, "BORDER")
+    border:SetPoint("TOPLEFT", card, "TOPLEFT", 0, 0)
+    border:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", 0, 0)
+    border:SetColorTexture(0.3, 0.1, 0.1, 0.4)
+
+    local tLabel = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    tLabel:SetPoint("TOP", card, "TOP", 0, -8)
+    tLabel:SetText(title)
+
+    local valLabel = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
+    valLabel:SetPoint("CENTER", card, "CENTER", 0, -6)
+    valLabel:SetText("0")
+
+    return valLabel
 end
 
 function HQTab:Create(parent)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetAllPoints(parent)
 
-    ODD.UI.Components:CreateSectionHeader(frame, L["TAB_HQ"] .. " - Estado General de Hermandad", -12)
+    ODD.UI.Components:CreateSectionHeader(frame, "Panel General - Estadísticas de Desalojo", -12)
 
     -- Ficha del personaje local
     local profileBox = CreateFrame("Frame", nil, frame)
@@ -112,7 +198,7 @@ function HQTab:Create(parent)
     oLabel:SetText("Origen: " .. L["STATUS_LOCAL_OBSERVED"])
 
     -- ========================================================
-    -- MODELO 3D NATIVO DEL PERSONAJE (completamente transparente)
+    -- MODELO 3D NATIVO DEL PERSONAJE
     -- ========================================================
     local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame)
     modelFrame:SetSize(115, 115)
@@ -122,11 +208,10 @@ function HQTab:Create(parent)
     local function UpdatePlayerModel()
         modelFrame:ClearModel()
         modelFrame:SetUnit("player")
-        modelFrame:SetPortraitZoom(0) -- Vista de cuerpo completo
-        modelFrame:SetRotation(0)     -- De frente
+        modelFrame:SetPortraitZoom(0)
+        modelFrame:SetRotation(0)
     end
 
-    -- Permitir rotar el modelo arrastrando con el ratón
     modelFrame:EnableMouse(true)
     local isDragging = false
     local prevMouseX = 0
@@ -150,10 +235,10 @@ function HQTab:Create(parent)
         end
     end)
 
-    -- Estado de sincronización y monitor de compañeros en línea
+    -- Estado de sincronización P2P
     local syncBox = CreateFrame("Frame", nil, frame)
-    syncBox:SetSize(620, 26)
-    syncBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -92)
+    syncBox:SetSize(620, 24)
+    syncBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -90)
 
     local pulseDot = syncBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     pulseDot:SetPoint("LEFT", syncBox, "LEFT", 0, 0)
@@ -161,20 +246,48 @@ function HQTab:Create(parent)
 
     peerStatus = syncBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     peerStatus:SetPoint("LEFT", pulseDot, "RIGHT", 8, 0)
-    peerStatus:SetText("Compañeros con ODD en linea: 0")
+    peerStatus:SetText("Compañeros con ODD en línea: 0")
 
     -- ========================================================
-    -- PANEL DE MEDALLAS Y LOGROS INTERNOS
+    -- 4 TARJETAS GRANDES DE ESTADÍSTICAS
     -- ========================================================
-    local medHeader = ODD.UI.Components:CreateSectionHeader(frame, "Medallas y Logros de Orgrimmar Desokupa:", -128)
+    ODD.UI.Components:CreateSectionHeader(frame, "Resumen Global de Bajas:", -124)
 
-    local scrollFrame = CreateFrame("ScrollFrame", "ODD_MedalsScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 285)
-    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -156)
+    local cardWidth = 180
+    local cardHeight = 65
+    local cardSpacing = 13
 
-    medalsScrollChild = CreateFrame("Frame", nil, scrollFrame)
-    medalsScrollChild:SetSize(740, 1)
-    scrollFrame:SetScrollChild(medalsScrollChild)
+    statPersonalTotal = CreateStatCard(frame, "Tus Bajas Totales", 16, -150, cardWidth, cardHeight)
+    statGuildTotal = CreateStatCard(frame, "Bajas de Hermandad", 16 + (cardWidth + cardSpacing) * 1, -150, cardWidth, cardHeight)
+    statTodayTotal = CreateStatCard(frame, "Bajas de Hoy", 16 + (cardWidth + cardSpacing) * 2, -150, cardWidth, cardHeight)
+    statWeekTotal = CreateStatCard(frame, "Bajas de Esta Semana", 16 + (cardWidth + cardSpacing) * 3, -150, cardWidth, cardHeight)
+
+    -- ========================================================
+    -- DETALLES ADICIONALES Y CONTRIBUCIÓN
+    -- ========================================================
+    local bottomBox = CreateFrame("Frame", nil, frame)
+    bottomBox:SetSize(760, 190)
+    bottomBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -228)
+    local bBg = bottomBox:CreateTexture(nil, "BACKGROUND")
+    bBg:SetAllPoints(bottomBox)
+    bBg:SetColorTexture(0.08, 0.08, 0.08, 0.6)
+
+    -- Última baja
+    lastKillDetails = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    lastKillDetails:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -14)
+    lastKillDetails:SetText("Último desalojo: Calculando...")
+
+    -- Subcabecera contribución
+    local contribHeader = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    contribHeader:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -46)
+    contribHeader:SetText("|cFFFFD100Máximos Exterminadores de la Hermandad:|r")
+
+    -- Lista Top 6
+    topKillersList = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    topKillersList:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -70)
+    topKillersList:SetJustifyH("LEFT")
+    topKillersList:SetSpacing(4)
+    topKillersList:SetText("1. Tú: 0 bajas")
 
     local function Refresh()
         if ODD.Network and ODD.Network.Sync then
@@ -193,7 +306,7 @@ function HQTab:Create(parent)
         pLabel:SetText(pText)
 
         HQTab:RefreshPresence()
-        HQTab:RefreshMedals()
+        HQTab:RefreshStats()
         UpdatePlayerModel()
     end
 

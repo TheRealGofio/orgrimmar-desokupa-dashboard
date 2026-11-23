@@ -13,8 +13,9 @@ L["CMD_HELP_VERSION"] = "  /odd version - Muestra la versión instalada y la bui
 L["CMD_UNKNOWN"] = "Comando no reconocido. Escribe /odd help para ver la lista."
 
 -- Pestañas
-L["TAB_HQ"] = "Cuartel General"
+L["TAB_HQ"] = "General"
 L["TAB_GNOMOMETER"] = "Gnomómetro"
+L["TAB_MEDALS"] = "Logros"
 L["TAB_PVP"] = "Frente PvP"
 L["TAB_WORKSHOPS"] = "Talleres"
 L["TAB_ROSTER"] = "Roster"
