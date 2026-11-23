@@ -4,6 +4,44 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.3.6-alpha] - 2026-11-23
+
+### 🏆 Sistema de Puntos de Logro
+- **Puntuación por Dificultad:** Se asignan puntos (de 5 a 50 pts) a cada logro y medalla según su complejidad y rareza.
+- **Visualización en la UI:**
+  - En la pestaña **General** (`HQTab`), la ficha del personaje muestra la suma total de puntos de logro junto a la clase y nivel.
+  - En la pestaña **Logros**, la cabecera resume el progreso en logros y puntos totales (`Progreso: X / Y logros • Puntos de Logro: X / Y pts`). Cada fila detalla los puntos que otorga la medalla.
+- **Clasificación y Ordenación en el Gnomómetro:**
+  - El Leaderboard de hermandad muestra tanto las bajas como los puntos de logro conseguidos (`X bajas • Y pts`).
+  - Nuevos botones de filtrado rápido: **`[Más Bajas]`** (orden por gnomos abatidos) y **`[Más Puntos]`** (orden por puntuación de logros).
+- **Sincronización P2P:** El protocolo de red incluye `ap` (achievement points) en el intercambio entre miembros de hermandad.
+
+### 🎯 Sistema de Némesis en PvP
+- **Sustitución de Historial:** La pestaña **PvP** reemplaza el registro genérico de partidas por un rastreador interactivo de Némesis.
+- **Identificación de Agresores:** Registra a los jugadores de la Alianza que te derrotan, indicando su clase, zona, fecha y marcador de venganzas.
+- **Estados de Búsqueda:** Clasificación dinámica con etiquetas `[BUSCADO]` (si te van ganando el marcador) y `[VENGADO]` (en cuanto igualas o superas las bajas).
+- **Rangos de Honor:** Visualización del rango PvP oficial de WoW Forever (`GetPVPRankInfo`) en lugar de etiquetas numéricas genéricas.
+
+### 🔊 Efectos de Sonido Personalizados
+- **Módulo `Core/Audio.lua`:** Detección y reproducción nativa de efectos sonoros sin dependencias externas.
+- **Eventos con Sonido:**
+  - Sonido al abatir un gnomo (`Media/Sounds/kill.mp3` o `.ogg`).
+  - Sonido al desbloquear un nuevo logro (`Media/Sounds/achievement.mp3` o `.ogg`).
+- **Control en Ajustes:** Nueva opción de configuración para silenciar todos los sonidos del addon.
+
+### 📢 Mensajes Dinámicos e Identidad en Hermandad
+- **10 Frases Ingeniosas de Desalojo:** Al abatir un gnomo, el mensaje enviado al chat de hermandad elige aleatoriamente entre 10 frases cómicas y temáticas de Orgrimmar Desokupa.
+- **Anuncio Natural de Logros:** Al desbloquear un logro se anuncia de forma limpia y directa al chat de hermandad: *"He conseguido el logro [Nombre del Logro]"*.
+- **Nombre y Apellido Oficiales:** Adaptada la lectura de identidad para extraer el nombre y apellido completos tal como están registrados en el Roster de hermandad de WoW Forever (ej. `Holgar Stormaxe`).
+
+### ⚡ Red, Rendimiento y Correcciones Críticas
+- **Solución al Límite de 250 Bytes:** Corregido el desbordamiento en el canal de addon limitando el broadcast de talleres a las 2 profesiones primarias y añadiendo un fallback automático al codificador plano `S1`.
+- **Deduplicación Estricta del Jugador Local:** Implementada la función `IsMe()` para comparar de forma insensible a mayúsculas nombres simples y nombres con reino (`Nombre`, `Nombre-Reino`, `Nombre Reino`). Corrige el bug donde el HUD y la pestaña General duplicaban las bajas del propio jugador sumándolas como si fueran de un compañero remoto.
+- **Renombrado y Pulido de Pestañas:** Pestañas renombradas a *General, Gnomómetro, Logros, PvP, Profesiones, Miembros y Ajustes*. Retirados campos obsoletos de "Personaje Principal".
+- **Ajuste de ScrollFrames:** Corregida la altura de todas las listas con scroll para evitar solapamientos con los botones inferiores.
+
+---
+
 ## [0.1.8-alpha] - 2026-11-23
 
 ### ⚔️ Detección Directa de Bajas y Descarte de UnitCanAttack
