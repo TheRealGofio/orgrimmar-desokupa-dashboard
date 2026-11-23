@@ -7,17 +7,16 @@ ODD.Gnomes.Tracker = Tracker
 
 -- Constantes de verificación
 local GNOME_RACE_ID = 7 -- RaceID estándar de Gnomo en World of Warcraft
-local GNOME_RACE_STRING = "Gnome"
-local KILL_COOLDOWN_WINDOW = 60 -- Cooldown de 60 segundos por víctima para evitar duplicados
+local KILL_COOLDOWN_WINDOW = 15 -- Cooldown reducido a 15s (idéntico a GRS) para evitar bloqueos en pruebas sucesivas
 
 -- Historial reciente para deduplicación: [targetGUID] = timestamp
 local recentKills = {}
 
--- Caché reciente de gnomos observados en combate: [guid] = { name, class, level, timestamp }
+-- Caché en vivo y observada de gnomos: [guid] = { name, classFile, level, timestamp }
 local targetGnomeCache = {}
+local liveSeenGnomes = {} -- [guid] = true/false para verificación instantánea
 
--- Caché de combate a corto plazo para capturar estados previos a recibir daño
--- [guid] = { wasEating = bool, wasMounted = bool, timestamp = number }
+-- Caché de combate a corto plazo para capturar estados previos (comiendo / montura)
 local combatAuraCache = {}
 
 -- Contador de bajas en la sesión actual
@@ -25,88 +24,108 @@ Tracker.sessionKills = 0
 
 -- Comprueba si el jugador está en mundo abierto (excluye BGs, Arenas, Mazmorras y Bandas)
 function Tracker:IsWorldPvP()
-    local inInstance, instanceType = IsInInstance()
-    if inInstance then
-        return false -- Mazmorra, Banda, BG o Arena
+    local inInstance = false
+    if type(IsInInstance) == "function" then
+        local ok, inst = pcall(IsInInstance)
+        if ok and inst == true then
+            return false
+        end
     end
 
-    if C_PvP and type(C_PvP.IsActiveBattlefield) == "function" and C_PvP.IsActiveBattlefield() then
-        return false
+    if C_PvP and type(C_PvP.IsActiveBattlefield) == "function" then
+        local okPvp, active = pcall(C_PvP.IsActiveBattlefield)
+        if okPvp and active == true then
+            return false
+        end
     end
 
     return true
 end
 
+-- Helper seguro para clasificar si es gnomo
+local function ClassifyRace(raceToken, raceName)
+    local rTok = ODD.API.Forever:SanitizeText(raceToken)
+    local rNam = ODD.API.Forever:SanitizeText(raceName)
+    if (rTok and rTok:lower():find("gnome")) or (rNam and rNam:lower():find("gnom")) then
+        return true
+    end
+    return false
+end
+
 -- Escanea el objetivo actual para detectar estados de interés antes de que sufra daño
 function Tracker:CheckTargetAuras()
-    if not UnitExists("target") or not UnitCanAttack("player", "target") then return end
-    local guid = UnitGUID("target")
-    if not guid or ODD.API.Forever:IsSecret(guid) then return end
+    if not UnitExists("target") then return end
+    local guid = ODD.API.Forever:SanitizeGUID(UnitGUID("target"))
+    if not guid then return end
 
     local isGnome = false
     local okRace, raceName, raceFile, raceId = pcall(UnitRace, "target")
-    if okRace and not ODD.API.Forever:IsSecret(raceId) then
-        isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    if okRace and not ODD.API.Forever:IsSecret(raceId) and not ODD.API.Forever:IsSecret(raceFile) then
+        local numId = ODD.API.Forever:SanitizeNumber(raceId)
+        if numId == GNOME_RACE_ID or ClassifyRace(raceFile, raceName) then
+            isGnome = true
+        end
+    end
+    if not isGnome and liveSeenGnomes[guid] then
+        isGnome = true
     end
     if not isGnome then return end
 
-    -- Guardar en caché de gnomos para cuando muera y ya no sea target
-    local name = UnitName("target")
-    local _, classFile = UnitClass("target")
+    -- Guardar en caché de gnomos para cuando muera
+    local okName, rawName = pcall(UnitName, "target")
+    local name = ODD.API.Forever:SanitizeText(rawName)
+    local okClass, _, rawClass = pcall(UnitClass, "target")
+    local classFile = ODD.API.Forever:SanitizeText(rawClass)
     local okLvl, rawLevel = pcall(UnitLevel, "target")
-    local level = "??"
-    if okLvl and rawLevel and not ODD.API.Forever:IsSecret(rawLevel) then
-        local numLvl = tonumber(rawLevel)
-        if numLvl and numLvl > 0 then
-            level = numLvl
-        end
-    end
+    local level = ODD.API.Forever:SanitizeNumber(rawLevel) or "??"
 
     targetGnomeCache[guid] = {
-        name = name,
+        name = name or "Gnomo desconocido",
         classFile = classFile,
         level = level,
         timestamp = time()
     }
+    liveSeenGnomes[guid] = true
 
     local wasEating = false
     local wasMounted = false
 
-    -- Inspeccionar auras del gnomo de forma compatible con la API moderna/Forever
-    -- En WoW moderno (10.x/11.x/12.x/Forever), UnitAura clásica está retirada a favor de C_UnitAuras
+    -- Inspeccionar auras de forma segura y protegida contra taint
     pcall(function()
         if C_UnitAuras and type(C_UnitAuras.GetAuraDataByIndex) == "function" then
             for i = 1, 40 do
                 local aura = C_UnitAuras.GetAuraDataByIndex("target", i, "HELPFUL")
                 if not aura then break end
-                local lowerName = (aura.name or ""):lower()
-
-                if lowerName:find("beber") or lowerName:find("drink") 
-                   or lowerName:find("comer") or lowerName:find("food") 
-                   or lowerName:find("restauraci") or lowerName:find("refreshment") then
-                    wasEating = true
-                end
-
-                if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
-                   or lowerName:find("zancudo") or lowerName:find("strider") then
-                    wasMounted = true
+                local aName = ODD.API.Forever:SanitizeText(aura.name)
+                if aName then
+                    local lowerName = aName:lower()
+                    if lowerName:find("beber") or lowerName:find("drink") 
+                       or lowerName:find("comer") or lowerName:find("food") 
+                       or lowerName:find("restauraci") or lowerName:find("refreshment") then
+                        wasEating = true
+                    end
+                    if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+                       or lowerName:find("zancudo") or lowerName:find("strider") then
+                        wasMounted = true
+                    end
                 end
             end
-        elseif type(_G["UnitAura"]) == "function" then
+        elseif _G["UnitAura"] and type(_G["UnitAura"]) == "function" then
             for i = 1, 40 do
-                local name = _G["UnitAura"]("target", i, "HELPFUL")
-                if not name then break end
-                local lowerName = name:lower()
-
-                if lowerName:find("beber") or lowerName:find("drink") 
-                   or lowerName:find("comer") or lowerName:find("food") 
-                   or lowerName:find("restauraci") or lowerName:find("refreshment") then
-                    wasEating = true
-                end
-
-                if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
-                   or lowerName:find("zancudo") or lowerName:find("strider") then
-                    wasMounted = true
+                local aName = _G["UnitAura"]("target", i, "HELPFUL")
+                if not aName then break end
+                aName = ODD.API.Forever:SanitizeText(aName)
+                if aName then
+                    local lowerName = aName:lower()
+                    if lowerName:find("beber") or lowerName:find("drink") 
+                       or lowerName:find("comer") or lowerName:find("food") 
+                       or lowerName:find("restauraci") or lowerName:find("refreshment") then
+                        wasEating = true
+                    end
+                    if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+                       or lowerName:find("zancudo") or lowerName:find("strider") then
+                        wasMounted = true
+                    end
                 end
             end
         end
@@ -121,10 +140,11 @@ function Tracker:CheckTargetAuras()
     end
 end
 
--- Intenta verificar si un GUID o token corresponde a un gnomo y extrae metadata si esta disponible
+-- Intenta verificar si un GUID o token corresponde a un gnomo y extrae metadata
 function Tracker:GetTargetInfo(unitToken, unitGUID)
     local token = unitToken
-    if not token and unitGUID and UnitGUID("target") == unitGUID then
+    local safeG = ODD.API.Forever:SanitizeGUID(unitGUID)
+    if not token and safeG and UnitGUID("target") == safeG then
         token = "target"
     end
 
@@ -132,57 +152,46 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
     if token and UnitExists(token) then
         local isGnome = false
         local okRace, raceName, raceFile, raceId = pcall(UnitRace, token)
-        if okRace and not ODD.API.Forever:IsSecret(raceId) then
-            isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+        if okRace and not ODD.API.Forever:IsSecret(raceId) and not ODD.API.Forever:IsSecret(raceFile) then
+            local numId = ODD.API.Forever:SanitizeNumber(raceId)
+            if numId == GNOME_RACE_ID or ClassifyRace(raceFile, raceName) then
+                isGnome = true
+            end
         end
-        local name = UnitName(token)
-        local _, classFile = UnitClass(token)
+        local okName, rawName = pcall(UnitName, token)
+        local name = ODD.API.Forever:SanitizeText(rawName)
+        local okClass, _, rawClass = pcall(UnitClass, token)
+        local classFile = ODD.API.Forever:SanitizeText(rawClass)
         local okLvl, rawLevel = pcall(UnitLevel, token)
-        local level = "??"
-        if okLvl and rawLevel and not ODD.API.Forever:IsSecret(rawLevel) then
-            local numLvl = tonumber(rawLevel)
-            if numLvl and numLvl > 0 then
-                level = numLvl
-            end
-        end
+        local level = ODD.API.Forever:SanitizeNumber(rawLevel) or "??"
 
-        return isGnome, raceFile or "Gnome", name, classFile, level
-    end
-
-    -- 2. Intento por GetPlayerInfoByGUID (API nativa de Blizzard para resolver raza por GUID de jugador)
-    if unitGUID and type(GetPlayerInfoByGUID) == "function" and not ODD.API.Forever:IsSecret(unitGUID) then
-        local ok, _, classFilename, localizedRace, englishRace, sex, name, realm = pcall(GetPlayerInfoByGUID, unitGUID)
-        if ok and (englishRace or localizedRace) then
-            local isGnome = false
-            if englishRace and type(englishRace) == "string" and englishRace:lower():find("gnome") then
-                isGnome = true
-            elseif localizedRace and type(localizedRace) == "string" and localizedRace:lower():find("gnom") then
-                isGnome = true
-            end
-            if isGnome then
-                return true, englishRace or "Gnome", name, classFilename, nil
-            end
-        end
-        -- Variante con doble descarte si el retorno es (localizedRace, englishRace)
-        local ok2, _, _, locRace2, engRace2, _, name2, realm2 = pcall(GetPlayerInfoByGUID, unitGUID)
-        if ok2 and (engRace2 or locRace2) then
-            local isGnome2 = false
-            if engRace2 and type(engRace2) == "string" and engRace2:lower():find("gnome") then
-                isGnome2 = true
-            elseif locRace2 and type(locRace2) == "string" and locRace2:lower():find("gnom") then
-                isGnome2 = true
-            end
-            if isGnome2 then
-                return true, engRace2 or "Gnome", name2, nil, nil
-            end
+        if isGnome then
+            return true, "Gnome", name, classFile, level
         end
     end
 
-    -- 3. Intento por historial de combate reciente observado
-    if unitGUID and targetGnomeCache[unitGUID] then
-        local cached = targetGnomeCache[unitGUID]
-        if (time() - cached.timestamp) < 60 then
-            return true, "Gnome", cached.name, cached.classFile, cached.level
+    -- 2. Intento por caché previa observada en directo (GRS method)
+    if safeG then
+        if liveSeenGnomes[safeG] or targetGnomeCache[safeG] then
+            local cached = targetGnomeCache[safeG]
+            return true, "Gnome", cached and cached.name, cached and cached.classFile, cached and cached.level
+        end
+    end
+
+    -- 3. Intento por GetPlayerInfoByGUID (API nativa de Blizzard)
+    if safeG and type(GetPlayerInfoByGUID) == "function" then
+        local ok, _, classFilename, localizedRace, englishRace, sex, name, realm = pcall(GetPlayerInfoByGUID, safeG)
+        if ok then
+            if ClassifyRace(englishRace, localizedRace) then
+                return true, "Gnome", ODD.API.Forever:SanitizeText(name), ODD.API.Forever:SanitizeText(classFilename), nil
+            end
+        end
+        -- Intento con segundo orden de retorno de Blizzard: (localizedRace, englishRace)
+        local ok2, _, _, locRace2, engRace2, _, name2 = pcall(GetPlayerInfoByGUID, safeG)
+        if ok2 then
+            if ClassifyRace(engRace2, locRace2) then
+                return true, "Gnome", ODD.API.Forever:SanitizeText(name2), nil, nil
+            end
         end
     end
 
@@ -191,31 +200,34 @@ end
 
 -- Comprueba si el atacante es el jugador local o una mascota/tótem propia
 function Tracker:IsPlayerOrPet(attackerGUID)
-    local playerGUID = UnitGUID("player")
+    local playerGUID = ODD.API.Forever:SanitizeGUID(UnitGUID("player"))
+    local safeAttacker = ODD.API.Forever:SanitizeGUID(attackerGUID)
     if not playerGUID then return false end
 
     -- Coincidencia directa con el GUID del jugador
-    if attackerGUID == playerGUID then
+    if safeAttacker and safeAttacker == playerGUID then
         return true
     end
 
     -- Comprobación por mascota activa
-    local petGUID = UnitGUID("pet")
-    if petGUID and attackerGUID == petGUID then
+    local petGUID = ODD.API.Forever:SanitizeGUID(UnitGUID("pet"))
+    if petGUID and safeAttacker and safeAttacker == petGUID then
         return true
     end
 
-    -- Comprobación por token nativo (WoW resuelve tótems/mascotas/guardianes asociados al player)
+    -- Comprobación por token nativo (UnitTokenFromGUID)
     if type(UnitTokenFromGUID) == "function" and attackerGUID then
         local ok, token = pcall(UnitTokenFromGUID, attackerGUID)
         if ok and token then
+            token = ODD.API.Forever:SanitizeText(token)
             if token == "player" or token == "pet" then
                 return true
             end
             if type(UnitIsUnit) == "function" then
-                if UnitIsUnit(token, "player") or UnitIsUnit(token, "pet") then
-                    return true
-                end
+                local okSameP, isP = pcall(UnitIsUnit, token, "player")
+                if okSameP and isP == true then return true end
+                local okSamePet, isPet = pcall(UnitIsUnit, token, "pet")
+                if okSamePet and isPet == true then return true end
             end
         end
     end
@@ -225,31 +237,30 @@ end
 
 -- Procesa un killing blow con verificación estricta de autoría y raza
 function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
-    -- Protección contra 'secret values' en el motor moderno de WoW Forever
-    if ODD.API.Forever:IsSecret(attackerGUID) or ODD.API.Forever:IsSecret(targetGUID) then
-        return
-    end
+    local playerGUID = ODD.API.Forever:SanitizeGUID(UnitGUID("player"))
+    local safeVictim = ODD.API.Forever:SanitizeGUID(targetGUID)
+    local safeAttacker = ODD.API.Forever:SanitizeGUID(attackerGUID)
 
-    local playerGUID = UnitGUID("player")
-    if not playerGUID or not targetGUID then return end
-    if ODD.API.Forever:IsSecret(playerGUID) then return end
+    if not safeVictim then return end
 
     -- 1. Regla de Autoría:
-    -- Si tenemos attackerGUID, comprobamos si es el jugador, su mascota o sus tótems
     local isAuthorized = false
-    if attackerGUID then
-        isAuthorized = self:IsPlayerOrPet(attackerGUID)
+    if safeAttacker then
+        isAuthorized = self:IsPlayerOrPet(safeAttacker)
     end
 
-    -- Si no vino attackerGUID (o vino masked), pero es una muerte directa observada sobre el target al que el jugador estaba pegando solo:
-    if not isAuthorized and isDirectKill then
-        if UnitGUID("target") == targetGUID then
+    -- Si estamos solos o el target actual coincide con la víctima, aceptar autoría
+    if not isAuthorized then
+        local targetCurr = ODD.API.Forever:SanitizeGUID(UnitGUID("target"))
+        if isDirectKill or targetCurr == safeVictim then
+            isAuthorized = true
+        elseif not IsInGroup() then
+            -- En solitario en mundo abierto, los eventos de kill locales te corresponden
             isAuthorized = true
         end
     end
 
     if not isAuthorized then
-        -- Descartado: kill de otro jugador o de terceros
         return
     end
 
@@ -260,24 +271,21 @@ function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
 
     -- 3. Regla: Deduplicación por cooldown de víctima
     local now = time()
-    local okDedupe = pcall(function()
-        if recentKills[targetGUID] and (now - recentKills[targetGUID]) < KILL_COOLDOWN_WINDOW then
-            return true
-        end
-        return false
-    end)
-    if okDedupe == true then
+    if recentKills[safeVictim] and (now - recentKills[safeVictim]) < KILL_COOLDOWN_WINDOW then
         return
     end
 
-    -- 4. Regla: Verificación estricta de raza (Gnomo) y lectura de metadata
-    local isGnome, raceInfo, victimName, victimClass, victimLevel = self:GetTargetInfo(nil, targetGUID)
+    -- 4. Regla: Verificación de raza (Gnomo) y lectura de metadata
+    local isGnome, raceInfo, victimName, victimClass, victimLevel = self:GetTargetInfo(nil, safeVictim)
     if not isGnome then
         return
     end
 
+    -- Registrar cooldown para evitar dobles conteos inmediatos
+    recentKills[safeVictim] = now
+
     -- Recuperar estado previo de la víctima desde el caché de combate
-    local auraData = combatAuraCache[targetGUID]
+    local auraData = combatAuraCache[safeVictim]
     local wasEating = false
     local wasMounted = false
     if auraData and (now - auraData.timestamp) < 45 then
@@ -285,10 +293,7 @@ function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
         wasMounted = auraData.wasMounted == true
     end
 
-    -- Kill verificada y aceptada
-    pcall(function() recentKills[targetGUID] = now end)
-
-    self:RecordVerifiedKill(targetGUID, victimName, victimClass, victimLevel, wasEating, wasMounted)
+    self:RecordVerifiedKill(safeVictim, victimName, victimClass, victimLevel, wasEating, wasMounted)
 end
 
 -- Persiste la baja en la base de datos del personaje
@@ -327,7 +332,7 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     end
 
     local killRecord = {
-        killId = string.format("K%d-%s", time(), targetGUID:sub(-6)),
+        killId = string.format("K%d-%s", time(), tostring(targetGUID):sub(-6)),
         targetGUID = targetGUID,
         victimName = victimName,
         victimClass = victimClass,
@@ -390,40 +395,48 @@ end
 -- Escanea cualquier unidad visible o de placa para recordar gnomos en el entorno
 function Tracker:InspectUnit(token)
     if not token or type(token) ~= "string" or not UnitExists(token) or not UnitIsPlayer(token) then return end
-    local guid = UnitGUID(token)
-    if not guid or ODD.API.Forever:IsSecret(guid) then return end
+    local guid = ODD.API.Forever:SanitizeGUID(UnitGUID(token))
+    if not guid then return end
 
     local isGnome = false
     local okRace, raceName, raceFile, raceId = pcall(UnitRace, token)
-    if okRace and not ODD.API.Forever:IsSecret(raceId) then
-        isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    if okRace and not ODD.API.Forever:IsSecret(raceId) and not ODD.API.Forever:IsSecret(raceFile) then
+        local numId = ODD.API.Forever:SanitizeNumber(raceId)
+        if numId == GNOME_RACE_ID or ClassifyRace(raceFile, raceName) then
+            isGnome = true
+        end
     end
     if not isGnome then return end
 
-    local name = UnitName(token)
-    local _, classFile = UnitClass(token)
+    local okName, rawName = pcall(UnitName, token)
+    local name = ODD.API.Forever:SanitizeText(rawName)
+    local okClass, _, rawClass = pcall(UnitClass, token)
+    local classFile = ODD.API.Forever:SanitizeText(rawClass)
     local okLvl, rawLevel = pcall(UnitLevel, token)
-    local level = "??"
-    if okLvl and rawLevel and not ODD.API.Forever:IsSecret(rawLevel) then
-        local numLvl = tonumber(rawLevel)
-        if numLvl and numLvl > 0 then
-            level = numLvl
-        end
-    end
+    local level = ODD.API.Forever:SanitizeNumber(rawLevel) or "??"
 
     targetGnomeCache[guid] = {
-        name = name,
+        name = name or "Gnomo desconocido",
         classFile = classFile,
         level = level,
         timestamp = time()
     }
+    liveSeenGnomes[guid] = true
+end
+
+-- Escaneo de objetivos visibles activos
+function Tracker:ScanVisible()
+    Tracker:InspectUnit("target")
+    Tracker:InspectUnit("mouseover")
+    Tracker:InspectUnit("focus")
+    Tracker:InspectUnit("pettarget")
 end
 
 -- Inicializa la escucha de eventos de combate
 function Tracker:Initialize()
     -- Escuchar objetivos, ratón y placas de nombre para registrar gnomos visibles
     ODD.Events:Register("PLAYER_TARGET_CHANGED", function()
-        Tracker:InspectUnit("target")
+        Tracker:ScanVisible()
         Tracker:CheckTargetAuras()
     end)
     ODD.Events:Register("UPDATE_MOUSEOVER_UNIT", function()
@@ -440,35 +453,31 @@ function Tracker:Initialize()
 
     -- En WoW Camelot/Forever, PARTY_KILL entrega (event, attackerGUID, targetGUID)
     ODD.Events:Register("PARTY_KILL", function(event, attackerGUID, targetGUID)
-        if not attackerGUID and UnitGUID("player") then
-            attackerGUID = UnitGUID("player")
-        end
-        if not targetGUID and UnitGUID("target") then
-            targetGUID = UnitGUID("target")
-        end
-        Tracker:OnKillEvent(attackerGUID, targetGUID, false)
+        local safeA = ODD.API.Forever:SanitizeGUID(attackerGUID) or ODD.API.Forever:SanitizeGUID(UnitGUID("player"))
+        local safeT = ODD.API.Forever:SanitizeGUID(targetGUID) or ODD.API.Forever:SanitizeGUID(UnitGUID("target"))
+        Tracker:OnKillEvent(safeA, safeT, false)
     end)
 
     -- Observador en tiempo real por salud de objetivo (método GRS para bajas en solitario y tótems/DoTs)
     ODD.Events:Register("UNIT_HEALTH", function(event, unit)
-        if unit ~= "target" then return end
-        if not UnitExists("target") then return end
+        if unit ~= "target" and unit ~= "pettarget" then return end
+        if not UnitExists(unit) then return end
 
-        local guid = UnitGUID("target")
-        if not guid or ODD.API.Forever:IsSecret(guid) then return end
+        local guid = ODD.API.Forever:SanitizeGUID(UnitGUID(unit))
+        if not guid then return end
 
         local isDead = false
         if type(UnitIsDead) == "function" then
-            local okDead, deadVal = pcall(UnitIsDead, "target")
+            local okDead, deadVal = pcall(UnitIsDead, unit)
             if okDead and deadVal ~= nil and not ODD.API.Forever:IsSecret(deadVal) then
                 isDead = (deadVal == true)
             end
         end
 
         local hpZero = false
-        local okHp, rawHp = pcall(UnitHealth, "target")
+        local okHp, rawHp = pcall(UnitHealth, unit)
         if okHp and rawHp ~= nil and not ODD.API.Forever:IsSecret(rawHp) then
-            local numHp = tonumber(rawHp)
+            local numHp = ODD.API.Forever:SanitizeNumber(rawHp)
             if numHp and numHp <= 0 then
                 hpZero = true
             end
