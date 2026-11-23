@@ -17,31 +17,18 @@ function SettingsTab:Create(parent)
     ODD.UI.Components:CreateSectionHeader(frame, L["TAB_SETTINGS"] .. " - Configuracion y Perfil", -12)
 
     -- ========================================================
-    -- BLOQUE 1: IDENTIDAD Y ROL DECLARADO
+    -- BLOQUE 1: ROL PREFERIDO EN HERMANDAD
     -- ========================================================
-    local profileHeader = ODD.UI.Components:CreateSectionHeader(frame, "Perfil Declarado en Hermandad:", -38)
-
-    local mainLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    mainLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -66)
-    mainLabel:SetText("Personaje Principal (Main):")
-
-    mainEditBox = CreateFrame("EditBox", "ODD_MainCharEditBox", frame, "InputBoxTemplate")
-    mainEditBox:SetSize(160, 20)
-    mainEditBox:SetPoint("LEFT", mainLabel, "RIGHT", 10, 0)
-    mainEditBox:SetAutoFocus(false)
-    mainEditBox:SetScript("OnTextChanged", function(self)
-        local text = self:GetText():gsub("%s+", "")
-        ODD.Guild.Profiles:SetMainCharacter(text ~= "" and text or nil)
-    end)
+    local profileHeader = ODD.UI.Components:CreateSectionHeader(frame, "Rol en Hermandad:", -38)
 
     local roleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    roleLabel:SetPoint("LEFT", mainEditBox, "RIGHT", 30, 0)
+    roleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -66)
     roleLabel:SetText("Rol preferido:")
 
     local currentRoleIndex = 1
     local roleBtn = CreateFrame("Button", "ODD_RoleSelectorBtn", frame)
-    roleBtn:SetSize(130, 22)
-    roleBtn:SetPoint("LEFT", roleLabel, "RIGHT", 10, 0)
+    roleBtn:SetSize(140, 22)
+    roleBtn:SetPoint("LEFT", roleLabel, "RIGHT", 12, 0)
     roleBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
     local rBg = roleBtn:CreateTexture(nil, "BACKGROUND")
     rBg:SetAllPoints(roleBtn)
@@ -101,9 +88,9 @@ function SettingsTab:Create(parent)
         return btn
     end
 
-    CreateCheck("Compartir presencia y version de ODD", "sharePresence", -132)
-    CreateCheck("Compartir rol y personaje principal (Main)", "shareProfile", -160)
-    CreateCheck("Compartir estadisticas de combate declaradas", "shareStats", -188)
+    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -132)
+    CreateCheck("Compartir rol en la hermandad", "shareProfile", -160)
+    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -188)
     CreateCheck("Compartir recetas y profesiones conocidas", "shareTrades", -216)
     CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -244)
     CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -272)
@@ -148,10 +135,6 @@ function SettingsTab:Create(parent)
     hudDesc:SetText("Muestra una tarjeta compacta y arrastrable con las bajas de hoy, semana y hermandad.")
 
     local function RefreshSettings()
-        local profile = ODD.Guild.Profiles:GetLocalProfile()
-        if mainEditBox then
-            mainEditBox:SetText(profile.mainCharacter or "")
-        end
         UpdateRoleDisplay()
 
         for _, btn in ipairs(checkboxes) do

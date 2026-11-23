@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Sync = {}
@@ -45,18 +45,21 @@ function Sync:BroadcastHello(delaySeconds)
             if profile.customRole then data.role = profile.customRole end
         end
 
-        -- Añadir estadísticas de bajas del Gnomómetro si está configurado compartir estadísticas
+        -- Añadir estadísticas de bajas del Gnomómetro y puntos de logro si está configurado compartir estadísticas
         if ODD.Database:GetSetting("shareStats") then
             local charDB = ODD.Database:GetChar()
             if charDB and charDB.observations and charDB.observations.gnomes then
                 data.gk = charDB.observations.gnomes.kills or 0
             end
+            if ODD.Achievements and ODD.Achievements.Medals then
+                data.ap = ODD.Achievements.Medals:GetPlayerAchievementPoints()
+            end
         end
 
-        -- Añadir profesiones si está configurado compartir talleres
+        -- Añadir profesiones primarias si está configurado compartir talleres
         if ODD.Database:GetSetting("shareTrades") then
             if ODD.Professions and ODD.Professions.Scanner then
-                local mySkills = ODD.Professions.Scanner:GetLocalProfessions()
+                local mySkills = ODD.Professions.Scanner:GetLocalProfessions(true) -- Solo primarias (hasta 2) para ahorrar bytes
                 if mySkills and #mySkills > 0 then
                     local pList = {}
                     for _, p in ipairs(mySkills) do
@@ -70,6 +73,16 @@ function Sync:BroadcastHello(delaySeconds)
         local codec, encoded = ODD.Network.Codec:Encode(data)
         local msgId = ODD.Network.Protocol:GenerateMsgId()
         local line = ODD.Network.Protocol:FormatLine("HELLO", msgId, "*", codec, encoded)
+
+        -- Si la línea empaquetada excede el límite de cable (por ejemplo si el codec CB1/Base64 infla el tamaño),
+        -- forzamos fallback al serializador plano 'S1' para garantizar que viaje en un único paquete seguro
+        if #line > ODD.Network.Protocol.MAX_WIRE_BYTES and codec ~= "S1" then
+            local _, s1Encoded = ODD.Network.Codec:EncodeSimple(data)
+            local fallbackLine = ODD.Network.Protocol:FormatLine("HELLO", msgId, "*", "S1", s1Encoded)
+            if #fallbackLine <= ODD.Network.Protocol.MAX_WIRE_BYTES then
+                line = fallbackLine
+            end
+        end
 
         ODD.Network.Queue:Enqueue(line, "GUILD")
         ODD:Debug("Enviado anuncio de presencia HELLO.")
@@ -117,7 +130,18 @@ function Sync:OnMessageReceived(text, channel, sender)
     -- Limpieza de reino en el sender
     local senderName = Ambiguate(sender, "none")
     local myName = UnitName("player")
-    if senderName == myName then return end -- Ignorar mensajes propios reflejados
+    local myFullName, myRealm = UnitFullName("player")
+    local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
+
+    local function IsMe(name)
+        if not name then return false end
+        local cName = Ambiguate(name, "none"):lower()
+        local cMyName = Ambiguate(myName, "none"):lower()
+        local cComb = myCombinedName:lower()
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+    end
+
+    if IsMe(senderName) or IsMe(sender) then return end -- Ignorar mensajes propios reflejados por el canal de hermandad
 
     local parsed, err = ODD.Network.Protocol:ParseLine(text)
     if not parsed then
@@ -147,8 +171,9 @@ function Sync:OnMessageReceived(text, channel, sender)
                 lastSeen = time(),
                 origin = string.format("Declarado por %s (no verificado)", senderName),
             }
-            if data.gk then
+            if data.gk or data.ap then
                 presenceList[senderName].gnomeKills = tonumber(data.gk) or 0
+                presenceList[senderName].achievementPoints = tonumber(data.ap) or 0
                 -- Guardar en los perfiles globales para persistencia en el Leaderboard
                 local globalDB = ODD.Database:GetGlobal()
                 if globalDB then
@@ -157,6 +182,7 @@ function Sync:OnMessageReceived(text, channel, sender)
                     globalDB.profiles[senderName].name = senderName
                     globalDB.profiles[senderName].className = data.cls
                     globalDB.profiles[senderName].gnomeKills = tonumber(data.gk) or 0
+                    globalDB.profiles[senderName].achievementPoints = tonumber(data.ap) or 0
                     globalDB.profiles[senderName].updatedAt = time()
                     _G["ODDDB"] = globalDB
                 end

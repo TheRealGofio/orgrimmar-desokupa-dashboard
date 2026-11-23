@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Profiles = {}
@@ -22,7 +22,17 @@ end
 
 function Profiles:GetLocalProfile()
     local charDB = (ODD.Database and type(ODD.Database.GetChar) == "function") and ODD.Database:GetChar() or nil
-    return charDB and charDB.identity or {}
+    local id = charDB and charDB.identity or {}
+
+    -- Si el nombre almacenado es solo el nombre de pila y estamos en hermandad, actualizarlo con el nombre completo
+    if id.guid and (not id.name or not id.name:find(" ")) then
+        local pInfo = ODD.API.Forever:GetPlayerInfo()
+        if pInfo.name and pInfo.name:find(" ") then
+            id.name = pInfo.name
+        end
+    end
+
+    return id
 end
 
 function Profiles:SetCustomRole(role)

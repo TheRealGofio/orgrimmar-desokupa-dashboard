@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -14,15 +14,20 @@ function MedalsTab:Refresh()
 
     local medals = ODD.Achievements.Medals:GetPlayerMedals()
     local completedCount = 0
+    local earnedPoints = 0
+    local totalPoints = 0
     for _, m in ipairs(medals) do
+        local pts = m.points or 10
+        totalPoints = totalPoints + pts
         if m.completed then
             completedCount = completedCount + 1
+            earnedPoints = earnedPoints + pts
         end
     end
 
     if statsSummaryLabel then
-        statsSummaryLabel:SetText(string.format("Progreso de Logros: |cFFFFD100%d / %d|r completados (%.1f%%)",
-            completedCount, #medals, #medals > 0 and (completedCount / #medals * 100) or 0))
+        statsSummaryLabel:SetText(string.format("Progreso: |cFFFFD100%d / %d|r logros (%.1f%%)   •   Puntos de Logro: |cFF00FFCC%d / %d pts|r",
+            completedCount, #medals, #medals > 0 and (completedCount / #medals * 100) or 0, earnedPoints, totalPoints))
     end
 
     for _, r in ipairs(medalRows) do r:Hide() end
@@ -68,12 +73,12 @@ function MedalsTab:Refresh()
 
         if m.completed then
             row.bg:SetColorTexture(0.1, 0.28, 0.1, 0.45)
-            row.title:SetText(string.format("|cFFFFD100%s|r  |cFF00FF00[Completado]|r", m.name))
+            row.title:SetText(string.format("|cFFFFD100%s|r  |cFF00FF00[Completado]|r  |cFF00FFCC(%d pts)|r", m.name, m.points or 10))
             row.prog:SetText(string.format("|cFF00FF00%d / %d|r", m.progress, m.maxReq))
             row.icon:SetDesaturated(false)
         else
             row.bg:SetColorTexture(0.12, 0.12, 0.12, 0.35)
-            row.title:SetText(string.format("|cFF888888%s|r", m.name))
+            row.title:SetText(string.format("|cFF888888%s|r  |cFF557788(%d pts)|r", m.name, m.points or 10))
             row.prog:SetText(string.format("|cFF888888%d / %d|r", m.progress, m.maxReq))
             row.icon:SetDesaturated(true)
         end

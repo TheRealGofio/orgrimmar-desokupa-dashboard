@@ -7,8 +7,25 @@ ODD.UI.PvPTab = PvPTab
 
 local statLabels = {}
 local bgSummaryLabel = nil
-local recentMatchesScrollChild = nil
-local matchRows = {}
+local nemesisScrollChild = nil
+local nemesisRows = {}
+
+-- Colores de clase estándar
+local CLASS_COLORS = {
+    ["WARRIOR"]     = "FFC79C6E",
+    ["PALADIN"]     = "FFF58CBA",
+    ["HUNTER"]      = "FFABD473",
+    ["ROGUE"]       = "FFFFF569",
+    ["PRIEST"]      = "FFFFFFFF",
+    ["DEATHKNIGHT"] = "FFC41F3B",
+    ["SHAMAN"]      = "FF0070DE",
+    ["MAGE"]        = "FF69CCF0",
+    ["WARLOCK"]     = "FF9482C9",
+    ["MONK"]        = "FF00FF96",
+    ["DRUID"]       = "FFFF7D0A",
+    ["DEMONHUNTER"] = "FFA330C9",
+    ["EVOKER"]      = "FF33937F",
+}
 
 function PvPTab:Refresh()
     if not bgSummaryLabel then return end
@@ -16,84 +33,102 @@ function PvPTab:Refresh()
     -- 1. Estadísticas oficiales de honor
     local stats = ODD.PvP.Tracker:GetLocalStats()
     if statLabels.today then
-        statLabels.today:SetText(string.format("Hoy: |cFFFFD100%d HK|r (%d Honor)", stats.todayHK, stats.todayHonor))
+        if stats.todayHonor > 0 then
+            statLabels.today:SetText(string.format("Hoy: |cFFFFD100%d HK|r (%d Honor)", stats.todayHK, stats.todayHonor))
+        else
+            statLabels.today:SetText(string.format("Hoy: |cFFFFD100%d HK|r", stats.todayHK))
+        end
     end
     if statLabels.yesterday then
-        statLabels.yesterday:SetText(string.format("Ayer: |cFFFFD100%d HK|r (%d Honor)", stats.yesterdayHK, stats.yesterdayHonor))
+        if stats.yesterdayHonor > 0 then
+            statLabels.yesterday:SetText(string.format("Ayer: |cFFFFD100%d HK|r (%d Honor)", stats.yesterdayHK, stats.yesterdayHonor))
+        else
+            statLabels.yesterday:SetText(string.format("Ayer: |cFFFFD100%d HK|r", stats.yesterdayHK))
+        end
     end
     if statLabels.lifetime then
-        statLabels.lifetime:SetText(string.format("Historico: |cFFFFD100%d HK|r (Rango %d)", stats.lifetimeHK, stats.rank))
+        local rankStr = (stats.rank and stats.rank > 0) and string.format("Rango %d (%s)", stats.rank, stats.rankName or "") or (stats.rankName or "Civil")
+        statLabels.lifetime:SetText(string.format("Histórico: |cFFFFD100%d HK|r |cFF888888[%s]|r", stats.lifetimeHK, rankStr))
     end
 
-    -- 2. Historial de Campos de Batalla
+    -- 2. Resumen de Campos de Batalla
     local charDB = ODD.Database:GetChar()
     local matches = (charDB and charDB.observations and charDB.observations.pvp and charDB.observations.pvp.matches) or {}
     local wins, losses = 0, 0
     for _, m in ipairs(matches) do
-        if m.victory then
-            wins = wins + 1
-        else
-            losses = losses + 1
-        end
+        if m.victory then wins = wins + 1 else losses = losses + 1 end
     end
-
     local total = wins + losses
     local winRate = total > 0 and math.floor((wins / total) * 100) or 0
     bgSummaryLabel:SetText(string.format("Campos de Batalla: |cFF00FF00%d Victorias|r - |cFFFF0000%d Derrotas|r (Ratio: %d%%)", wins, losses, winRate))
 
-    -- Filas de partidas recientes
-    if recentMatchesScrollChild then
-        for _, r in ipairs(matchRows) do r:Hide() end
+    -- 3. Tabla de Némesis / Objetivos Prioritarios de Desahucio
+    if nemesisScrollChild then
+        for _, r in ipairs(nemesisRows) do r:Hide() end
 
-        local rowHeight = 20
+        local nemList = ODD.PvP.Tracker:GetNemesisList()
+        local rowHeight = 26
         local currentY = 0
-        local startIdx = math.max(1, #matches - 30)
 
-        local count = 0
-        for i = #matches, startIdx, -1 do
-            count = count + 1
-            local m = matches[i]
-            local row = matchRows[count]
+        for i, nem in ipairs(nemList) do
+            local row = nemesisRows[i]
             if not row then
-                row = CreateFrame("Frame", nil, recentMatchesScrollChild)
-                row:SetSize(740, 18)
+                row = CreateFrame("Frame", nil, nemesisScrollChild)
+                row:SetSize(760, 24)
 
                 local bg = row:CreateTexture(nil, "BACKGROUND")
                 bg:SetAllPoints(row)
                 row.bg = bg
 
-                local rResult = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                rResult:SetPoint("LEFT", row, "LEFT", 6, 0)
-                row.result = rResult
+                -- Estado: [BUSCADO] o [VENGADO]
+                local rStatus = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                rStatus:SetPoint("LEFT", row, "LEFT", 8, 0)
+                row.status = rStatus
 
-                local rZone = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                rZone:SetPoint("LEFT", row, "LEFT", 100, 0)
+                -- Nombre y Raza
+                local rName = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                rName:SetPoint("LEFT", row, "LEFT", 110, 0)
+                row.name = rName
+
+                -- Marcador (Te ha matado X veces - Lo has matado Y veces)
+                local rScore = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                rScore:SetPoint("LEFT", row, "LEFT", 330, 0)
+                row.score = rScore
+
+                -- Último avistamiento (Zona y Fecha)
+                local rZone = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+                rZone:SetPoint("RIGHT", row, "RIGHT", -16, 0)
                 row.zone = rZone
 
-                local rDate = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                rDate:SetPoint("RIGHT", row, "RIGHT", -16, 0)
-                row.date = rDate
-
-                matchRows[count] = row
+                nemesisRows[i] = row
             end
 
-            row:SetPoint("TOPLEFT", recentMatchesScrollChild, "TOPLEFT", 0, currentY)
+            row:SetPoint("TOPLEFT", nemesisScrollChild, "TOPLEFT", 0, currentY)
             currentY = currentY - rowHeight
 
-            if m.victory then
-                row.bg:SetColorTexture(0.05, 0.25, 0.05, 0.35)
-                row.result:SetText("|cFF00FF00Victoria|r")
+            local isWanted = (nem.status == "WANTED")
+            if isWanted then
+                row.bg:SetColorTexture(0.35, 0.05, 0.05, 0.45)
+                row.status:SetText("|cFFFF0000[BUSCADO]|r")
             else
-                row.bg:SetColorTexture(0.25, 0.05, 0.05, 0.35)
-                row.result:SetText("|cFFFF0000Derrota|r")
+                row.bg:SetColorTexture(0.05, 0.22, 0.05, 0.35)
+                row.status:SetText("|cFF00FF00[VENGADO]|r")
             end
 
-            row.zone:SetText(m.zone or "Campo de Batalla")
-            row.date:SetText(date("%Y-%m-%d %H:%M", m.timestamp))
+            local classCol = CLASS_COLORS[nem.class] or "FFFFFFFF"
+            local raceStr = (nem.race and nem.race ~= "UNKNOWN") and string.format(" (%s)", nem.race) or ""
+            row.name:SetText(string.format("|c%s%s|r%s", classCol, nem.name or "Enemigo", raceStr))
+
+            row.score:SetText(string.format("Te abatió: |cFFFF0000%d|r  •  Lo abatiste: |cFF00FF00%d|r", 
+                nem.deathsTo or 0, nem.killsOn or 0))
+
+            local dateStr = date("%m/%d %H:%M", nem.lastEncounter or time())
+            row.zone:SetText(string.format("%s (%s)", nem.zone or "Mundo Abierto", dateStr))
+
             row:Show()
         end
 
-        recentMatchesScrollChild:SetHeight(math.max(1, count * rowHeight))
+        nemesisScrollChild:SetHeight(math.max(1, #nemList * rowHeight))
     end
 end
 
@@ -101,11 +136,11 @@ function PvPTab:Create(parent)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetAllPoints(parent)
 
-    ODD.UI.Components:CreateSectionHeader(frame, L["TAB_PVP"] .. " - Honor y Campos de Batalla", -12)
+    ODD.UI.Components:CreateSectionHeader(frame, L["TAB_PVP"] .. " - Honor y Objetivos Prioritarios", -12)
 
     -- Panel de Estadísticas de Honor
     local honorBox = CreateFrame("Frame", nil, frame)
-    honorBox:SetSize(760, 48)
+    honorBox:SetSize(760, 42)
     honorBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -38)
     local hBg = honorBox:CreateTexture(nil, "BACKGROUND")
     hBg:SetAllPoints(honorBox)
@@ -121,23 +156,46 @@ function PvPTab:Create(parent)
 
     statLabels.lifetime = honorBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     statLabels.lifetime:SetPoint("LEFT", honorBox, "LEFT", 500, 0)
-    statLabels.lifetime:SetText("Historico: Cargando...")
+    statLabels.lifetime:SetText("Histórico: Cargando...")
 
     -- Resumen de Victorias / Derrotas de Campos de Batalla
-    bgSummaryLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    bgSummaryLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -95)
+    bgSummaryLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    bgSummaryLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -88)
     bgSummaryLabel:SetText("Campos de Batalla: 0 Victorias - 0 Derrotas")
 
-    -- Tabla de Partidas Recientes con Scroll
-    local histHeader = ODD.UI.Components:CreateSectionHeader(frame, "Historial de Encuentros Recientes:", -128)
+    -- ========================================================
+    -- LISTA DE NÉMESIS / OBJETIVOS PRIORITARIOS DE DESAHUCIO
+    -- ========================================================
+    local nemHeader = ODD.UI.Components:CreateSectionHeader(frame, "Lista de Némesis (Enemigos que te han abatido):", -118)
 
-    local scrollFrame = CreateFrame("ScrollFrame", "ODD_PvPMatchesScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 275)
-    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -155)
+    local headerFrame = CreateFrame("Frame", nil, frame)
+    headerFrame:SetSize(760, 18)
+    headerFrame:SetPoint("TOPLEFT", nemHeader, "BOTTOMLEFT", 0, -6)
 
-    recentMatchesScrollChild = CreateFrame("Frame", nil, scrollFrame)
-    recentMatchesScrollChild:SetSize(740, 1)
-    scrollFrame:SetScrollChild(recentMatchesScrollChild)
+    local colStat = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colStat:SetPoint("LEFT", headerFrame, "LEFT", 8, 0)
+    colStat:SetText("Estado")
+
+    local colEnemy = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colEnemy:SetPoint("LEFT", headerFrame, "LEFT", 110, 0)
+    colEnemy:SetText("Némesis / Raza")
+
+    local colScore = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colScore:SetPoint("LEFT", headerFrame, "LEFT", 330, 0)
+    colScore:SetText("Marcador Personal")
+
+    local colLoc = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colLoc:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)
+    colLoc:SetText("Último Encuentro")
+
+    -- Tabla de Némesis con Scroll (cortando limpiamente antes de las pestañas inferiores)
+    local scrollFrame = CreateFrame("ScrollFrame", "ODD_NemesisScrollFrame", frame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(760, 245)
+    scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
+
+    nemesisScrollChild = CreateFrame("Frame", nil, scrollFrame)
+    nemesisScrollChild:SetSize(740, 1)
+    scrollFrame:SetScrollChild(nemesisScrollChild)
 
     frame:SetScript("OnShow", function()
         PvPTab:Refresh()

@@ -15,9 +15,9 @@ if GetLocale and GetLocale() == "enUS" then
     L["TAB_HQ"] = "General"
     L["TAB_GNOMOMETER"] = "Gnomometer"
     L["TAB_MEDALS"] = "Achievements"
-    L["TAB_PVP"] = "PvP Front"
-    L["TAB_WORKSHOPS"] = "Workshops"
-    L["TAB_ROSTER"] = "Roster"
+    L["TAB_PVP"] = "PvP"
+    L["TAB_WORKSHOPS"] = "Professions"
+    L["TAB_ROSTER"] = "Members"
     L["TAB_SETTINGS"] = "Settings"
 
     L["STATUS_NO_DATA"] = "No data available"

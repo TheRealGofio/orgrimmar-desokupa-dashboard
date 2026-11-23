@@ -48,6 +48,7 @@ Schema.DefaultCharacterDB = {
         },
         pvp = {
             matches = {},
+            nemesis = {}, -- [enemyGUID] = { name, class, race, deathsTo = number, killsOn = number, lastEncounter = timestamp, zone = string, status = "WANTED"|"AVENGED" }
         },
         professions = {
             scannedAt = 0,

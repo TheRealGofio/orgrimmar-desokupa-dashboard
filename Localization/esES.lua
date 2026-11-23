@@ -16,9 +16,9 @@ L["CMD_UNKNOWN"] = "Comando no reconocido. Escribe /odd help para ver la lista."
 L["TAB_HQ"] = "General"
 L["TAB_GNOMOMETER"] = "Gnomómetro"
 L["TAB_MEDALS"] = "Logros"
-L["TAB_PVP"] = "Frente PvP"
-L["TAB_WORKSHOPS"] = "Talleres"
-L["TAB_ROSTER"] = "Roster"
+L["TAB_PVP"] = "PvP"
+L["TAB_WORKSHOPS"] = "Profesiones"
+L["TAB_ROSTER"] = "Miembros"
 L["TAB_SETTINGS"] = "Ajustes"
 
 -- Estados de datos y procedencia

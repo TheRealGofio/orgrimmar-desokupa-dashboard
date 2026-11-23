@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local HUD = {}
@@ -124,10 +124,21 @@ function HUD:Refresh()
 
     local guildTotal = personalTotal
     local myName = UnitName("player") or "Tú"
+    local myFullName, myRealm = UnitFullName("player")
+    local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
+
+    local function IsMe(name)
+        if not name then return false end
+        local cName = Ambiguate(name, "none"):lower()
+        local cMyName = Ambiguate(myName, "none"):lower()
+        local cComb = myCombinedName:lower()
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+    end
+
     local globalDB = ODD.Database:GetGlobal()
     if globalDB and globalDB.profiles then
         for name, profile in pairs(globalDB.profiles) do
-            if name ~= myName and profile.gnomeKills and profile.gnomeKills > 0 then
+            if not IsMe(name) and profile.gnomeKills and profile.gnomeKills > 0 then
                 guildTotal = guildTotal + profile.gnomeKills
             end
         end

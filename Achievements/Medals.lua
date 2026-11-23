@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Medals = {}
@@ -8,67 +8,67 @@ ODD.Achievements.Medals = Medals
 -- Definición extensa de medallas y títulos sobre gnomos
 local MEDAL_DEFS = {
     -- 1. Bajas Totales
-    { id = "gnome_1", name = "Primer Desalojo", desc = "Abate a tu primer gnomo en mundo abierto.", icon = "Interface\\Icons\\Spell_Nature_Polymorph", req = 1 },
-    { id = "gnome_5", name = "Control de Plagas", desc = "Abate a 5 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Creature_Poison_01", req = 5 },
-    { id = "gnome_10", name = "Cazagnomos", desc = "Abate a 10 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_DecisiveStrike", req = 10 },
-    { id = "gnome_25", name = "Fumigador Oficial", desc = "Abate a 25 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Drink_05", req = 25 },
-    { id = "gnome_50", name = "Azote de Gnomeregan", desc = "Abate a 50 gnomos en mundo abierto.", icon = "Interface\\Icons\\Spell_Shadow_SummonVoidWalker", req = 50 },
-    { id = "gnome_75", name = "Rompeengranajes", desc = "Abate a 75 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Misc_Gear_01", req = 75 },
-    { id = "gnome_100", name = "Terror de la Alianza", desc = "Abate a 100 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_BannerPVP_02", req = 100 },
-    { id = "gnome_250", name = "Exterminador Jefe", desc = "Abate a 250 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_SavageBlow", req = 250 },
-    { id = "gnome_500", name = "Leyenda de Orgrimmar Desokupa", desc = "Abate a 500 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Helmet_08", req = 500 },
+    { id = "gnome_1", name = "Primer Desalojo", desc = "Abate a tu primer gnomo en mundo abierto.", icon = "Interface\\Icons\\Spell_Nature_Polymorph", req = 1, points = 5 },
+    { id = "gnome_5", name = "Control de Plagas", desc = "Abate a 5 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Creature_Poison_01", req = 5, points = 5 },
+    { id = "gnome_10", name = "Cazagnomos", desc = "Abate a 10 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_DecisiveStrike", req = 10, points = 10 },
+    { id = "gnome_25", name = "Fumigador Oficial", desc = "Abate a 25 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Drink_05", req = 25, points = 15 },
+    { id = "gnome_50", name = "Azote de Gnomeregan", desc = "Abate a 50 gnomos en mundo abierto.", icon = "Interface\\Icons\\Spell_Shadow_SummonVoidWalker", req = 50, points = 20 },
+    { id = "gnome_75", name = "Rompeengranajes", desc = "Abate a 75 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Misc_Gear_01", req = 75, points = 20 },
+    { id = "gnome_100", name = "Terror de la Alianza", desc = "Abate a 100 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_BannerPVP_02", req = 100, points = 25 },
+    { id = "gnome_250", name = "Exterminador Jefe", desc = "Abate a 250 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_SavageBlow", req = 250, points = 35 },
+    { id = "gnome_500", name = "Leyenda de Orgrimmar Desokupa", desc = "Abate a 500 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Helmet_08", req = 500, points = 50 },
 
     -- 2. Especialistas por Clase (Cadena de clase: 1, 5, 10 de cada una)
-    { id = "class_mage_1", name = "Cortahechizos", desc = "Abate a un gnomo Mago.", icon = "Interface\\Icons\\Spell_Holy_MagicalSentry", reqClass = "MAGE", reqClassCount = 1 },
-    { id = "class_mage_5", name = "Disipador Nato", desc = "Abate a 5 gnomos Magos.", icon = "Interface\\Icons\\Spell_Arcane_Blast", reqClass = "MAGE", reqClassCount = 5 },
-    { id = "class_mage_10", name = "Extintor Arcano", desc = "Abate a 10 gnomos Magos.", icon = "Interface\\Icons\\Spell_Fire_Burnout", reqClass = "MAGE", reqClassCount = 10 },
+    { id = "class_mage_1", name = "Cortahechizos", desc = "Abate a un gnomo Mago.", icon = "Interface\\Icons\\Spell_Holy_MagicalSentry", reqClass = "MAGE", reqClassCount = 1, points = 5 },
+    { id = "class_mage_5", name = "Disipador Nato", desc = "Abate a 5 gnomos Magos.", icon = "Interface\\Icons\\Spell_Arcane_Blast", reqClass = "MAGE", reqClassCount = 5, points = 10 },
+    { id = "class_mage_10", name = "Extintor Arcano", desc = "Abate a 10 gnomos Magos.", icon = "Interface\\Icons\\Spell_Fire_Burnout", reqClass = "MAGE", reqClassCount = 10, points = 15 },
 
-    { id = "class_warlock_1", name = "Pisa-diablillos", desc = "Abate a un gnomo Brujo.", icon = "Interface\\Icons\\Spell_Shadow_CurseOfTounges", reqClass = "WARLOCK", reqClassCount = 1 },
-    { id = "class_warlock_5", name = "Purga Demoníaca", desc = "Abate a 5 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_RainOfFire", reqClass = "WARLOCK", reqClassCount = 5 },
-    { id = "class_warlock_10", name = "Cazademonios Diminutos", desc = "Abate a 10 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_SoulLeech", reqClass = "WARLOCK", reqClassCount = 10 },
+    { id = "class_warlock_1", name = "Pisa-diablillos", desc = "Abate a un gnomo Brujo.", icon = "Interface\\Icons\\Spell_Shadow_CurseOfTounges", reqClass = "WARLOCK", reqClassCount = 1, points = 5 },
+    { id = "class_warlock_5", name = "Purga Demoníaca", desc = "Abate a 5 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_RainOfFire", reqClass = "WARLOCK", reqClassCount = 5, points = 10 },
+    { id = "class_warlock_10", name = "Cazademonios Diminutos", desc = "Abate a 10 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_SoulLeech", reqClass = "WARLOCK", reqClassCount = 10, points = 15 },
 
-    { id = "class_rogue_1", name = "Descubierto de las Sombras", desc = "Abate a un gnomo Pícaro.", icon = "Interface\\Icons\\Ability_Stealth", reqClass = "ROGUE", reqClassCount = 1 },
-    { id = "class_rogue_5", name = "Sentidos Aguzados", desc = "Abate a 5 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_EyeOfTheOwl", reqClass = "ROGUE", reqClassCount = 5 },
-    { id = "class_rogue_10", name = "Ni Te Escondas", desc = "Abate a 10 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_CheapShot", reqClass = "ROGUE", reqClassCount = 10 },
+    { id = "class_rogue_1", name = "Descubierto de las Sombras", desc = "Abate a un gnomo Pícaro.", icon = "Interface\\Icons\\Ability_Stealth", reqClass = "ROGUE", reqClassCount = 1, points = 5 },
+    { id = "class_rogue_5", name = "Sentidos Aguzados", desc = "Abate a 5 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_EyeOfTheOwl", reqClass = "ROGUE", reqClassCount = 5, points = 10 },
+    { id = "class_rogue_10", name = "Ni Te Escondas", desc = "Abate a 10 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_CheapShot", reqClass = "ROGUE", reqClassCount = 10, points = 15 },
 
-    { id = "class_warrior_1", name = "Mordisco al Tobillo Evitado", desc = "Abate a un gnomo Guerrero.", icon = "Interface\\Icons\\Ability_Racial_Avatar", reqClass = "WARRIOR", reqClassCount = 1 },
-    { id = "class_warrior_5", name = "Escudo Roto", desc = "Abate a 5 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_ShieldBreak", reqClass = "WARRIOR", reqClassCount = 5 },
-    { id = "class_warrior_10", name = "Peso Pluma Fuera de Combate", desc = "Abate a 10 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_Revenge", reqClass = "WARRIOR", reqClassCount = 10 },
+    { id = "class_warrior_1", name = "Mordisco al Tobillo Evitado", desc = "Abate a un gnomo Guerrero.", icon = "Interface\\Icons\\Ability_Racial_Avatar", reqClass = "WARRIOR", reqClassCount = 1, points = 5 },
+    { id = "class_warrior_5", name = "Escudo Roto", desc = "Abate a 5 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_ShieldBreak", reqClass = "WARRIOR", reqClassCount = 5, points = 10 },
+    { id = "class_warrior_10", name = "Peso Pluma Fuera de Combate", desc = "Abate a 10 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_Revenge", reqClass = "WARRIOR", reqClassCount = 10, points = 15 },
 
-    { id = "class_all", name = "Desalojo Interdisciplinar", desc = "Abate al menos a un gnomo de cada clase (Mago, Brujo, Pícaro y Guerrero).", icon = "Interface\\Icons\\INV_Misc_Book_09", reqAllClasses = true },
+    { id = "class_all", name = "Desalojo Interdisciplinar", desc = "Abate al menos a un gnomo de cada clase (Mago, Brujo, Pícaro y Guerrero).", icon = "Interface\\Icons\\INV_Misc_Book_09", reqAllClasses = true, points = 20 },
 
     -- 3. Logros por Gnomos 'Gris' / Sin Experiencia (Sin Piedad)
-    { id = "gnome_gray_1", name = "Sin Piedad", desc = "Abate a un gnomo de nivel gris (que no otorgue experiencia).", icon = "Interface\\Icons\\Ability_Poisons", reqGray = 1 },
-    { id = "gnome_gray_10", name = "Bulería en Dun Morogh", desc = "Abate a 10 gnomos de nivel gris.", icon = "Interface\\Icons\\INV_Misc_Head_Gnome_01", reqGray = 10 },
-    { id = "gnome_gray_25", name = "Abuso de Poder Desokupa", desc = "Abate a 25 gnomos de nivel gris.", icon = "Interface\\Icons\\Ability_Warrior_PunishingBlow", reqGray = 25 },
+    { id = "gnome_gray_1", name = "Sin Piedad", desc = "Abate a un gnomo de nivel gris (que no otorgue experiencia).", icon = "Interface\\Icons\\Ability_Poisons", reqGray = 1, points = 5 },
+    { id = "gnome_gray_10", name = "Bulería en Dun Morogh", desc = "Abate a 10 gnomos de nivel gris.", icon = "Interface\\Icons\\INV_Misc_Head_Gnome_01", reqGray = 10, points = 10 },
+    { id = "gnome_gray_25", name = "Abuso de Poder Desokupa", desc = "Abate a 25 gnomos de nivel gris.", icon = "Interface\\Icons\\Ability_Warrior_PunishingBlow", reqGray = 25, points = 15 },
 
     -- 4. Hazañas de Nivel Alto
-    { id = "gnome_high_level", name = "Peligro en Miniatura", desc = "Abate a un gnomo de nivel 50 o superior.", icon = "Interface\\Icons\\Ability_Creature_Cursed_04", reqHighLevel = 50 },
-    { id = "gnome_skull", name = "David contra Goliat al Revés", desc = "Abate a un gnomo de nivel calavera (??).", icon = "Interface\\Icons\\Spell_Shadow_DeathScream", reqSkull = true },
+    { id = "gnome_high_level", name = "Peligro en Miniatura", desc = "Abate a un gnomo de nivel 50 o superior.", icon = "Interface\\Icons\\Ability_Creature_Cursed_04", reqHighLevel = 50, points = 15 },
+    { id = "gnome_skull", name = "David contra Goliat al Revés", desc = "Abate a un gnomo de nivel calavera (??).", icon = "Interface\\Icons\\Spell_Shadow_DeathScream", reqSkull = true, points = 25 },
 
     -- 5. Caza Territorial
-    { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3 },
-    { id = "gnome_zones_5", name = "Limpieza Territorial", desc = "Abate gnomos en al menos 5 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map08", reqZones = 5 },
-    { id = "gnome_zones_10", name = "Desokupa Global", desc = "Abate gnomos en al menos 10 zonas diferentes de Azeroth.", icon = "Interface\\Icons\\INV_Misc_Spyglass_02", reqZones = 10 },
-    { id = "gnome_horde_turf", name = "¡A mi casa no entras!", desc = "Abate a un gnomo dentro de Durotar o Los Baldíos.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqHordeTurf = true },
-    { id = "gnome_stv", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZoneName = "Tuercespina", reqZoneCount = 5 },
-    { id = "gnome_hillsbrad", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZoneName = "Trabalomas", reqZoneCount = 5 },
-    { id = "gnome_home", name = "Visita a Domicilio", desc = "Abate a un gnomo en Dun Morogh o en las puertas de Gnomeregan.", icon = "Interface\\Icons\\Spell_Frost_FrostWard", reqHome = true },
-    { id = "gnome_ports", name = "Control Portuario", desc = "Abate a un gnomo en Bahía del Botín o Trinquete.", icon = "Interface\\Icons\\Spell_Frost_SummonWaterElemental", reqPorts = true },
+    { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3, points = 10 },
+    { id = "gnome_zones_5", name = "Limpieza Territorial", desc = "Abate gnomos en al menos 5 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map08", reqZones = 5, points = 15 },
+    { id = "gnome_zones_10", name = "Desokupa Global", desc = "Abate gnomos en al menos 10 zonas diferentes de Azeroth.", icon = "Interface\\Icons\\INV_Misc_Spyglass_02", reqZones = 10, points = 25 },
+    { id = "gnome_horde_turf", name = "¡A mi casa no entras!", desc = "Abate a un gnomo dentro de Durotar o Los Baldíos.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqHordeTurf = true, points = 10 },
+    { id = "gnome_stv", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZoneName = "Tuercespina", reqZoneCount = 5, points = 15 },
+    { id = "gnome_hillsbrad", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZoneName = "Trabalomas", reqZoneCount = 5, points = 15 },
+    { id = "gnome_home", name = "Visita a Domicilio", desc = "Abate a un gnomo en Dun Morogh o en las puertas de Gnomeregan.", icon = "Interface\\Icons\\Spell_Frost_FrostWard", reqHome = true, points = 20 },
+    { id = "gnome_ports", name = "Control Portuario", desc = "Abate a un gnomo en Bahía del Botín o Trinquete.", icon = "Interface\\Icons\\Spell_Frost_SummonWaterElemental", reqPorts = true, points = 15 },
 
     -- 6. Situaciones Especiales y Racha
-    { id = "gnome_eating", name = "Pisotón Desprevenido", desc = "Abate a un gnomo mientras esté comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Misc_Fork&Knife", reqEating = 1 },
-    { id = "gnome_mounted", name = "Pisa-flores", desc = "Abate a un gnomo que se desplace en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider", reqMounted = 1 },
-    { id = "gnome_quick_double", name = "Doble Desahucio", desc = "Abate a 2 gnomos con menos de 60 segundos de diferencia.", icon = "Interface\\Icons\\Ability_Rogue_Sprint", reqQuickDiff = 60 },
-    { id = "gnome_quick_triple", name = "Desokupación Exprés", desc = "Abate a 3 gnomos en menos de 5 minutos.", icon = "Interface\\Icons\\Spell_Nature_BloodLust", reqTripleDiff = 300 },
-    { id = "gnome_session_5", name = "Jornada Laboral Completa", desc = "Abate a 5 gnomos durante una misma sesión de juego.", icon = "Interface\\Icons\\INV_Misc_Coin_01", reqSessionKills = 5 },
+    { id = "gnome_eating", name = "Pisotón Desprevenido", desc = "Abate a un gnomo mientras esté comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Misc_Fork&Knife", reqEating = 1, points = 10 },
+    { id = "gnome_mounted", name = "Pisa-flores", desc = "Abate a un gnomo que se desplace en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider", reqMounted = 1, points = 15 },
+    { id = "gnome_quick_double", name = "Doble Desahucio", desc = "Abate a 2 gnomos con menos de 60 segundos de diferencia.", icon = "Interface\\Icons\\Ability_Rogue_Sprint", reqQuickDiff = 60, points = 20 },
+    { id = "gnome_quick_triple", name = "Desokupación Exprés", desc = "Abate a 3 gnomos en menos de 5 minutos.", icon = "Interface\\Icons\\Spell_Nature_BloodLust", reqTripleDiff = 300, points = 30 },
+    { id = "gnome_session_5", name = "Jornada Laboral Completa", desc = "Abate a 5 gnomos durante una misma sesión de juego.", icon = "Interface\\Icons\\INV_Misc_Coin_01", reqSessionKills = 5, points = 15 },
 
     -- 7. Cooperación de Hermandad
-    { id = "gnome_guild_group", name = "Cuadrilla de Desahucio", desc = "Abate a un gnomo estando en grupo con al menos un compañero de la hermandad.", icon = "Interface\\Icons\\Spell_Holy_PrayerOfSpirit", reqGuildGroup = 1 },
-    { id = "gnome_guild_group_10", name = "Comité de Desahucio Masivo", desc = "Abate a 10 gnomos estando en grupo con compañeros de hermandad.", icon = "Interface\\Icons\\INV_BannerPVP_03", reqGuildGroup = 10 },
+    { id = "gnome_guild_group", name = "Cuadrilla de Desahucio", desc = "Abate a un gnomo estando en grupo con al menos un compañero de la hermandad.", icon = "Interface\\Icons\\Spell_Holy_PrayerOfSpirit", reqGuildGroup = 1, points = 10 },
+    { id = "gnome_guild_group_10", name = "Comité de Desahucio Masivo", desc = "Abate a 10 gnomos estando en grupo con compañeros de hermandad.", icon = "Interface\\Icons\\INV_BannerPVP_03", reqGuildGroup = 10, points = 25 },
 
     -- 8. Partidas PvP
-    { id = "bg_10", name = "Veterano de Batalla", desc = "Participa en 10 Campos de Batalla observados.", icon = "Interface\\Icons\\Achievement_BG_winWSG", reqBG = 10 },
+    { id = "bg_10", name = "Veterano de Batalla", desc = "Participa en 10 Campos de Batalla observados.", icon = "Interface\\Icons\\Achievement_BG_winWSG", reqBG = 10, points = 15 },
 }
 
 -- Función auxiliar para calcular si un objetivo era nivel 'gris' (sin experiencia/honor)
@@ -278,6 +278,7 @@ function Medals:GetPlayerMedals()
             name = def.name,
             desc = def.desc,
             icon = def.icon,
+            points = def.points or 10,
             completed = completed,
             progress = math.min(progress, maxReq),
             maxReq = maxReq,
@@ -288,7 +289,22 @@ function Medals:GetPlayerMedals()
     return results
 end
 
--- Comprueba nuevos logros obtenidos tras una baja y dispara el Toast con sonido
+-- Calcula el total de puntos de logro del jugador y los puntos máximos alcanzables
+function Medals:GetPlayerAchievementPoints()
+    local medals = self:GetPlayerMedals()
+    local earned = 0
+    local maxPoints = 0
+    for _, m in ipairs(medals) do
+        local pts = m.points or 10
+        maxPoints = maxPoints + pts
+        if m.completed then
+            earned = earned + pts
+        end
+    end
+    return earned, maxPoints
+end
+
+-- Comprueba nuevos logros obtenidos tras una baja y dispara el Toast con sonido y anuncio a hermandad
 function Medals:CheckNewAchievements()
     local charDB = ODD.Database:GetChar()
     if not charDB then return end
@@ -307,6 +323,15 @@ function Medals:CheckNewAchievements()
                 ODD.UI.Toast:Show(m.name, m.desc, m.icon)
             end
             ODD:Log("|cFFFFD100¡Logro desbloqueado!|r %s - %s", m.name, m.desc)
+
+            -- Anuncio al chat de hermandad si no está silenciado
+            if ODD.API.Forever:IsInGuild() and not ODD.Database:GetSetting("muteGuildAnnouncements") then
+                local msg = string.format("He conseguido el logro %s", m.name)
+                local sendChat = (C_ChatInfo and C_ChatInfo.SendChatMessage) or _G["SendChatMessage"]
+                if sendChat then
+                    pcall(sendChat, msg, "GUILD")
+                end
+            end
         end
     end
 end

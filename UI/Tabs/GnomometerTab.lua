@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -9,6 +9,9 @@ local killsValueLabel = nil
 local lastKillLabel = nil
 local scrollChild = nil
 local rowFrames = {}
+local currentSort = "kills" -- "kills" o "points"
+local btnSortKills = nil
+local btnSortPoints = nil
 
 -- Colores de clase estándar WoW para el ranking
 local CLASS_COLORS = {
@@ -42,8 +45,12 @@ function GnomometerTab:Refresh()
     local charDB = ODD.Database:GetChar()
     local gnomes = charDB and charDB.observations and charDB.observations.gnomes
     local totalKills = gnomes and gnomes.kills or 0
+    local totalPoints = 0
+    if ODD.Achievements and ODD.Achievements.Medals then
+        totalPoints = ODD.Achievements.Medals:GetPlayerAchievementPoints()
+    end
 
-    killsValueLabel:SetText(string.format("Tus bajas verificadas: %d", totalKills))
+    killsValueLabel:SetText(string.format("Tus bajas verificadas: |cFFFFD100%d|r   •   Puntos de Logro: |cFF00FFCC%d pts|r", totalKills, totalPoints))
 
     if gnomes and gnomes.records and #gnomes.records > 0 then
         local last = gnomes.records[#gnomes.records]
@@ -60,8 +67,19 @@ function GnomometerTab:Refresh()
 
     -- Refrescar Leaderboard con Scroll
     if ODD.Achievements and ODD.Achievements.Rankings then
-        local board = ODD.Achievements.Rankings:GetGnomeLeaderboard()
+        local board = ODD.Achievements.Rankings:GetGnomeLeaderboard(currentSort)
         local rowHeight = 22
+
+        -- Actualizar estilos de los botones de ordenación
+        if btnSortKills and btnSortPoints then
+            if currentSort == "kills" then
+                btnSortKills:SetText("|cFFFFD100[Más Bajas]|r")
+                btnSortPoints:SetText("|cFF888888Más Puntos|r")
+            else
+                btnSortKills:SetText("|cFF888888Más Bajas|r")
+                btnSortPoints:SetText("|cFF00FFCC[Más Puntos]|r")
+            end
+        end
 
         for _, r in ipairs(rowFrames) do r:Hide() end
 
@@ -118,7 +136,7 @@ function GnomometerTab:Refresh()
             local color = CLASS_COLORS[entry.className] or "FFFFFFFF"
             local tag = entry.isSelf and " |cFF00FF00(Tu - Verificado)|r" or " |cFF808080(Declarado)|r"
             row.name:SetText(string.format("|c%s%s|r%s", color, entry.name, tag))
-            row.score:SetText(string.format("|cFFFFD100%d bajas|r", entry.kills))
+            row.score:SetText(string.format("|cFFFFD100%d bajas|r  •  |cFF00FFCC%d pts|r", entry.kills or 0, entry.points or 0))
             row:Show()
         end
 
@@ -144,6 +162,35 @@ function GnomometerTab:Create(parent)
     -- ========================================================
     local lbHeader = ODD.UI.Components:CreateSectionHeader(frame, "Clasificacion de Hermandad (Top 5 Destacado + General):", -95)
 
+    -- Botones de ordenación
+    local sortBox = CreateFrame("Frame", nil, frame)
+    sortBox:SetSize(220, 20)
+    sortBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -95)
+
+    local sortLbl = sortBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    sortLbl:SetPoint("LEFT", sortBox, "LEFT", 0, 0)
+    sortLbl:SetText("Ordenar:")
+
+    btnSortKills = CreateFrame("Button", nil, sortBox)
+    btnSortKills:SetSize(75, 18)
+    btnSortKills:SetPoint("LEFT", sortLbl, "RIGHT", 6, 0)
+    btnSortKills:SetNormalFontObject("GameFontHighlightSmall")
+    btnSortKills:SetText("|cFFFFD100[Más Bajas]|r")
+    btnSortKills:SetScript("OnClick", function()
+        currentSort = "kills"
+        GnomometerTab:Refresh()
+    end)
+
+    btnSortPoints = CreateFrame("Button", nil, sortBox)
+    btnSortPoints:SetSize(80, 18)
+    btnSortPoints:SetPoint("LEFT", btnSortKills, "RIGHT", 4, 0)
+    btnSortPoints:SetNormalFontObject("GameFontHighlightSmall")
+    btnSortPoints:SetText("|cFF888888Más Puntos|r")
+    btnSortPoints:SetScript("OnClick", function()
+        currentSort = "points"
+        GnomometerTab:Refresh()
+    end)
+
     local headerFrame = CreateFrame("Frame", nil, frame)
     headerFrame:SetSize(760, 18)
     headerFrame:SetPoint("TOPLEFT", lbHeader, "BOTTOMLEFT", 0, -6)
@@ -158,7 +205,7 @@ function GnomometerTab:Create(parent)
 
     local colScore = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colScore:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)
-    colScore:SetText("Bajas")
+    colScore:SetText("Bajas  •  Puntos")
 
     local scrollFrame = CreateFrame("ScrollFrame", "ODD_GnomeLeaderboardScrollFrame", frame, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(760, 240)

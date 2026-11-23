@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -78,6 +78,17 @@ function HQTab:CalculateStats()
     -- Total de hermandad: tu total propio + totales declarados por compañeros en ODDDB
     local guildTotal = personalTotal
     local myName = UnitName("player") or "Tú"
+    local myFullName, myRealm = UnitFullName("player")
+    local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
+
+    local function IsMe(name)
+        if not name then return false end
+        local cName = Ambiguate(name, "none"):lower()
+        local cMyName = Ambiguate(myName, "none"):lower()
+        local cComb = myCombinedName:lower()
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+    end
+
     local topContributors = {
         { name = myName, kills = personalTotal, isSelf = true }
     }
@@ -85,7 +96,7 @@ function HQTab:CalculateStats()
     local globalDB = ODD.Database:GetGlobal()
     if globalDB and globalDB.profiles then
         for name, profile in pairs(globalDB.profiles) do
-            if name ~= myName and profile.gnomeKills and profile.gnomeKills > 0 then
+            if not IsMe(name) and profile.gnomeKills and profile.gnomeKills > 0 then
                 guildTotal = guildTotal + profile.gnomeKills
                 table.insert(topContributors, {
                     name = name,
@@ -300,14 +311,17 @@ function HQTab:Create(parent)
         end
 
         local profile = ODD.Guild.Profiles:GetLocalProfile()
-        local mainText = profile.mainCharacter and string.format(" (Main: %s)", profile.mainCharacter) or ""
         local roleText = profile.customRole and string.format(" [%s]", profile.customRole) or ""
-        local pText = string.format("Personaje: |cFFFFD100%s%s%s|r  •  Clase: |cFFFFD100%s|r  •  Nivel: |cFFFFD100%s|r", 
+        local myPts = 0
+        if ODD.Achievements and ODD.Achievements.Medals then
+            myPts = ODD.Achievements.Medals:GetPlayerAchievementPoints()
+        end
+        local pText = string.format("Personaje: |cFFFFD100%s%s|r  •  Clase: |cFFFFD100%s|r  •  Nivel: |cFFFFD100%s|r  •  Puntos de Logro: |cFF00FFCC%d pts|r", 
             profile.name or UnitName("player") or "Desconocido", 
-            mainText,
             roleText,
             profile.class or select(2, UnitClass("player")) or "Desconocido", 
-            tostring(profile.level or UnitLevel("player") or "?"))
+            tostring(profile.level or UnitLevel("player") or "?"),
+            myPts)
         pLabel:SetText(pText)
 
         HQTab:RefreshPresence()

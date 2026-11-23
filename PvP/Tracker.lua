@@ -5,6 +5,8 @@ local PvP = {}
 ODD.PvP = ODD.PvP or {}
 ODD.PvP.Tracker = PvP
 
+local deathTicket = 0
+
 -- Consulta las estadísticas oficiales de PvP del jugador local
 function PvP:GetLocalStats()
     local todayHK, todayHonor = 0, 0
@@ -26,6 +28,15 @@ function PvP:GetLocalStats()
         honorLevel = UnitHonorLevel("player") or 0
     end
 
+    -- Obtener el título y nombre oficial de rango de la API de WoW Forever
+    local rankName = "Civil"
+    if lifeRank and lifeRank > 0 and type(GetPVPRankInfo) == "function" then
+        local rTitle = GetPVPRankInfo(lifeRank, "player")
+        if rTitle and rTitle ~= "" then
+            rankName = rTitle
+        end
+    end
+
     return {
         todayHK = todayHK or 0,
         todayHonor = todayHonor or 0,
@@ -33,12 +44,191 @@ function PvP:GetLocalStats()
         yesterdayHonor = yestHonor or 0,
         lifetimeHK = lifeHK or 0,
         rank = lifeRank or 0,
+        rankName = rankName,
         honorLevel = honorLevel,
         origin = "local_observed",
     }
 end
 
--- Escucha de finalización de Campos de Batalla verificados
+-- ========================================================
+-- SISTEMA DE NÉMESIS / VENGANZA (OBJETIVOS PRIORITARIOS)
+-- ========================================================
+
+-- Extrae los datos del enemigo que asestó el killing blow según C_DeathRecap
+local function FindDeathRecapKiller(diedAt, playerGUID)
+    local events = nil
+    if C_DeathRecap and type(C_DeathRecap.GetRecapEvents) == "function" then
+        local ok, res = pcall(C_DeathRecap.GetRecapEvents)
+        if ok and type(res) == "table" then
+            events = res
+        end
+    end
+    if not events then return nil end
+
+    local chosen = nil
+    for _, ev in ipairs(events) do
+        if type(ev) == "table" then
+            local sourceGUID = ODD.API.Forever:SanitizeGUID(ev.sourceGUID)
+            local sourceName = ODD.API.Forever:SanitizeText(ev.sourceName)
+            local destGUID = ODD.API.Forever:SanitizeGUID(ev.destGUID)
+            local when = ODD.API.Forever:SanitizeNumber(ev.timestamp)
+            local overkill = ODD.API.Forever:SanitizeNumber(ev.overkill)
+
+            if sourceGUID and when and overkill and overkill >= 0 then
+                local recent = (when >= diedAt - 4 and when <= diedAt + 4)
+                local isMe = (not playerGUID) or (not destGUID) or (destGUID == playerGUID)
+                if recent and isMe and (not chosen or when >= chosen.timestamp) then
+                    chosen = {
+                        guid = sourceGUID,
+                        name = sourceName,
+                        timestamp = when,
+                    }
+                end
+            end
+        end
+    end
+    return chosen
+end
+
+-- Procesa la muerte del jugador y busca al asesino
+local function ProcessDeathRecap(ticket, diedAt, attempt)
+    if ticket ~= deathTicket then return end
+
+    local playerGUID = ODD.API.Forever:SanitizeGUID(UnitGUID("player"))
+    local killer = FindDeathRecapKiller(diedAt, playerGUID)
+
+    -- Si aún no ha llegado el evento y quedan intentos, reintentar (idéntico al timing de GRS)
+    if not killer and attempt < 4 and C_Timer and C_Timer.After then
+        local wait = ({ 0.35, 0.7, 1.2 })[attempt]
+        C_Timer.After(wait, function()
+            ProcessDeathRecap(ticket, diedAt, attempt + 1)
+        end)
+        return
+    end
+
+    if not killer or not killer.guid:find("^Player%-") then
+        return
+    end
+
+    PvP:RecordNemesisKillOnPlayer(killer.guid, killer.name)
+end
+
+-- Registra cuando un enemigo te mata
+function PvP:RecordNemesisKillOnPlayer(killerGUID, killerName)
+    local charDB = ODD.Database:GetChar()
+    if not charDB or not charDB.observations or not charDB.observations.pvp then return end
+
+    charDB.observations.pvp.nemesis = charDB.observations.pvp.nemesis or {}
+    local nemTable = charDB.observations.pvp.nemesis
+
+    local enemyName = killerName
+    local enemyClass = nil
+    local enemyRace = nil
+
+    -- Intentar resolver raza, clase y nombre por GetPlayerInfoByGUID
+    if type(GetPlayerInfoByGUID) == "function" then
+        local ok, _, classFile, locRace, engRace, _, pName = pcall(GetPlayerInfoByGUID, killerGUID)
+        if ok then
+            enemyClass = ODD.API.Forever:SanitizeText(classFile)
+            enemyRace = ODD.API.Forever:SanitizeText(engRace) or ODD.API.Forever:SanitizeText(locRace)
+            if not enemyName or enemyName == "" then
+                enemyName = ODD.API.Forever:SanitizeText(pName)
+            end
+        end
+    end
+
+    enemyName = enemyName or "Enemigo de la Alianza"
+
+    local record = nemTable[killerGUID] or {
+        guid = killerGUID,
+        name = enemyName,
+        class = enemyClass or "UNKNOWN",
+        race = enemyRace or "UNKNOWN",
+        deathsTo = 0,
+        killsOn = 0,
+        firstEncounter = time(),
+        lastEncounter = time(),
+        zone = GetZoneText() or "Mundo Abierto",
+        status = "WANTED",
+    }
+
+    record.name = enemyName
+    record.class = enemyClass or record.class
+    record.race = enemyRace or record.race
+    record.deathsTo = (record.deathsTo or 0) + 1
+    record.lastEncounter = time()
+    record.zone = GetZoneText() or record.zone
+    record.status = "WANTED"
+
+    nemTable[killerGUID] = record
+    _G["ODDCharacterDB"] = charDB
+
+    ODD:Log("|cFFFF0000[NÉMESIS]|r ¡Caíste ante |cFFFFD100%s|r (%s)! Marcado como Objetivo Prioritario.", 
+        record.name, record.race or "Alianza")
+
+    if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then
+        ODD.UI.PvPTab:Refresh()
+    end
+end
+
+-- Registra cuando te vengas y abates a un enemigo de la lista de Némesis
+function PvP:CheckNemesisAvenged(victimGUID, victimName, victimClass, victimRace)
+    local charDB = ODD.Database:GetChar()
+    if not charDB or not charDB.observations or not charDB.observations.pvp then return end
+
+    local nemTable = charDB.observations.pvp.nemesis
+    if not nemTable or not nemTable[victimGUID] then return end
+
+    local record = nemTable[victimGUID]
+    record.killsOn = (record.killsOn or 0) + 1
+    record.lastEncounter = time()
+    record.zone = GetZoneText() or record.zone
+
+    -- Si lo has matado al menos tantas veces como te ha matado, queda vengado
+    if record.killsOn >= record.deathsTo then
+        record.status = "AVENGED"
+        ODD:Log("|cFF00FF00[¡VENGANZA CUMPLIDA!]|r Has eliminado a tu némesis |cFFFFD100%s|r (Marcador: %d - %d).", 
+            record.name or victimName or "Enemigo", record.killsOn, record.deathsTo)
+    else
+        ODD:Log("|cFFFFD100[REPRESALIA]|r Has abatido a tu némesis %s. Te faltan %d bajas para saldar la deuda.", 
+            record.name or victimName or "Enemigo", record.deathsTo - record.killsOn)
+    end
+
+    _G["ODDCharacterDB"] = charDB
+
+    if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then
+        ODD.UI.PvPTab:Refresh()
+    end
+end
+
+-- Obtiene la lista ordenada de Némesis (primero los BUSCADOS con más muertes sobre ti)
+function PvP:GetNemesisList()
+    local charDB = ODD.Database:GetChar()
+    local nemTable = (charDB and charDB.observations and charDB.observations.pvp and charDB.observations.pvp.nemesis) or {}
+    local list = {}
+
+    for guid, nem in pairs(nemTable) do
+        table.insert(list, nem)
+    end
+
+    table.sort(list, function(a, b)
+        -- Primero los que siguen en búsqueda ("WANTED")
+        if a.status ~= b.status then
+            return a.status == "WANTED"
+        end
+        -- Luego los que más veces te han matado
+        if (a.deathsTo or 0) ~= (b.deathsTo or 0) then
+            return (a.deathsTo or 0) > (b.deathsTo or 0)
+        end
+        return (a.lastEncounter or 0) > (b.lastEncounter or 0)
+    end)
+
+    return list
+end
+
+-- ========================================================
+-- INICIALIZACIÓN Y EVENTOS
+-- ========================================================
 function PvP:Initialize()
     -- Actualización de estadísticas tras muertes con honor
     ODD.Events:Register("PLAYER_PVP_KILLS_CHANGED", function()
@@ -53,14 +243,28 @@ function PvP:Initialize()
         PvP:OnMatchComplete(winner, duration)
     end)
 
-    ODD:Debug("Módulo PvP Tracker inicializado.")
+    -- Detección de muerte del jugador para capturar Némesis
+    ODD.Events:Register("PLAYER_DEAD", function()
+        deathTicket = deathTicket + 1
+        local now = time()
+        ProcessDeathRecap(deathTicket, now, 1)
+    end)
+
+    -- También enganchar PARTY_KILL para comprobar si la víctima era Némesis
+    ODD.Events:Register("PARTY_KILL", function(event, attackerGUID, targetGUID)
+        local safeT = ODD.API.Forever:SanitizeGUID(targetGUID)
+        if safeT then
+            PvP:CheckNemesisAvenged(safeT)
+        end
+    end)
+
+    ODD:Debug("Módulo PvP Tracker y Sistema de Némesis inicializado.")
 end
 
 function PvP:OnMatchComplete(winner, duration)
     local myFaction = UnitFactionGroup("player")
     local isWinner = false
 
-    -- En WoW, winner suele ser 0 (Horda) / 1 (Alianza) o nombre de facción
     if winner == 0 and myFaction == "Horde" then
         isWinner = true
     elseif winner == "Horde" and myFaction == "Horde" then

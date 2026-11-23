@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Scanner = {}
@@ -16,7 +16,7 @@ function Scanner:ScanLocalProfessions()
     -- En WoW nativo, GetProfessions devuelve índices: prof1, prof2, archaeology, fishing, cooking, firstAid
     if type(GetProfessions) == "function" then
         local profIndices = { GetProfessions() }
-        for _, idx in ipairs(profIndices) do
+        for i, idx in ipairs(profIndices) do
             if idx and type(GetProfessionInfo) == "function" then
                 local name, icon, skillLevel, maxSkillLevel, numSpells, spellOffset, skillLine, rankModifier = GetProfessionInfo(idx)
                 if name then
@@ -26,6 +26,7 @@ function Scanner:ScanLocalProfessions()
                         maxLevel = maxSkillLevel or 0,
                         skillLine = skillLine,
                         icon = icon,
+                        isPrimary = (i <= 2),
                         origin = "local_observed",
                     })
                 end
@@ -41,14 +42,30 @@ function Scanner:ScanLocalProfessions()
     return skills
 end
 
-function Scanner:GetLocalProfessions()
+function Scanner:GetLocalProfessions(onlyPrimary)
+    local allProfs = {}
     local charDB = ODD.Database:GetChar()
     if charDB and charDB.observations and charDB.observations.professions and charDB.observations.professions.skills then
         if #charDB.observations.professions.skills > 0 then
-            return charDB.observations.professions.skills
+            allProfs = charDB.observations.professions.skills
+        else
+            allProfs = self:ScanLocalProfessions()
+        end
+    else
+        allProfs = self:ScanLocalProfessions()
+    end
+
+    if not onlyPrimary then
+        return allProfs
+    end
+
+    local primaries = {}
+    for _, p in ipairs(allProfs) do
+        if p.isPrimary then
+            table.insert(primaries, p)
         end
     end
-    return self:ScanLocalProfessions()
+    return primaries
 end
 
 -- Busca artesanos en la hermandad (datos propios y declarados)

@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Codec = {}
@@ -61,6 +61,10 @@ function Codec:Encode(tbl)
     end
 
     -- Fallback nativo determinista y seguro
+    return "S1", SimpleSerialize(tbl)
+end
+
+function Codec:EncodeSimple(tbl)
     return "S1", SimpleSerialize(tbl)
 end
 

@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Tracker = {}
@@ -380,6 +380,20 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     end
 end
 
+-- Lista de frases ingeniosas y temáticas de Orgrimmar Desokupa para anunciar bajas
+local KILL_ANNOUNCEMENT_TEMPLATES = {
+    "¡Orden de desahucio ejecutada sobre %s en %s! Uno menos que molesta. (Total: %d)",
+    "¡Desalojo completado sin fianza para %s en %s! El local queda precintado. (Total: %d)",
+    "Acabo de enviar a %s al cementerio desde %s. Que no vuelva a okupar suelo de la Horda. (Total: %d)",
+    "¡Fumigación exitosa en %s! El gnomo %s ha sido neutralizado. (Total: %d)",
+    "Pisotón contundente a %s en %s. Debería haber mirado por dónde pisaba. (Total: %d)",
+    "¡Cláusula de rescisión aplicada a %s en %s! Bajas totales acumuladas: %d.",
+    "¿Quién dejó a este gnomo suelto? %s ha sido desalojado en %s. (Cuenta personal: %d)",
+    "Propiedad recuperada en %s tras mandar al hoyo a %s. ¡Por la Horda! (Total: %d)",
+    "Desalojo exprés en %s: %s ha aprendido por las malas a respetar los alquileres. (Total: %d)",
+    "¡Otro gnomo que muerde el polvo! %s despachado en %s sin derecho a recurso. (Total: %d)",
+}
+
 -- Envía el mensaje de exterminio al chat de hermandad
 function Tracker:AnnounceToGuild(killRecord, totalKills)
     if not ODD.API.Forever:IsInGuild() then return end
@@ -392,8 +406,12 @@ function Tracker:AnnounceToGuild(killRecord, totalKills)
         victimStr = string.format("%s (%s nivel %s)", killRecord.victimName, killRecord.victimClass, tostring(killRecord.victimLevel))
     end
 
-    local msg = string.format("[ODD] Gnomo exterminado: %s en %s! Mi cuenta asciende a %d bajas.", 
-        victimStr, killRecord.zone or "Mundo Abierto", totalKills)
+    local zoneStr = killRecord.zone or "Mundo Abierto"
+    local idx = math.random(1, #KILL_ANNOUNCEMENT_TEMPLATES)
+    local template = KILL_ANNOUNCEMENT_TEMPLATES[idx]
+    local phrase = string.format(template, victimStr, zoneStr, totalKills)
+
+    local msg = string.format("[ODD] %s", phrase)
 
     -- SendChatMessage nativo al canal de hermandad
     local sendChat = (C_ChatInfo and C_ChatInfo.SendChatMessage) or _G["SendChatMessage"]

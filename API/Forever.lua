@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Forever = {}
@@ -50,9 +50,23 @@ function Forever:GetPlayerInfo()
     local guid = UnitGUID("player")
     local level = UnitLevel("player")
 
+    -- En WoW Forever, los nombres completos (con apellido) están disponibles en el Roster de hermandad
+    local fullName = self:SanitizeText(name)
+    local safeGuid = self:SanitizeGUID(guid)
+    if safeGuid and type(GetNumGuildMembers) == "function" and type(GetGuildRosterInfo) == "function" then
+        local numTotal = GetNumGuildMembers()
+        for i = 1, numTotal do
+            local gName, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, gGuid = GetGuildRosterInfo(i)
+            if gGuid and self:SanitizeGUID(gGuid) == safeGuid and gName then
+                fullName = self:SanitizeText(gName)
+                break
+            end
+        end
+    end
+
     return {
-        guid = self:SanitizeGUID(guid),
-        name = self:SanitizeText(name),
+        guid = safeGuid,
+        name = fullName,
         realm = self:SanitizeText(realm) or GetRealmName(),
         className = self:SanitizeText(classFilename),
         classId = self:SanitizeNumber(classId),
