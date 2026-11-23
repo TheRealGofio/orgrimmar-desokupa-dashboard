@@ -34,7 +34,7 @@ function MedalsTab:Refresh()
         local row = medalRows[i]
         if not row then
             row = CreateFrame("Frame", nil, medalsScrollChild)
-            row:SetSize(740, 34)
+            row:SetSize(760, 34)
 
             local bg = row:CreateTexture(nil, "BACKGROUND")
             bg:SetAllPoints(row)
@@ -91,19 +91,19 @@ function MedalsTab:Create(parent)
     ODD.UI.Components:CreateSectionHeader(frame, "Logros y Medallas de Exterminio", -12)
 
     local summaryBox = CreateFrame("Frame", nil, frame)
-    summaryBox:SetSize(760, 26)
-    summaryBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -34)
+    summaryBox:SetSize(780, 26)
+    summaryBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, -34)
 
     statsSummaryLabel = summaryBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     statsSummaryLabel:SetPoint("LEFT", summaryBox, "LEFT", 0, 0)
     statsSummaryLabel:SetText("Cargando logros...")
 
     local scrollFrame = CreateFrame("ScrollFrame", "ODD_MedalsTabScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 400)
-    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -66)
+    scrollFrame:SetSize(780, 440)
+    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, -66)
 
     medalsScrollChild = CreateFrame("Frame", nil, scrollFrame)
-    medalsScrollChild:SetSize(740, 1)
+    medalsScrollChild:SetSize(760, 1)
     scrollFrame:SetScrollChild(medalsScrollChild)
 
     frame:SetScript("OnShow", function()
