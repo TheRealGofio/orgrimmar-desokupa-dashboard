@@ -125,13 +125,21 @@ function Dashboard:Create()
     end
 
     -- ========================================================
-    -- MARCO TEMÁTICO ORNAMENTAL HORDA / ORGRIMMAR (OVERLAY SUPERIOR)
+    -- MARCO TEMÁTICO ORNAMENTAL HORDA / ORGRIMMAR (FONDO ARRASTRABLE + OVERLAY VISUAL)
     -- ========================================================
-    -- Situado por ENCIMA de la ventana (subnivel OVERLAY +15) sin bloquear interacción
+    -- Frame que abarca todo el tamaño de la imagen exterior (incluyendo los salientes de 118px y 285px)
+    -- Permite agarrar y arrastrar la ventana pinchando directamente en cualquier parte de la ilustración exterior
+    local artDragFrame = CreateFrame("Frame", "ODD_ArtDragFrame", mainFrame)
+    artDragFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
+    artDragFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
+    artDragFrame:SetFrameLevel(mainFrame:GetFrameLevel() - 1)
+    Dashboard:EnableFrameDrag(artDragFrame)
+
+    -- Capa visual superior para que la textura pinte por ENCIMA de los bordes metálicos de la ventana
     local hordeOverlay = CreateFrame("Frame", "ODD_HordeFrameOverlay", mainFrame)
     hordeOverlay:SetAllPoints(mainFrame)
     hordeOverlay:SetFrameLevel(mainFrame:GetFrameLevel() + 15)
-    hordeOverlay:EnableMouse(false) -- Permite hacer clics a través hacia las pestañas y botones
+    hordeOverlay:EnableMouse(false) -- No bloquea los botones y controles interiores
 
     local hordeFrameTex = hordeOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
     hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_horde.png")
