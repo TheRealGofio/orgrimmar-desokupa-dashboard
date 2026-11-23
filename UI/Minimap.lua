@@ -9,10 +9,14 @@ local button = nil
 
 local function UpdatePosition(angle)
     if not button then return end
-    local radius = 80
+    -- En WoW, el radio del minimapa estándar es su ancho/2 (~70px) + margen (~10-12px) = ~82-84px
+    -- O calculado dinámicamente según el tamaño real del Minimap:
+    local miniW = (Minimap and Minimap:GetWidth()) or 140
+    local radius = (miniW * 0.5) + 11
     local rad = math.rad(angle or 220)
     local cos = math.cos(rad)
     local sin = math.sin(rad)
+    button:ClearAllPoints()
     button:SetPoint("CENTER", Minimap, "CENTER", cos * radius, sin * radius)
 end
 
@@ -27,7 +31,7 @@ function MinimapBtn:Initialize()
     button = CreateFrame("Button", "ODD_MinimapButton", Minimap)
     button:SetSize(32, 32)
     button:SetFrameStrata("MEDIUM")
-    button:SetFrameLevel(8)
+    button:SetFrameLevel((Minimap:GetFrameLevel() or 5) + 8)
     button:EnableMouse(true)
     button:SetMovable(true)
 
@@ -40,7 +44,7 @@ function MinimapBtn:Initialize()
 
     -- Borde circular estándar de Blizzard para botones de minimapa
     local border = button:CreateTexture(nil, "OVERLAY")
-    border:SetSize(52, 52)
+    border:SetSize(54, 54)
     border:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
     border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
     button.border = border
@@ -56,7 +60,8 @@ function MinimapBtn:Initialize()
     -- Posicionar alrededor del minimapa
     UpdatePosition(currentAngle)
 
-    -- Clic para abrir / cerrar el Dashboard o alternar HUD con clic derecho
+    -- Clics: Clic Izquierdo abre/cierra panel, Clic Derecho alterna HUD compacto
+    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     button:SetScript("OnClick", function(self, btn)
         if btn == "LeftButton" then
             ODD.UI:Toggle()
@@ -73,7 +78,7 @@ function MinimapBtn:Initialize()
         GameTooltip:AddLine("|cFFFF8000Orgrimmar Desokupa Dashboard|r", 1, 1, 1)
         GameTooltip:AddLine("Clic izquierdo: Abrir / Cerrar panel", 0.2, 1, 0.2)
         GameTooltip:AddLine("Clic derecho: Mostrar / Ocultar HUD compacto", 1, 0.8, 0)
-        GameTooltip:AddLine("Arrastrar: Mover alrededor del minimapa", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine("Arrastrar (clic izquierdo): Mover por el minimapa", 0.8, 0.8, 0.8)
 
         local charDB = ODD.Database:GetChar()
         local kills = (charDB and charDB.observations and charDB.observations.gnomes and charDB.observations.gnomes.kills) or 0
@@ -86,42 +91,31 @@ function MinimapBtn:Initialize()
         GameTooltip:Hide()
     end)
 
-    -- Arrastre suave circular alrededor del minimapa
-    local isDragging = false
-    button:RegisterForDrag("RightButton", "LeftButton")
+    -- Arrastre suave circular con Clic Izquierdo (estándar de addons de WoW)
+    button:RegisterForDrag("LeftButton")
 
     button:SetScript("OnDragStart", function(self)
-        if IsShiftKeyDown() or IsControlKeyDown() then
-            isDragging = true
-        end
-    end)
-
-    button:SetScript("OnMouseDown", function(self, btn)
-        if btn == "RightButton" then
-            isDragging = true
-        end
-    end)
-
-    button:SetScript("OnMouseUp", function(self, btn)
-        if isDragging then
-            isDragging = false
-        end
-    end)
-
-    button:SetScript("OnUpdate", function(self)
-        if isDragging then
+        self:SetScript("OnUpdate", function()
             local mx, my = Minimap:GetCenter()
+            if not mx or not my then return end
+
             local cx, cy = GetCursorPosition()
-            local scale = Minimap:GetEffectiveScale()
+            local scale = UIParent:GetEffectiveScale()
             cx, cy = cx / scale, cy / scale
 
             local deg = math.deg(math.atan2(cy - my, cx - mx))
             if deg < 0 then deg = deg + 360 end
 
             UpdatePosition(deg)
-            if globalDB and globalDB.settings then
-                globalDB.settings.minimapPos = deg
+            local gDB = ODD.Database:GetGlobal()
+            if gDB and gDB.settings then
+                gDB.settings.minimapPos = deg
+                _G["ODDDB"] = gDB
             end
-        end
+        end)
+    end)
+
+    button:SetScript("OnDragStop", function(self)
+        self:SetScript("OnUpdate", nil)
     end)
 end

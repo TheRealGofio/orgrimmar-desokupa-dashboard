@@ -6,7 +6,7 @@ addonTable.ODD = ODD
 _G["ODD"] = ODD
 
 ODD.addonName = addonName
-ODD.version = "0.3.6-alpha"
+ODD.version = "0.3.7-alpha"
 ODD.targetInterface = 16001
 
 -- Submódulos

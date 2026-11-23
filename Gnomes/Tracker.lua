@@ -254,20 +254,31 @@ function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
 
     if not safeVictim then return end
 
-    -- 1. Regla de Autoría:
+    -- 1. Regla de Autoría (Golpe de gracia estricto, modelo GRS):
     local isAuthorized = false
+    local inGroup = IsInGroup and IsInGroup()
+
     if safeAttacker then
         isAuthorized = self:IsPlayerOrPet(safeAttacker)
     end
 
-    -- Si estamos solos o el target actual coincide con la víctima, aceptar autoría
-    if not isAuthorized then
-        local targetCurr = ODD.API.Forever:SanitizeGUID(UnitGUID("target"))
-        if isDirectKill or targetCurr == safeVictim then
-            isAuthorized = true
-        elseif not IsInGroup() then
-            -- En solitario en mundo abierto, los eventos de kill locales te corresponden
-            isAuthorized = true
+    if inGroup then
+        -- En grupo / raid: SOLO cuenta si el atacante del killing blow eres TÚ o TU MASCOTA.
+        -- Si un compañero de grupo dio el golpe de gracia, se descarta tajantemente.
+        if not isAuthorized then
+            return
+        end
+    else
+        -- En solitario (sin grupo):
+        -- Si safeAttacker no se pudo resolver, o el evento viene de UNIT_HEALTH (isDirectKill),
+        -- o la víctima es nuestro objetivo actual, se acepta autoría de jugador solitario.
+        if not isAuthorized then
+            local targetCurr = ODD.API.Forever:SanitizeGUID(UnitGUID("target"))
+            if isDirectKill or targetCurr == safeVictim then
+                isAuthorized = true
+            else
+                isAuthorized = true
+            end
         end
     end
 
@@ -523,13 +534,17 @@ function Tracker:Initialize()
 
     -- En WoW Camelot/Forever, PARTY_KILL entrega (event, attackerGUID, targetGUID)
     ODD.Events:Register("PARTY_KILL", function(event, attackerGUID, targetGUID)
-        local safeA = ODD.API.Forever:SanitizeGUID(attackerGUID) or ODD.API.Forever:SanitizeGUID(UnitGUID("player"))
+        local safeA = ODD.API.Forever:SanitizeGUID(attackerGUID)
         local safeT = ODD.API.Forever:SanitizeGUID(targetGUID) or ODD.API.Forever:SanitizeGUID(UnitGUID("target"))
         Tracker:OnKillEvent(safeA, safeT, false)
     end)
 
     -- Observador en tiempo real por salud de objetivo (método GRS para bajas en solitario y tótems/DoTs)
     ODD.Events:Register("UNIT_HEALTH", function(event, unit)
+        -- Si estamos en grupo, NO inferir kills por UNIT_HEALTH para evitar robos o falsas atribuciones entre compañeros.
+        -- PARTY_KILL se encargará con el GUID exacto del autor.
+        if IsInGroup and IsInGroup() then return end
+
         if unit ~= "target" and unit ~= "pettarget" then return end
         if not UnitExists(unit) then return end
 
