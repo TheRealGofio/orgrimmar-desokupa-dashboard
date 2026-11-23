@@ -184,7 +184,7 @@ function HQTab:Create(parent)
     -- Ficha del personaje local
     local profileBox = CreateFrame("Frame", nil, frame)
     profileBox:SetSize(620, 48)
-    profileBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -36)
+    profileBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -34)
     local pBg = profileBox:CreateTexture(nil, "BACKGROUND")
     pBg:SetAllPoints(profileBox)
     pBg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
@@ -201,8 +201,8 @@ function HQTab:Create(parent)
     -- MODELO 3D NATIVO DEL PERSONAJE
     -- ========================================================
     local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame)
-    modelFrame:SetSize(115, 115)
-    modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -26)
+    modelFrame:SetSize(100, 100)
+    modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -18)
     modelFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
 
     local function UpdatePlayerModel()

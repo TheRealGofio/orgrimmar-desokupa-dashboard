@@ -76,30 +76,32 @@ function Dashboard:Create()
     _G["ODD_MainDashboardFrame"] = mainFrame
     table.insert(UISpecialFrames, "ODD_MainDashboardFrame")
 
-    -- Título de la ventana
-    mainFrame.TitleBg:SetHeight(30)
-    mainFrame.title = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    mainFrame.title:SetPoint("TOPLEFT", mainFrame.TitleBg, "TOPLEFT", 10, -5)
-    mainFrame.title:SetText(L["ADDON_TITLE"] .. " v" .. ODD.version)
+    -- Ocultar la barra gris de Blizzard y título por defecto para que luzca el letrero 'Orgrimmar Desokupa'
+    if mainFrame.TitleBg then mainFrame.TitleBg:Hide() end
+    if mainFrame.title then mainFrame.title:Hide() end
+    if mainFrame.CloseButton then
+        mainFrame.CloseButton:SetFrameLevel(mainFrame:GetFrameLevel() + 25)
+        mainFrame.CloseButton:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -26, -55)
+    end
 
-    -- Contenedor interior de pestañas
+    -- Contenedor interior de pestañas (encuadrado dentro de la ventana útil de frame_3)
     local contentFrame = CreateFrame("Frame", "ODD_DashboardContentFrame", mainFrame)
-    contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 18, -40)
-    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -18, 50)
+    contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 30, -68)
+    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -30, 68)
     Dashboard:EnableFrameDrag(contentFrame)
 
-    -- Generar botones de pestañas (ancho ajustado a 106px para albergar 7 pestañas)
+    -- Generar botones de pestañas (ancho ajustado a 104px para albergar 7 pestañas limpiamente)
     local prevBtn = nil
     for i, def in ipairs(TAB_DEFS) do
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
-        btn:SetSize(106, 26)
+        btn:SetSize(104, 26)
         btn:SetFrameLevel(mainFrame:GetFrameLevel() + 20)
         
         -- Textura de fondo nativa
         local bg = btn:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(btn)
-        bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+        bg:SetColorTexture(0.2, 0.2, 0.2, 0.85)
         btn.bg = bg
 
         -- Texto
@@ -109,9 +111,9 @@ function Dashboard:Create()
         btn.fs = fs
 
         if i == 1 then
-            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 22, 14)
+            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 44, 38)
         else
-            btn:SetPoint("LEFT", prevBtn, "RIGHT", 4, 0)
+            btn:SetPoint("LEFT", prevBtn, "RIGHT", 3, 0)
         end
 
         btn:SetScript("OnClick", function(self)
