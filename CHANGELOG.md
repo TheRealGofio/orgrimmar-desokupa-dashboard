@@ -4,6 +4,12 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.7-alpha] - 2026-11-23
+
+### 🛡️ Protección de Motor contra Valores Secretos (Secret Values Taint)
+- **Error en `UNIT_HEALTH` subsanado:** En WoW Camelot/Forever, los valores numéricos de vida (`UnitHealth`) o nivel (`UnitLevel`) durante el combate de jugadores de facción opuesta pueden estar encapsulados como `secret number value`. Las comparaciones directas en Lua como `hp <= 0` provocan una excepción de taint.
+- **Validación Segura:** Todas las lecturas de salud, nivel y raza se realizan ahora con comprobación estricta de `ODD.API.Forever:IsSecret()` y `tonumber()` seguro, evitando excepciones en tiempo de combate.
+
 ## [0.1.6-alpha] - 2026-11-23
 
 ### ⚔️ Detección en Solitario, Mascotas y Tótems

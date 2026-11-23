@@ -43,15 +43,25 @@ function Tracker:CheckTargetAuras()
     local guid = UnitGUID("target")
     if not guid or ODD.API.Forever:IsSecret(guid) then return end
 
-    local raceName, raceFile, raceId = UnitRace("target")
-    local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    local isGnome = false
+    local okRace, raceName, raceFile, raceId = pcall(UnitRace, "target")
+    if okRace and not ODD.API.Forever:IsSecret(raceId) then
+        isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    end
     if not isGnome then return end
 
     -- Guardar en caché de gnomos para cuando muera y ya no sea target
     local name = UnitName("target")
     local _, classFile = UnitClass("target")
-    local level = UnitLevel("target")
-    if level and level <= 0 then level = "??" end
+    local okLvl, rawLevel = pcall(UnitLevel, "target")
+    local level = "??"
+    if okLvl and rawLevel and not ODD.API.Forever:IsSecret(rawLevel) then
+        local numLvl = tonumber(rawLevel)
+        if numLvl and numLvl > 0 then
+            level = numLvl
+        end
+    end
+
     targetGnomeCache[guid] = {
         name = name,
         classFile = classFile,
@@ -120,12 +130,21 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
 
     -- 1. Intento por token activo ("target", "mouseover", etc.)
     if token and UnitExists(token) then
-        local raceName, raceFile, raceId = UnitRace(token)
-        local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+        local isGnome = false
+        local okRace, raceName, raceFile, raceId = pcall(UnitRace, token)
+        if okRace and not ODD.API.Forever:IsSecret(raceId) then
+            isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+        end
         local name = UnitName(token)
         local _, classFile = UnitClass(token)
-        local level = UnitLevel(token)
-        if level and level <= 0 then level = "??" end
+        local okLvl, rawLevel = pcall(UnitLevel, token)
+        local level = "??"
+        if okLvl and rawLevel and not ODD.API.Forever:IsSecret(rawLevel) then
+            local numLvl = tonumber(rawLevel)
+            if numLvl and numLvl > 0 then
+                level = numLvl
+            end
+        end
 
         return isGnome, raceFile or "Gnome", name, classFile, level
     end
@@ -355,14 +374,23 @@ function Tracker:InspectUnit(token)
     local guid = UnitGUID(token)
     if not guid or ODD.API.Forever:IsSecret(guid) then return end
 
-    local raceName, raceFile, raceId = UnitRace(token)
-    local isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    local isGnome = false
+    local okRace, raceName, raceFile, raceId = pcall(UnitRace, token)
+    if okRace and not ODD.API.Forever:IsSecret(raceId) then
+        isGnome = (raceId == GNOME_RACE_ID or (raceFile and raceFile:lower() == "gnome"))
+    end
     if not isGnome then return end
 
     local name = UnitName(token)
     local _, classFile = UnitClass(token)
-    local level = UnitLevel(token)
-    if level and level <= 0 then level = "??" end
+    local okLvl, rawLevel = pcall(UnitLevel, token)
+    local level = "??"
+    if okLvl and rawLevel and not ODD.API.Forever:IsSecret(rawLevel) then
+        local numLvl = tonumber(rawLevel)
+        if numLvl and numLvl > 0 then
+            level = numLvl
+        end
+    end
 
     targetGnomeCache[guid] = {
         name = name,
@@ -404,15 +432,31 @@ function Tracker:Initialize()
 
     -- Observador en tiempo real por salud de objetivo (método GRS para bajas en solitario y tótems/DoTs)
     ODD.Events:Register("UNIT_HEALTH", function(event, unit)
-        if unit == "target" and UnitExists("target") and UnitCanAttack("player", "target") then
-            local hp = UnitHealth("target")
-            local isDead = UnitIsDead("target")
-            if (hp ~= nil and hp <= 0) or isDead then
-                local guid = UnitGUID("target")
-                if guid then
-                    Tracker:OnKillEvent(UnitGUID("player"), guid, true)
-                end
+        if unit ~= "target" then return end
+        if not UnitExists("target") or not UnitCanAttack("player", "target") then return end
+
+        local guid = UnitGUID("target")
+        if not guid or ODD.API.Forever:IsSecret(guid) then return end
+
+        local isDead = false
+        if type(UnitIsDead) == "function" then
+            local okDead, deadVal = pcall(UnitIsDead, "target")
+            if okDead and deadVal ~= nil and not ODD.API.Forever:IsSecret(deadVal) then
+                isDead = (deadVal == true)
             end
+        end
+
+        local hpZero = false
+        local okHp, rawHp = pcall(UnitHealth, "target")
+        if okHp and rawHp ~= nil and not ODD.API.Forever:IsSecret(rawHp) then
+            local numHp = tonumber(rawHp)
+            if numHp and numHp <= 0 then
+                hpZero = true
+            end
+        end
+
+        if isDead or hpZero then
+            Tracker:OnKillEvent(UnitGUID("player"), guid, true)
         end
     end)
 
