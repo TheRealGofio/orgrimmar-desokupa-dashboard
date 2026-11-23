@@ -97,6 +97,7 @@ function Dashboard:Create()
     local contentFrame = CreateFrame("Frame", "ODD_DashboardContentFrame", mainFrame)
     contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 32, -72)
     contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -32, 72)
+    contentFrame:SetFrameLevel(mainFrame:GetFrameLevel() + 2)
     Dashboard:EnableFrameDrag(contentFrame)
 
     -- Generar botones de pestañas (ancho 105px para albergar las 7 pestañas)
@@ -105,7 +106,7 @@ function Dashboard:Create()
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
         btn:SetSize(105, 26)
-        btn:SetFrameLevel(mainFrame:GetFrameLevel() + 20)
+        btn:SetFrameLevel(mainFrame:GetFrameLevel() + 10)
         
         -- Textura de fondo mimetizada
         local bg = btn:CreateTexture(nil, "BACKGROUND")
@@ -148,26 +149,20 @@ function Dashboard:Create()
     -- ========================================================
     -- MARCO TEMÁTICO ORNAMENTAL HORDA (frame_4.png: 1600x1600)
     -- ========================================================
-    -- Salientes calculados con precisión para encajar el viewport negro interior
-    -- Ancho ventana útil: 830px -> Escala frame: 1.177 -> Ancho total: ~1176px (saliente lateral: 173px)
-    -- Alto ventana útil: 520px -> Alto total: ~1176px (saliente superior: 340px, inferior: 316px)
+    -- Capa de fondo que dibuja la ilustración completa (marco de madera + fondo negro)
+    -- Se ubica en BACKGROUND (subnivel -5) detrás del contentFrame para que los textos y estadísticas se pinten encima
+    local hordeFrameTex = mainFrame:CreateTexture(nil, "BACKGROUND", nil, -5)
+    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_4.png")
+    hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -173, 340)
+    hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 173, -316)
+    mainFrame.hordeFrameTex = hordeFrameTex
+
+    -- Frame interactivo que abarca todo el tamaño exterior de la imagen para permitir arrastre desde la madera
     local artDragFrame = CreateFrame("Frame", "ODD_ArtDragFrame", mainFrame)
     artDragFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -173, 340)
     artDragFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 173, -316)
     artDragFrame:SetFrameLevel(mainFrame:GetFrameLevel() - 1)
     Dashboard:EnableFrameDrag(artDragFrame)
-
-    -- Capa superior que dibuja el marco ornamental de madera, calaveras y pinchos
-    local hordeOverlay = CreateFrame("Frame", "ODD_HordeFrameOverlay", mainFrame)
-    hordeOverlay:SetAllPoints(mainFrame)
-    hordeOverlay:SetFrameLevel(mainFrame:GetFrameLevel() + 15)
-    hordeOverlay:EnableMouse(false)
-
-    local hordeFrameTex = hordeOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
-    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_4.png")
-    hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -173, 340)
-    hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 173, -316)
-    mainFrame.hordeFrameTex = hordeFrameTex
 
     SwitchTab(1)
     return mainFrame
