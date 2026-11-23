@@ -94,9 +94,10 @@ function Dashboard:Create()
     mainFrame.CloseButton = closeBtn
 
     -- Contenedor interior de pestañas perfectamente encuadrado dentro del fondo negro de frame_4
+    -- Subido a -18px superior y -18px inferior para aprovechar todo el hueco negro libre
     local contentFrame = CreateFrame("Frame", "ODD_DashboardContentFrame", mainFrame)
-    contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 32, -72)
-    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -32, 72)
+    contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 32, -18)
+    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -32, 75)
     contentFrame:SetFrameLevel(mainFrame:GetFrameLevel() + 2)
     Dashboard:EnableFrameDrag(contentFrame)
 
@@ -127,7 +128,7 @@ function Dashboard:Create()
         btn.fs = fs
 
         if i == 1 then
-            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 44, 40)
+            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 44, 42)
         else
             btn:SetPoint("LEFT", prevBtn, "RIGHT", 3, 0)
         end

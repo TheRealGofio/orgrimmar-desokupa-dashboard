@@ -99,7 +99,7 @@ function MedalsTab:Create(parent)
     statsSummaryLabel:SetText("Cargando logros...")
 
     local scrollFrame = CreateFrame("ScrollFrame", "ODD_MedalsTabScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 360)
+    scrollFrame:SetSize(760, 400)
     scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -66)
 
     medalsScrollChild = CreateFrame("Frame", nil, scrollFrame)
