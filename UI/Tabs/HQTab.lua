@@ -262,6 +262,11 @@ function HQTab:Create(parent)
     statTodayTotal = CreateStatCard(frame, "Bajas de Hoy", 16 + (cardWidth + cardSpacing) * 2, -150, cardWidth, cardHeight)
     statWeekTotal = CreateStatCard(frame, "Bajas de Esta Semana", 16 + (cardWidth + cardSpacing) * 3, -150, cardWidth, cardHeight)
 
+    if ODD.UI.Dashboard and ODD.UI.Dashboard.EnableFrameDrag then
+        ODD.UI.Dashboard:EnableFrameDrag(profileBox)
+        ODD.UI.Dashboard:EnableFrameDrag(syncBox)
+    end
+
     -- ========================================================
     -- DETALLES ADICIONALES Y CONTRIBUCIÓN
     -- ========================================================

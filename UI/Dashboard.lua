@@ -40,6 +40,23 @@ local function SwitchTab(tabIndex)
     end
 end
 
+-- Helper global para habilitar arrastre suave desde cualquier frame o pestaña hija
+function Dashboard:EnableFrameDrag(f)
+    if not f or f == mainFrame then return end
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:HookScript("OnDragStart", function()
+        if mainFrame and mainFrame:IsShown() then
+            mainFrame:StartMoving()
+        end
+    end)
+    f:HookScript("OnDragStop", function()
+        if mainFrame then
+            mainFrame:StopMovingOrSizing()
+        end
+    end)
+end
+
 function Dashboard:Create()
     if mainFrame then return mainFrame end
 
@@ -55,14 +72,6 @@ function Dashboard:Create()
     mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
     mainFrame:Hide()
 
-    -- Marco temático ornamental Horda / Orgrimmar
-    -- Textura como BACKGROUND del mainFrame sin capturar clics para no bloquear el contenido
-    local hordeFrame = mainFrame:CreateTexture(nil, "BACKGROUND", nil, -5)
-    hordeFrame:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_horde.png")
-    hordeFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
-    hordeFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
-    mainFrame.hordeFrame = hordeFrame
-
     -- Título de la ventana
     mainFrame.TitleBg:SetHeight(30)
     mainFrame.title = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -70,9 +79,10 @@ function Dashboard:Create()
     mainFrame.title:SetText(L["ADDON_TITLE"] .. " v" .. ODD.version)
 
     -- Contenedor interior de pestañas
-    local contentFrame = CreateFrame("Frame", nil, mainFrame)
+    local contentFrame = CreateFrame("Frame", "ODD_DashboardContentFrame", mainFrame)
     contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 18, -40)
     contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -18, 50)
+    Dashboard:EnableFrameDrag(contentFrame)
 
     -- Generar botones de pestañas (ancho ajustado a 106px para albergar 7 pestañas)
     local prevBtn = nil
@@ -80,7 +90,7 @@ function Dashboard:Create()
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
         btn:SetSize(106, 26)
-        btn:SetFrameLevel(mainFrame:GetFrameLevel() + 10)
+        btn:SetFrameLevel(mainFrame:GetFrameLevel() + 20)
         
         -- Textura de fondo nativa
         local bg = btn:CreateTexture(nil, "BACKGROUND")
@@ -107,10 +117,27 @@ function Dashboard:Create()
         local tabContent = def.creator(contentFrame)
         tabContent:SetFrameLevel(contentFrame:GetFrameLevel() + 2)
         tabContent:Hide()
+        Dashboard:EnableFrameDrag(tabContent)
+
         table.insert(tabFrames, tabContent)
         table.insert(tabButtons, btn)
         prevBtn = btn
     end
+
+    -- ========================================================
+    -- MARCO TEMÁTICO ORNAMENTAL HORDA / ORGRIMMAR (OVERLAY SUPERIOR)
+    -- ========================================================
+    -- Situado por ENCIMA de la ventana (subnivel OVERLAY +15) sin bloquear interacción
+    local hordeOverlay = CreateFrame("Frame", "ODD_HordeFrameOverlay", mainFrame)
+    hordeOverlay:SetAllPoints(mainFrame)
+    hordeOverlay:SetFrameLevel(mainFrame:GetFrameLevel() + 15)
+    hordeOverlay:EnableMouse(false) -- Permite hacer clics a través hacia las pestañas y botones
+
+    local hordeFrameTex = hordeOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
+    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_horde.png")
+    hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
+    hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
+    mainFrame.hordeFrameTex = hordeFrameTex
 
     SwitchTab(1)
     return mainFrame
