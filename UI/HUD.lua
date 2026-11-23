@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local HUD = {}
@@ -10,8 +10,9 @@ local hudFrame = nil
 function HUD:Create()
     if hudFrame then return hudFrame end
 
+    -- Dimensiones del marco del HUD (380x95 para dar amplitud, nitidez y holgura al diseño)
     hudFrame = CreateFrame("Frame", "ODD_HUDFrame", UIParent)
-    hudFrame:SetSize(220, 68)
+    hudFrame:SetSize(380, 95)
     hudFrame:SetFrameStrata("MEDIUM")
     hudFrame:SetClampedToScreen(true)
     hudFrame:SetMovable(true)
@@ -36,48 +37,81 @@ function HUD:Create()
         end
     end)
 
-    -- Fondo translúcido oscuro con borde sutil Horda
-    local bg = hudFrame:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(hudFrame)
-    bg:SetColorTexture(0.08, 0.08, 0.08, 0.75)
-    hudFrame.bg = bg
+    -- Textura Horda generada (hud_banner_2.png)
+    local bgTex = hudFrame:CreateTexture(nil, "BACKGROUND")
+    bgTex:SetAllPoints(hudFrame)
+    bgTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\hud_banner_2.png")
+    bgTex:SetTexCoord(0, 1, 0, 1)
+    hudFrame.bgTex = bgTex
 
-    local border = hudFrame:CreateTexture(nil, "BORDER")
-    border:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 0, 0)
-    border:SetPoint("BOTTOMRIGHT", hudFrame, "BOTTOMRIGHT", 0, 0)
-    border:SetColorTexture(0.4, 0.1, 0.1, 0.6)
-
-    -- Cabecera / Título
-    local title = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    title:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 8, -6)
-    title:SetText("|cFFFFD100ODD - Orgrimmar Desokupa|r")
-    hudFrame.title = title
-
-    -- Botón de cerrar HUD (X)
+    -- Botón de cerrar HUD (X) situado discretamente en la esquina metálica
     local closeBtn = CreateFrame("Button", nil, hudFrame)
-    closeBtn:SetSize(16, 16)
-    closeBtn:SetPoint("TOPRIGHT", hudFrame, "TOPRIGHT", -4, -4)
-    local closeBg = closeBtn:CreateTexture(nil, "BACKGROUND")
-    closeBg:SetAllPoints()
-    closeBg:SetColorTexture(0.6, 0.1, 0.1, 0.8)
+    closeBtn:SetSize(14, 14)
+    closeBtn:SetPoint("TOPRIGHT", hudFrame, "TOPRIGHT", -56, -20)
     local closeFs = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     closeFs:SetPoint("CENTER", closeBtn, "CENTER", 0, 0)
-    closeFs:SetText("X")
+    closeFs:SetText("|cFF888888X|r")
+    closeBtn:SetScript("OnEnter", function() closeFs:SetText("|cFFFF2020X|r") end)
+    closeBtn:SetScript("OnLeave", function() closeFs:SetText("|cFF888888X|r") end)
     closeBtn:SetScript("OnClick", function()
         HUD:SetShown(false)
     end)
 
-    -- Línea 1: Bajas de hoy y de la semana
-    local line1 = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    line1:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 8, -26)
-    line1:SetText("Hoy: |cFF00FF000|r   •   Semana: |cFFFF80000|r")
-    hudFrame.line1 = line1
+    -- Columna Izquierda - Fila 1: Hoy (dentro de la zona oscura libre de tela roja)
+    local labelToday = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    labelToday:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 82, -36)
+    labelToday:SetText("|cFFB0B0B0Hoy:|r")
+    labelToday:SetShadowColor(0, 0, 0, 1)
+    labelToday:SetShadowOffset(1, -1)
 
-    -- Línea 2: Total personal y de hermandad
-    local line2 = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    line2:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 8, -44)
-    line2:SetText("Total: |cFFFFD1000|r   •   Guild: |cFF00FFCC0|r")
-    hudFrame.line2 = line2
+    local valToday = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    valToday:SetPoint("LEFT", labelToday, "RIGHT", 5, 0)
+    valToday:SetText("|cFF00FF000|r")
+    valToday:SetShadowColor(0, 0, 0, 1)
+    valToday:SetShadowOffset(1, -1)
+    hudFrame.valToday = valToday
+
+    -- Columna Derecha - Fila 1: Semana
+    local labelWeek = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    labelWeek:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 204, -36)
+    labelWeek:SetText("|cFFB0B0B0Semana:|r")
+    labelWeek:SetShadowColor(0, 0, 0, 1)
+    labelWeek:SetShadowOffset(1, -1)
+
+    local valWeek = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    valWeek:SetPoint("LEFT", labelWeek, "RIGHT", 5, 0)
+    valWeek:SetText("|cFFFF80000|r")
+    valWeek:SetShadowColor(0, 0, 0, 1)
+    valWeek:SetShadowOffset(1, -1)
+    hudFrame.valWeek = valWeek
+
+    -- Columna Izquierda - Fila 2: Mis Bajas
+    local labelPersonal = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    labelPersonal:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 82, -56)
+    labelPersonal:SetText("|cFFB0B0B0Tus Bajas:|r")
+    labelPersonal:SetShadowColor(0, 0, 0, 1)
+    labelPersonal:SetShadowOffset(1, -1)
+
+    local valPersonal = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    valPersonal:SetPoint("LEFT", labelPersonal, "RIGHT", 5, 0)
+    valPersonal:SetText("|cFFFFD1000|r")
+    valPersonal:SetShadowColor(0, 0, 0, 1)
+    valPersonal:SetShadowOffset(1, -1)
+    hudFrame.valPersonal = valPersonal
+
+    -- Columna Derecha - Fila 2: Hermandad
+    local labelGuild = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    labelGuild:SetPoint("TOPLEFT", hudFrame, "TOPLEFT", 204, -56)
+    labelGuild:SetText("|cFFB0B0B0Hermandad:|r")
+    labelGuild:SetShadowColor(0, 0, 0, 1)
+    labelGuild:SetShadowOffset(1, -1)
+
+    local valGuild = hudFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    valGuild:SetPoint("LEFT", labelGuild, "RIGHT", 5, 0)
+    valGuild:SetText("|cFF00FFCC0|r")
+    valGuild:SetShadowColor(0, 0, 0, 1)
+    valGuild:SetShadowOffset(1, -1)
+    hudFrame.valGuild = valGuild
 
     -- Clic derecho abre/cierra el panel principal
     hudFrame:SetScript("OnMouseUp", function(self, button)
@@ -86,6 +120,18 @@ function HUD:Create()
                 ODD.UI:Toggle()
             end
         end
+    end)
+
+    -- Tooltip informativo al pasar el ratón
+    hudFrame:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:AddLine("ODD - Panel Rápido", 1, 0.82, 0)
+        GameTooltip:AddLine("Arrastra con Clic Izquierdo para mover.", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine("Clic Derecho para abrir el Dashboard.", 0.8, 0.8, 0.8)
+        GameTooltip:Show()
+    end)
+    hudFrame:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
     end)
 
     -- Restaurar posición previa si existe en DB
@@ -144,8 +190,10 @@ function HUD:Refresh()
         end
     end
 
-    hudFrame.line1:SetText(string.format("Hoy: |cFF00FF00%d|r   •   Semana: |cFFFF8000%d|r", todayCount, weekCount))
-    hudFrame.line2:SetText(string.format("Tus Bajas: |cFFFFD100%d|r   •   Guild: |cFF00FFCC%d|r", personalTotal, guildTotal))
+    hudFrame.valToday:SetText(string.format("|cFF00FF00%d|r", todayCount))
+    hudFrame.valWeek:SetText(string.format("|cFFFF8000%d|r", weekCount))
+    hudFrame.valPersonal:SetText(string.format("|cFFFFD100%d|r", personalTotal))
+    hudFrame.valGuild:SetText(string.format("|cFF00FFCC%d|r", guildTotal))
 end
 
 function HUD:SetShown(show)

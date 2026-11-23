@@ -67,8 +67,45 @@ function RosterTab:Refresh()
         return (a.name or "") < (b.name or "")
     end)
 
-    -- Ocultar filas existentes
-    for _, r in ipairs(memberRows) do r:Hide() end
+    -- 1. Obtener datos del Leaderboard para saber quién es Rank 1 en bajas y puntos
+    local rank1KillsName = nil
+    local rank1PointsName = nil
+    if ODD.Achievements and ODD.Achievements.Rankings then
+        local killBoard = ODD.Achievements.Rankings:GetGnomeLeaderboard("kills")
+        if killBoard and killBoard[1] and killBoard[1].kills and killBoard[1].kills > 0 then
+            rank1KillsName = killBoard[1].name:lower()
+        end
+        local ptBoard = ODD.Achievements.Rankings:GetGnomeLeaderboard("points")
+        if ptBoard and ptBoard[1] and ptBoard[1].points and ptBoard[1].points > 0 then
+            rank1PointsName = ptBoard[1].name:lower()
+        end
+    end
+
+    local globalDB = ODD.Database:GetGlobal()
+    local profiles = (globalDB and globalDB.profiles) or {}
+
+    local myName = UnitName("player") or "Tú"
+    local myKills = 0
+    local myPoints = 0
+    local charDB = ODD.Database:GetChar()
+    if charDB and charDB.observations and charDB.observations.gnomes then
+        myKills = charDB.observations.gnomes.kills or 0
+    end
+    if ODD.Achievements and ODD.Achievements.Medals then
+        myPoints = ODD.Achievements.Medals:GetPlayerAchievementPoints()
+    end
+
+    local function GetMemberStats(cleanName)
+        local cLower = cleanName:lower()
+        if cLower == myName:lower() then
+            return myKills, myPoints
+        end
+        local prof = profiles[cleanName]
+        if prof then
+            return prof.gnomeKills or 0, prof.achievementPoints or 0
+        end
+        return 0, 0
+    end
 
     local rowHeight = 22
     local currentY = 0
@@ -92,20 +129,61 @@ function RosterTab:Refresh()
             row.name = rName
 
             local rLvl = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            rLvl:SetPoint("LEFT", row, "LEFT", 210, 0)
+            rLvl:SetPoint("LEFT", row, "LEFT", 195, 0)
             row.lvl = rLvl
 
             local rRank = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            rRank:SetPoint("LEFT", row, "LEFT", 270, 0)
+            rRank:SetPoint("LEFT", row, "LEFT", 245, 0)
             row.rank = rRank
+
+            local rTitle = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            rTitle:SetPoint("LEFT", row, "LEFT", 380, 0)
+            row.title = rTitle
 
             local rZone = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
             rZone:SetPoint("RIGHT", row, "RIGHT", -16, 0)
             row.zone = rZone
 
+            -- Tooltip enriquecido al pasar el ratón por el miembro
+            row:EnableMouse(true)
+            row:SetScript("OnEnter", function(self)
+                self.bg:SetColorTexture(0.3, 0.25, 0.1, 0.45)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                if self.memberData then
+                    local md = self.memberData
+                    local cName = Ambiguate(md.name or "Desconocido", "none")
+                    local cColor = CLASS_COLORS[md.className] or "FFFFFFFF"
+                    GameTooltip:AddLine(string.format("|c%s%s|r (Nivel %s %s)", cColor, cName, tostring(md.level or "?"), md.className or ""), 1, 1, 1)
+                    GameTooltip:AddLine(string.format("Rango de Hermandad: |cFFFFD100%s|r", md.rankName or "-"), 0.9, 0.9, 0.9)
+
+                    if self.honoraryTitle then
+                        GameTooltip:AddLine(string.format("Título ODD: |c%s%s|r", self.honoraryTitleColor or "FFFFFFFF", self.honoraryTitle), 1, 0.82, 0)
+                    end
+                    GameTooltip:AddLine(string.format("Bajas verificadas/declaradas: |cFFFFD100%d|r", self.kills or 0), 1, 1, 1)
+                    GameTooltip:AddLine(string.format("Puntos de Logro: |cFF00FFCC%d pts|r", self.points or 0), 1, 1, 1)
+
+                    if md.online then
+                        GameTooltip:AddLine(string.format("Ubicación: |cFF00FF00%s|r", md.zone or "Mundo Abierto"), 0.8, 1, 0.8)
+                    else
+                        GameTooltip:AddLine("Estado: |cFF888888Desconectado|r", 0.6, 0.6, 0.6)
+                    end
+                end
+                GameTooltip:Show()
+            end)
+            row:SetScript("OnLeave", function(self)
+                if self.rowIndex and self.rowIndex % 2 == 0 then
+                    self.bg:SetColorTexture(0.12, 0.12, 0.12, 0.35)
+                else
+                    self.bg:SetColorTexture(0.18, 0.18, 0.18, 0.35)
+                end
+                GameTooltip:Hide()
+            end)
+
             memberRows[i] = row
         end
 
+        row.rowIndex = i
+        row.memberData = m
         row:SetPoint("TOPLEFT", rosterScrollChild, "TOPLEFT", 0, currentY)
         currentY = currentY - rowHeight
 
@@ -117,6 +195,19 @@ function RosterTab:Refresh()
 
         local classCol = CLASS_COLORS[m.className] or "FFFFFFFF"
         local cleanName = Ambiguate(m.name or "Desconocido", "none")
+        local kCount, pCount = GetMemberStats(cleanName)
+        row.kills = kCount
+        row.points = pCount
+
+        -- Calcular título honorífico
+        local isR1Kills = (rank1KillsName and cleanName:lower() == rank1KillsName)
+        local isR1Points = (rank1PointsName and cleanName:lower() == rank1PointsName)
+        local hTitle, hColor = "Aspirante", "FF888888"
+        if ODD.Achievements and ODD.Achievements.Rankings and ODD.Achievements.Rankings.GetHonoraryTitle then
+            hTitle, hColor = ODD.Achievements.Rankings:GetHonoraryTitle(kCount, pCount, isR1Kills, isR1Points)
+        end
+        row.honoraryTitle = hTitle
+        row.honoraryTitleColor = hColor
 
         if m.online then
             row.status:SetText("|cFF00FF00[ON]|r")
@@ -131,6 +222,7 @@ function RosterTab:Refresh()
         end
 
         row.rank:SetText(string.format("|cFFCCCCCC%s|r", m.rankName or "-"))
+        row.title:SetText(string.format("|c%s%s|r", hColor, hTitle))
         row:Show()
     end
 
@@ -224,8 +316,12 @@ function RosterTab:Create(parent)
     colLvl:SetText("Nivel")
 
     local colRank = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    colRank:SetPoint("LEFT", headerFrame, "LEFT", 270, 0)
+    colRank:SetPoint("LEFT", headerFrame, "LEFT", 245, 0)
     colRank:SetText("Rango")
+
+    local colTitle = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colTitle:SetPoint("LEFT", headerFrame, "LEFT", 380, 0)
+    colTitle:SetText("Título Honorífico ODD")
 
     local colZone = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colZone:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)

@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Sync = {}
@@ -45,11 +45,32 @@ function Sync:BroadcastHello(delaySeconds)
             if profile.customRole then data.role = profile.customRole end
         end
 
-        -- Añadir estadísticas de bajas del Gnomómetro y puntos de logro si está configurado compartir estadísticas
+        -- Añadir estadísticas de bajas del Gnomómetro, puntos de logro y top zonas si está configurado compartir estadísticas
         if ODD.Database:GetSetting("shareStats") then
             local charDB = ODD.Database:GetChar()
             if charDB and charDB.observations and charDB.observations.gnomes then
                 data.gk = charDB.observations.gnomes.kills or 0
+
+                -- Calcular las 2 zonas más frecuentes del jugador para el mapa de zonas calientes colectivo
+                local zoneCounts = {}
+                local records = charDB.observations.gnomes.records or {}
+                for _, r in ipairs(records) do
+                    local z = r.zone or "Desconocida"
+                    zoneCounts[z] = (zoneCounts[z] or 0) + 1
+                end
+                local sortedZones = {}
+                for zName, count in pairs(zoneCounts) do
+                    table.insert(sortedZones, { name = zName, count = count })
+                end
+                table.sort(sortedZones, function(a, b) return a.count > b.count end)
+
+                local topList = {}
+                for idx = 1, math.min(2, #sortedZones) do
+                    table.insert(topList, string.format("%s:%d", sortedZones[idx].name, sortedZones[idx].count))
+                end
+                if #topList > 0 then
+                    data.tz = table.concat(topList, ";")
+                end
             end
             if ODD.Achievements and ODD.Achievements.Medals then
                 data.ap = ODD.Achievements.Medals:GetPlayerAchievementPoints()
@@ -174,6 +195,7 @@ function Sync:OnMessageReceived(text, channel, sender)
             if data.gk or data.ap then
                 presenceList[senderName].gnomeKills = tonumber(data.gk) or 0
                 presenceList[senderName].achievementPoints = tonumber(data.ap) or 0
+                presenceList[senderName].topZones = data.tz
                 -- Guardar en los perfiles globales para persistencia en el Leaderboard
                 local globalDB = ODD.Database:GetGlobal()
                 if globalDB then
@@ -183,6 +205,9 @@ function Sync:OnMessageReceived(text, channel, sender)
                     globalDB.profiles[senderName].className = data.cls
                     globalDB.profiles[senderName].gnomeKills = tonumber(data.gk) or 0
                     globalDB.profiles[senderName].achievementPoints = tonumber(data.ap) or 0
+                    if data.tz then
+                        globalDB.profiles[senderName].topZones = data.tz
+                    end
                     globalDB.profiles[senderName].updatedAt = time()
                     _G["ODDDB"] = globalDB
                 end

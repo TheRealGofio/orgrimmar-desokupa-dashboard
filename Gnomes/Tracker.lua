@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Tracker = {}
@@ -72,8 +72,19 @@ function Tracker:CheckTargetAuras()
     if not isGnome then return end
 
     -- Guardar en caché de gnomos para cuando muera
-    local okName, rawName = pcall(UnitName, "target")
-    local name = ODD.API.Forever:SanitizeText(rawName)
+    -- En WoW Forever, los personajes pueden tener nombre y apellido.
+    local fullName = nil
+    if type(GetUnitName) == "function" then
+        local okGN, gn = pcall(GetUnitName, "target", true)
+        if okGN and gn and gn ~= "" then
+            fullName = ODD.API.Forever:SanitizeText(gn)
+        end
+    end
+    if not fullName then
+        local okName, rawName = pcall(UnitName, "target")
+        fullName = ODD.API.Forever:SanitizeText(rawName)
+    end
+    local name = fullName
     local okClass, _, rawClass = pcall(UnitClass, "target")
     local classFile = ODD.API.Forever:SanitizeText(rawClass)
     local okLvl, rawLevel = pcall(UnitLevel, "target")
@@ -436,8 +447,32 @@ function Tracker:InspectUnit(token)
     end
     if not isGnome then return end
 
-    local okName, rawName = pcall(UnitName, token)
-    local name = ODD.API.Forever:SanitizeText(rawName)
+    -- Asegurar que es de la facción enemiga (Alianza) y no está muerto
+    local isEnemy = false
+    if type(UnitIsEnemy) == "function" then
+        local okEn, en = pcall(UnitIsEnemy, "player", token)
+        if okEn and en == true then isEnemy = true end
+    end
+    local isDead = false
+    if type(UnitIsDead) == "function" then
+        local okDead, d = pcall(UnitIsDead, token)
+        if okDead and d == true then isDead = true end
+    end
+
+    -- En WoW Forever, los personajes pueden tener nombre y apellido.
+    -- GetUnitName(token, true) devuelve el nombre completo (nombre + apellido).
+    local fullName = nil
+    if type(GetUnitName) == "function" then
+        local okGN, gn = pcall(GetUnitName, token, true)
+        if okGN and gn and gn ~= "" then
+            fullName = ODD.API.Forever:SanitizeText(gn)
+        end
+    end
+    if not fullName then
+        local okName, rawName = pcall(UnitName, token)
+        fullName = ODD.API.Forever:SanitizeText(rawName)
+    end
+    local name = fullName
     local okClass, _, rawClass = pcall(UnitClass, token)
     local classFile = ODD.API.Forever:SanitizeText(rawClass)
     local okLvl, rawLevel = pcall(UnitLevel, token)
@@ -450,6 +485,13 @@ function Tracker:InspectUnit(token)
         timestamp = time()
     }
     liveSeenGnomes[guid] = true
+
+    -- Disparar Radar de Proximidad si es un gnomo enemigo vivo en mundo abierto
+    if isEnemy and not isDead and self:IsWorldPvP() then
+        if ODD.Gnomes and ODD.Gnomes.Radar and ODD.Gnomes.Radar.TriggerAlert then
+            ODD.Gnomes.Radar:TriggerAlert(guid, name, classFile, level, token)
+        end
+    end
 end
 
 -- Escaneo de objetivos visibles activos

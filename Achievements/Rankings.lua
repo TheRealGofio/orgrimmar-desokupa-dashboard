@@ -1,11 +1,33 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Rankings = {}
 ODD.Achievements = ODD.Achievements or {}
 ODD.Achievements.Rankings = Rankings
 
--- Calcula el Leaderboard del Gnomómetro combinando la observación local con los datos remotos declarados
+-- Calcula el título honorífico interno de hermandad según méritos
+function Rankings:GetHonoraryTitle(kills, points, isRank1Kills, isRank1Points)
+    kills = kills or 0
+    points = points or 0
+
+    if isRank1Kills and kills >= 5 then
+        return "El Fumigador Jefe", "FFFFD100"
+    elseif isRank1Points and points >= 20 then
+        return "Inspector de Desokupaciones", "FF00FFCC"
+    elseif kills >= 50 then
+        return "Azote de Manitas", "FFFF2020"
+    elseif kills >= 25 then
+        return "Desalojador Élite", "FFFF8000"
+    elseif kills >= 10 then
+        return "Cazarratas", "FF00FF00"
+    elseif kills >= 1 then
+        return "Desokupador Novato", "FF69CCF0"
+    elseif points >= 15 then
+        return "Coleccionista de Medallas", "FFA330C9"
+    else
+        return "Aspirante", "FF888888"
+    end
+end
 -- sortBy: "kills" (por bajas) o "points" (por puntos de logro)
 function Rankings:GetGnomeLeaderboard(sortBy)
     sortBy = sortBy or "kills"

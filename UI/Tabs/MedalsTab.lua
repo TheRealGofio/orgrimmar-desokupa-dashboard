@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -62,9 +62,53 @@ function MedalsTab:Refresh()
             prog:SetPoint("RIGHT", row, "RIGHT", -16, 0)
             row.prog = prog
 
+            -- Soporte para Shift + Clic (Compartir en chat)
+            row:EnableMouse(true)
+            row:SetScript("OnEnter", function(self)
+                self.bg:SetColorTexture(0.3, 0.3, 0.1, 0.5)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                if self.medalData then
+                    local m = self.medalData
+                    GameTooltip:AddLine(m.name, 1, 0.82, 0)
+                    GameTooltip:AddLine(m.desc, 1, 1, 1, true)
+                    GameTooltip:AddLine(string.format("Puntos de Logro: %d pts", m.points or 10), 0, 1, 0.8)
+                    GameTooltip:AddLine(m.completed and "|cFF00FF00Logro Completado|r" or "|cFFFF8000En progreso|r")
+                    GameTooltip:AddLine("Shift + Clic: Compartir en chat", 0.6, 0.6, 0.6)
+                end
+                GameTooltip:Show()
+            end)
+            row:SetScript("OnLeave", function(self)
+                if self.medalData then
+                    if self.medalData.completed then
+                        self.bg:SetColorTexture(0.1, 0.28, 0.1, 0.45)
+                    else
+                        self.bg:SetColorTexture(0.12, 0.12, 0.12, 0.35)
+                    end
+                end
+                GameTooltip:Hide()
+            end)
+            row:SetScript("OnMouseUp", function(self, button)
+                if IsShiftKeyDown() and self.medalData then
+                    local m = self.medalData
+                    local status = m.completed and "Completado" or string.format("%d/%d", m.progress, m.maxReq)
+                    local shareText = string.format("[ODD] Medalla: %s (%d pts) - %s: %s", m.name, m.points or 10, m.desc, status)
+                    if type(ChatEdit_InsertLink) == "function" then
+                        if not ChatEdit_InsertLink(shareText) then
+                            -- Si la caja de chat no está activa, abrirla con el texto
+                            local editBox = ChatEdit_ChooseBoxForSend()
+                            if editBox then
+                                ChatEdit_ActivateChat(editBox)
+                                editBox:Insert(shareText)
+                            end
+                        end
+                    end
+                end
+            end)
+
             medalRows[i] = row
         end
 
+        row.medalData = m
         row:SetPoint("TOPLEFT", medalsScrollChild, "TOPLEFT", 0, currentY)
         currentY = currentY - rowHeight
 

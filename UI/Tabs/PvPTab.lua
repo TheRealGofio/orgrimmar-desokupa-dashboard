@@ -100,9 +100,55 @@ function PvPTab:Refresh()
                 rZone:SetPoint("RIGHT", row, "RIGHT", -16, 0)
                 row.zone = rZone
 
+                -- Soporte para Shift + Clic (Compartir ficha de Némesis en chat)
+                row:EnableMouse(true)
+                row:SetScript("OnEnter", function(self)
+                    self.bg:SetColorTexture(0.35, 0.25, 0.05, 0.5)
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    if self.nemData then
+                        local n = self.nemData
+                        local statusTxt = (n.status == "WANTED") and "|cFFFF0000[OBJETIVO BUSCADO]|r" or "|cFF00FF00[VENGADO]|r"
+                        GameTooltip:AddLine(string.format("Némesis: %s", n.name or "Desconocido"), 1, 0.82, 0)
+                        GameTooltip:AddLine(statusTxt)
+                        GameTooltip:AddLine(string.format("Veces que te abatió: %d", n.deathsTo or 0), 1, 0.2, 0.2)
+                        GameTooltip:AddLine(string.format("Veces que lo abatiste: %d", n.killsOn or 0), 0.2, 1, 0.2)
+                        GameTooltip:AddLine(string.format("Última zona: %s", n.zone or "Mundo Abierto"), 0.8, 0.8, 0.8)
+                        GameTooltip:AddLine("Shift + Clic: Compartir en chat", 0.6, 0.6, 0.6)
+                    end
+                    GameTooltip:Show()
+                end)
+                row:SetScript("OnLeave", function(self)
+                    if self.nemData then
+                        if self.nemData.status == "WANTED" then
+                            self.bg:SetColorTexture(0.35, 0.05, 0.05, 0.45)
+                        else
+                            self.bg:SetColorTexture(0.05, 0.22, 0.05, 0.35)
+                        end
+                    end
+                    GameTooltip:Hide()
+                end)
+                row:SetScript("OnMouseUp", function(self, button)
+                    if IsShiftKeyDown() and self.nemData then
+                        local n = self.nemData
+                        local status = (n.status == "WANTED") and "BUSCADO" or "VENGADO"
+                        local shareText = string.format("[ODD] Némesis [%s]: %s (%s) - Balance: %d abatido / %d muertes en %s",
+                            status, n.name or "Enemigo", n.class or "?", n.killsOn or 0, n.deathsTo or 0, n.zone or "Mundo Abierto")
+                        if type(ChatEdit_InsertLink) == "function" then
+                            if not ChatEdit_InsertLink(shareText) then
+                                local editBox = ChatEdit_ChooseBoxForSend()
+                                if editBox then
+                                    ChatEdit_ActivateChat(editBox)
+                                    editBox:Insert(shareText)
+                                end
+                            end
+                        end
+                    end
+                end)
+
                 nemesisRows[i] = row
             end
 
+            row.nemData = nem
             row:SetPoint("TOPLEFT", nemesisScrollChild, "TOPLEFT", 0, currentY)
             currentY = currentY - rowHeight
 

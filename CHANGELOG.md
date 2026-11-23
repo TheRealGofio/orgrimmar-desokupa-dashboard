@@ -1,6 +1,40 @@
-﻿# Changelog - Orgrimmar Desokupa Dashboard (ODD)
+# Changelog - Orgrimmar Desokupa Dashboard (ODD)
 
 Todas las versiones notables y cambios de este proyecto están documentados aquí.
+
+---
+
+## [0.3.6-alpha] - 2026-11-23
+
+### ⚔️ Radar de Proximidad Interactivo con Modelo 3D
+- **Detección Anticipada en Mundo Abierto:** Alerte visual y sonora interactiva al detectar gnomos de la Alianza en placas de nombre, mouseover u objetivo visible.
+- **Modelo 3D y Datos de Combate:** Muestra el modelo animado en 3D del gnomo enemigo, nombre con color de clase de WoW, nivel y distinción especial si es tu Némesis registrada.
+- **Sistema de Colores por Nivel de Dificultad:** El borde de la alerta y el nivel del enemigo se adaptan dinámicamente al sistema oficial de dificultad de WoW (Gris, Verde, Amarillo, Naranja, Rojo).
+- **Targeteo Seguro con Clic Izquierdo:** Macro seguro (`/cleartarget`, `/targetexact`) con soporte para nombres y apellidos completos de WoW Forever, libre de errores de taint y sin interferencias de ratón.
+- **Voz Nativa de Gnomo:** Reproducción de la voz nativa de gnomo de WoW (`SOUNDKIT.GNOME_MALE_AGGRO`) y alerta de banda (`SOUNDKIT.RAID_WARNING`) a través del canal Master.
+- **Comandos de Prueba In-Game:** Pruebas directas con `/odd radar` y `/odd sound [radar|kill|achieve]`.
+
+### 🛡️ HUD Flotante Panorámico Horda (Alta Definición)
+- **Textura HD Dedicada:** Marco de hierro forjado, remaches y blasones de Orgrimmar adaptado a proporción panorámica en alta definición.
+- **Diseño Limpio y Ajustado:** Fondo oscuro central sin solapamiento de tela roja con estadísticas bien alineadas:
+  - Bajas de hoy (verde) y de la semana (naranja).
+  - Bajas personales acumuladas (dorado) y bajas totales de hermandad (cian).
+- **Arrastre y Posición Persistente:** Mueve el HUD con clic izquierdo a cualquier parte de la pantalla; la posición se guarda automáticamente. Clic derecho abre el dashboard principal.
+
+### 🗺️ Mapa de Zonas Calientes (Heatmap de Desalojo)
+- **Top Áreas de Operación en el Gnomómetro:** Nueva sección interactiva en la pestaña Gnomómetro con barras visuales térmicas y porcentajes de las 4 zonas con mayor actividad de desalojo.
+- **Agregación P2P:** Sincroniza las zonas con más bajas entre los compañeros de hermandad para reflejar el mapa colectivo de caza en vivo.
+
+### 💬 Compartir Logros y Némesis por Chat (Shift + Clic)
+- **Integración con el Chat:** `Shift + Clic` sobre cualquier logro en la pestaña Medallas o sobre una ficha de Némesis en la pestaña PvP pega automáticamente el progreso formateado en la ventana de chat activa para compartirlo con la hermandad o grupo.
+- **Apertura Inteligente:** Si no tenías la caja de chat abierta, el addon la activa e inserta el enlace automáticamente.
+
+### 📜 Títulos Honoríficos y Fichas en el Roster
+- **Títulos Cómicos de Hermandad:** Asignación automática de títulos honoríficos en la pestaña Miembros según las bajas y medallas conseguidas:
+  - *«El Fumigador Jefe»* (Líder en bajas de la hermandad).
+  - *«Inspector de Desokupaciones»* (Líder en puntos de logro).
+  - *«Azote de Manitas»*, *«Desalojador Élite»*, *«Cazarratas»*, *«Desokupador Novato»*, *«Coleccionista de Medallas»* y *«Aspirante»*.
+- **Tooltips Enriquecidos:** Al pasar el ratón por los miembros de la hermandad, se despliega una tarjeta emergente completa con su nivel, clase, rol, bajas verificadas, puntos de medallas y estado.
 
 ---
 

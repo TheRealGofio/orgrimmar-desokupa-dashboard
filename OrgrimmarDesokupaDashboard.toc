@@ -1,8 +1,8 @@
-﻿## Interface: 16001
+## Interface: 16001
 ## Title: Orgrimmar Desokupa Dashboard (ODD)
 ## Notes: Dashboard y analiticas para hermandades de la Horda en WoW Forever.
 ## Author: Orgrimmar Desokupa Team
-## Version: 0.3.5-alpha
+## Version: 0.3.6-alpha
 ## SavedVariables: ODDDB
 ## SavedVariablesPerCharacter: ODDCharacterDB
 
@@ -30,6 +30,7 @@ Guild\Profiles.lua
 Guild\Roster.lua
 
 # Gnomometro Fase 3
+Gnomes\Radar.lua
 Gnomes\Tracker.lua
 Achievements\Rankings.lua
 Achievements\Medals.lua

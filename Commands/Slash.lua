@@ -32,6 +32,26 @@ SlashCmdList["ODD"] = function(msg)
             if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then ODD.UI.PvPTab:Refresh() end
             if ODD.UI.WorkshopsTab and ODD.UI.WorkshopsTab.Refresh then ODD.UI.WorkshopsTab:Refresh() end
             if ODD.UI.HQTab and ODD.UI.HQTab.RefreshMedals then ODD.UI.HQTab:RefreshMedals() end
+        elseif cmd == "radar" or cmd == "testradar" then
+            ODD:Log("Disparando prueba de alerta de radar...")
+            if ODD.Gnomes and ODD.Gnomes.Radar and ODD.Gnomes.Radar.TriggerAlert then
+                local testName = (arg and arg ~= "") and arg or "Argemus"
+                ODD.Gnomes.Radar:TriggerAlert("Player-Test-01", testName, "PRIEST", 37, "target")
+            end
+        elseif cmd == "sound" or cmd == "sonido" then
+            if arg == "kill" then
+                ODD:Log("Reproduciendo sonido de Kill...")
+                if ODD.Audio and ODD.Audio.PlayKillSound then ODD.Audio:PlayKillSound() end
+            elseif arg == "achieve" or arg == "logro" then
+                ODD:Log("Reproduciendo sonido de Logro...")
+                if ODD.Audio and ODD.Audio.PlayAchievementSound then ODD.Audio:PlayAchievementSound() end
+            elseif arg == "radar" or arg == "gnomo" then
+                ODD:Log("Reproduciendo sonido de Alerta de Gnomo (Radar)...")
+                if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound() end
+            else
+                ODD:Log("Comandos de sonido: /odd sound kill | /odd sound achieve | /odd sound radar")
+                if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound() end
+            end
         elseif cmd == "status" then
             ODD:Log("=== Estado de ODD (%s) ===", ODD.version)
             local caps = ODD.Capabilities:GetAll()

@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -94,15 +94,16 @@ function SettingsTab:Create(parent)
     CreateCheck("Compartir recetas y profesiones conocidas", "shareTrades", -216)
     CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -244)
     CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -272)
+    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -300)
 
     -- ========================================================
     -- BLOQUE 3: HUD FLOTANTE EN PANTALLA (ESTILO GRS)
     -- ========================================================
-    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -304)
+    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -332)
 
     local hudToggleBtn = CreateFrame("Button", "ODD_HUDToggleSettingsBtn", frame)
     hudToggleBtn:SetSize(160, 26)
-    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -332)
+    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -360)
     local hBg = hudToggleBtn:CreateTexture(nil, "BACKGROUND")
     hBg:SetAllPoints()
     hBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)
