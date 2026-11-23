@@ -72,6 +72,10 @@ function Dashboard:Create()
     mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
     mainFrame:Hide()
 
+    -- Registrar la ventana en el gestor nativo de ESC de World of Warcraft
+    _G["ODD_MainDashboardFrame"] = mainFrame
+    table.insert(UISpecialFrames, "ODD_MainDashboardFrame")
+
     -- Título de la ventana
     mainFrame.TitleBg:SetHeight(30)
     mainFrame.title = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
