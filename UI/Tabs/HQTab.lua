@@ -271,7 +271,7 @@ function HQTab:Create(parent)
     -- DETALLES ADICIONALES Y CONTRIBUCIÓN
     -- ========================================================
     local bottomBox = CreateFrame("Frame", nil, frame)
-    bottomBox:SetSize(760, 190)
+    bottomBox:SetSize(760, 140)
     bottomBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -228)
     local bBg = bottomBox:CreateTexture(nil, "BACKGROUND")
     bBg:SetAllPoints(bottomBox)

@@ -161,7 +161,7 @@ function GnomometerTab:Create(parent)
     colScore:SetText("Bajas")
 
     local scrollFrame = CreateFrame("ScrollFrame", "ODD_GnomeLeaderboardScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 310)
+    scrollFrame:SetSize(760, 240)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
 
     scrollChild = CreateFrame("Frame", nil, scrollFrame)
