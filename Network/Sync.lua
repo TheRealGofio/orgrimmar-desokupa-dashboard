@@ -185,6 +185,9 @@ function Sync:OnMessageReceived(text, channel, sender)
             ODD:Debug("Compañero con ODD detectado: %s (v%s)", senderName, tostring(data.ver))
             
             -- Actualizar en la UI si está abierta
+            if ODD.UI.HQTab and ODD.UI.HQTab.RefreshStats then
+                ODD.UI.HQTab:RefreshStats()
+            end
             if ODD.UI.HQTab and ODD.UI.HQTab.RefreshPresence then
                 ODD.UI.HQTab:RefreshPresence()
             end
