@@ -10,6 +10,10 @@ SlashCmdList["ODD"] = function(msg)
 
         if cmd == "" or cmd == "show" or cmd == "toggle" then
             ODD.UI:Toggle()
+        elseif cmd == "hud" then
+            if ODD.UI and ODD.UI.HUD then
+                ODD.UI.HUD:Toggle()
+            end
         elseif cmd == "sync" then
             if ODD.Network and ODD.Network.Sync then
                 ODD.Network.Sync:TriggerManualSync()

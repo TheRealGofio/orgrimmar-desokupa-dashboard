@@ -56,10 +56,14 @@ function MinimapBtn:Initialize()
     -- Posicionar alrededor del minimapa
     UpdatePosition(currentAngle)
 
-    -- Clic para abrir / cerrar el Dashboard
+    -- Clic para abrir / cerrar el Dashboard o alternar HUD con clic derecho
     button:SetScript("OnClick", function(self, btn)
         if btn == "LeftButton" then
             ODD.UI:Toggle()
+        elseif btn == "RightButton" then
+            if ODD.UI and ODD.UI.HUD then
+                ODD.UI.HUD:Toggle()
+            end
         end
     end)
 
@@ -68,6 +72,7 @@ function MinimapBtn:Initialize()
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine("|cFFFF8000Orgrimmar Desokupa Dashboard|r", 1, 1, 1)
         GameTooltip:AddLine("Clic izquierdo: Abrir / Cerrar panel", 0.2, 1, 0.2)
+        GameTooltip:AddLine("Clic derecho: Mostrar / Ocultar HUD compacto", 1, 0.8, 0)
         GameTooltip:AddLine("Arrastrar: Mover alrededor del minimapa", 0.8, 0.8, 0.8)
 
         local charDB = ODD.Database:GetChar()

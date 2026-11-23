@@ -160,6 +160,9 @@ function ODD.UI:Initialize()
     if ODD.UI.MinimapBtn and ODD.UI.MinimapBtn.Initialize then
         ODD.UI.MinimapBtn:Initialize()
     end
+    if ODD.UI.HUD and ODD.Database:GetSetting("showHUD") then
+        ODD.UI.HUD:SetShown(true)
+    end
 end
 
 function ODD.UI:Toggle()

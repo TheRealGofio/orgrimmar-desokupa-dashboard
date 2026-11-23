@@ -2,7 +2,7 @@
 ## Title: Orgrimmar Desokupa Dashboard (ODD)
 ## Notes: Dashboard y analiticas para hermandades de la Horda en WoW Forever.
 ## Author: Orgrimmar Desokupa Team
-## Version: 0.2.0-alpha
+## Version: 0.2.5-alpha
 ## SavedVariables: ODDDB
 ## SavedVariablesPerCharacter: ODDCharacterDB
 
@@ -49,6 +49,7 @@ Network\Sync.lua
 # Comandos e Interfaz
 UI\Toast.lua
 UI\Components.lua
+UI\HUD.lua
 UI\Minimap.lua
 UI\Tabs\HQTab.lua
 UI\Tabs\GnomometerTab.lua

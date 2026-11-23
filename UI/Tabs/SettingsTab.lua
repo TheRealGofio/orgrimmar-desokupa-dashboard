@@ -107,6 +107,45 @@ function SettingsTab:Create(parent)
     CreateCheck("Compartir recetas y profesiones conocidas", "shareTrades", -216)
     CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -244)
 
+    -- ========================================================
+    -- BLOQUE 3: HUD FLOTANTE EN PANTALLA (ESTILO GRS)
+    -- ========================================================
+    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -278)
+
+    local hudToggleBtn = CreateFrame("Button", "ODD_HUDToggleSettingsBtn", frame)
+    hudToggleBtn:SetSize(160, 26)
+    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -308)
+    local hBg = hudToggleBtn:CreateTexture(nil, "BACKGROUND")
+    hBg:SetAllPoints()
+    hBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)
+    hudToggleBtn.bg = hBg
+
+    local hFs = hudToggleBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    hFs:SetPoint("CENTER", hudToggleBtn, "CENTER", 0, 0)
+    hudToggleBtn.fs = hFs
+
+    local function UpdateHUDButtonDisplay()
+        local isEnabled = ODD.Database:GetSetting("showHUD") == true
+        if isEnabled then
+            hudToggleBtn.bg:SetColorTexture(0.1, 0.35, 0.1, 0.9)
+            hudToggleBtn.fs:SetText("HUD: |cFF00FF00ACTIVADO|r")
+        else
+            hudToggleBtn.bg:SetColorTexture(0.3, 0.1, 0.1, 0.9)
+            hudToggleBtn.fs:SetText("HUD: |cFFFF0000DESACTIVADO|r")
+        end
+    end
+
+    hudToggleBtn:SetScript("OnClick", function()
+        if ODD.UI and ODD.UI.HUD then
+            ODD.UI.HUD:Toggle()
+            UpdateHUDButtonDisplay()
+        end
+    end)
+
+    local hudDesc = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    hudDesc:SetPoint("LEFT", hudToggleBtn, "RIGHT", 14, 0)
+    hudDesc:SetText("Muestra una tarjeta compacta y arrastrable con las bajas de hoy, semana y hermandad.")
+
     local function RefreshSettings()
         local profile = ODD.Guild.Profiles:GetLocalProfile()
         if mainEditBox then
@@ -118,6 +157,7 @@ function SettingsTab:Create(parent)
             local currentVal = ODD.Database:GetSetting(btn.settingKey)
             btn:SetChecked(currentVal == true)
         end
+        UpdateHUDButtonDisplay()
     end
 
     frame:SetScript("OnShow", RefreshSettings)

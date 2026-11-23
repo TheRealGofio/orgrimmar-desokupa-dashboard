@@ -368,6 +368,11 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then
         ODD.UI.GnomometerTab:Refresh()
     end
+
+    -- Refrescar HUD flotante compacto en pantalla si está activo
+    if ODD.UI.HUD and ODD.UI.HUD.Refresh then
+        ODD.UI.HUD:Refresh()
+    end
 end
 
 -- Envía el mensaje de exterminio al chat de hermandad
