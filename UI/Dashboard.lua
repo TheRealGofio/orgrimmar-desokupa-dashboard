@@ -31,10 +31,10 @@ local function SwitchTab(tabIndex)
     end
     for i, btn in ipairs(tabButtons) do
         if i == tabIndex then
-            btn.bg:SetColorTexture(0.5, 0.1, 0.1, 0.9) -- Rojo Horda activo
+            btn.bg:SetColorTexture(0.5, 0.1, 0.1, 0.95) -- Rojo Horda activo
             btn.fs:SetTextColor(1, 1, 1, 1)
         else
-            btn.bg:SetColorTexture(0.18, 0.18, 0.18, 0.8) -- Inactivo
+            btn.bg:SetColorTexture(0.12, 0.12, 0.12, 0.85) -- Inactivo negro carbón
             btn.fs:SetTextColor(0.8, 0.8, 0.8, 1)
         end
     end
@@ -60,8 +60,9 @@ end
 function Dashboard:Create()
     if mainFrame then return mainFrame end
 
-    mainFrame = CreateFrame("Frame", "ODD_MainDashboardFrame", UIParent, "BasicFrameTemplateWithInset")
-    mainFrame:SetSize(820, 520)
+    -- Ventana principal sin plantilla metálica gris para mimetizar totalmente con el fondo negro de frame_4
+    mainFrame = CreateFrame("Frame", "ODD_MainDashboardFrame", UIParent)
+    mainFrame:SetSize(830, 520)
     mainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     mainFrame:SetFrameStrata("HIGH")
     mainFrame:SetToplevel(true)
@@ -72,37 +73,51 @@ function Dashboard:Create()
     mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
     mainFrame:Hide()
 
+    -- Fondo negro sólido nativo (mimetizado con el fondo negro de frame_4)
+    local solidBlackBg = mainFrame:CreateTexture(nil, "BACKGROUND", nil, -8)
+    solidBlackBg:SetAllPoints(mainFrame)
+    solidBlackBg:SetColorTexture(0, 0, 0, 1)
+    mainFrame.solidBlackBg = solidBlackBg
+
     -- Registrar la ventana en el gestor nativo de ESC de World of Warcraft
     _G["ODD_MainDashboardFrame"] = mainFrame
     table.insert(UISpecialFrames, "ODD_MainDashboardFrame")
 
-    -- Ocultar la barra gris de Blizzard y título por defecto para que luzca el letrero 'Orgrimmar Desokupa'
-    if mainFrame.TitleBg then mainFrame.TitleBg:Hide() end
-    if mainFrame.title then mainFrame.title:Hide() end
-    if mainFrame.CloseButton then
-        mainFrame.CloseButton:SetFrameLevel(mainFrame:GetFrameLevel() + 25)
-        mainFrame.CloseButton:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -26, -55)
-    end
+    -- Botón de cierre elegante estilo Horda
+    local closeBtn = CreateFrame("Button", "ODD_MainCloseBtn", mainFrame, "UIPanelCloseButton")
+    closeBtn:SetSize(32, 32)
+    closeBtn:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -20, -56)
+    closeBtn:SetFrameLevel(mainFrame:GetFrameLevel() + 25)
+    closeBtn:SetScript("OnClick", function()
+        mainFrame:Hide()
+    end)
+    mainFrame.CloseButton = closeBtn
 
-    -- Contenedor interior de pestañas (encuadrado dentro de la ventana útil de frame_3)
+    -- Contenedor interior de pestañas perfectamente encuadrado dentro del fondo negro de frame_4
     local contentFrame = CreateFrame("Frame", "ODD_DashboardContentFrame", mainFrame)
-    contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 30, -68)
-    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -30, 68)
+    contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 32, -72)
+    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -32, 72)
     Dashboard:EnableFrameDrag(contentFrame)
 
-    -- Generar botones de pestañas (ancho ajustado a 104px para albergar 7 pestañas limpiamente)
+    -- Generar botones de pestañas (ancho 105px para albergar las 7 pestañas)
     local prevBtn = nil
     for i, def in ipairs(TAB_DEFS) do
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
-        btn:SetSize(104, 26)
+        btn:SetSize(105, 26)
         btn:SetFrameLevel(mainFrame:GetFrameLevel() + 20)
         
-        -- Textura de fondo nativa
+        -- Textura de fondo mimetizada
         local bg = btn:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(btn)
-        bg:SetColorTexture(0.2, 0.2, 0.2, 0.85)
+        bg:SetColorTexture(0.12, 0.12, 0.12, 0.85)
         btn.bg = bg
+
+        -- Borde sutil
+        local border = btn:CreateTexture(nil, "BORDER")
+        border:SetPoint("TOPLEFT", btn, "TOPLEFT", 0, 0)
+        border:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 0, 0)
+        border:SetColorTexture(0.3, 0.1, 0.1, 0.6)
 
         -- Texto
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -111,7 +126,7 @@ function Dashboard:Create()
         btn.fs = fs
 
         if i == 1 then
-            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 44, 38)
+            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 44, 40)
         else
             btn:SetPoint("LEFT", prevBtn, "RIGHT", 3, 0)
         end
@@ -131,26 +146,27 @@ function Dashboard:Create()
     end
 
     -- ========================================================
-    -- MARCO TEMÁTICO ORNAMENTAL HORDA / ORGRIMMAR (FONDO ARRASTRABLE + OVERLAY VISUAL)
+    -- MARCO TEMÁTICO ORNAMENTAL HORDA (frame_4.png: 1600x1600)
     -- ========================================================
-    -- Frame que abarca todo el tamaño de la imagen exterior (incluyendo los salientes de 118px y 285px)
-    -- Permite agarrar y arrastrar la ventana pinchando directamente en cualquier parte de la ilustración exterior
+    -- Salientes calculados con precisión para encajar el viewport negro interior
+    -- Ancho ventana útil: 830px -> Escala frame: 1.177 -> Ancho total: ~1176px (saliente lateral: 173px)
+    -- Alto ventana útil: 520px -> Alto total: ~1176px (saliente superior: 340px, inferior: 316px)
     local artDragFrame = CreateFrame("Frame", "ODD_ArtDragFrame", mainFrame)
-    artDragFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
-    artDragFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
+    artDragFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -173, 340)
+    artDragFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 173, -316)
     artDragFrame:SetFrameLevel(mainFrame:GetFrameLevel() - 1)
     Dashboard:EnableFrameDrag(artDragFrame)
 
-    -- Capa visual superior para que la textura pinte por ENCIMA de los bordes metálicos de la ventana
+    -- Capa superior que dibuja el marco ornamental de madera, calaveras y pinchos
     local hordeOverlay = CreateFrame("Frame", "ODD_HordeFrameOverlay", mainFrame)
     hordeOverlay:SetAllPoints(mainFrame)
     hordeOverlay:SetFrameLevel(mainFrame:GetFrameLevel() + 15)
-    hordeOverlay:EnableMouse(false) -- No bloquea los botones y controles interiores
+    hordeOverlay:EnableMouse(false)
 
     local hordeFrameTex = hordeOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
-    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_3.png")
-    hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
-    hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
+    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_4.png")
+    hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -173, 340)
+    hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 173, -316)
     mainFrame.hordeFrameTex = hordeFrameTex
 
     SwitchTab(1)
