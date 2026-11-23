@@ -94,19 +94,19 @@ function Dashboard:Create()
     mainFrame.CloseButton = closeBtn
 
     -- Contenedor interior de pestañas perfectamente encuadrado dentro del fondo negro de frame_4
-    -- Subido otros 54px (TOPLEFT a +36) y ampliado el ancho (márgenes laterales reducidos a 14px)
+    -- Pestañas subidas al interior del lienzo negro (BOTTOMLEFT a 70px)
     local contentFrame = CreateFrame("Frame", "ODD_DashboardContentFrame", mainFrame)
     contentFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 14, 36)
-    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -14, 75)
+    contentFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -14, 102)
     contentFrame:SetFrameLevel(mainFrame:GetFrameLevel() + 2)
     Dashboard:EnableFrameDrag(contentFrame)
 
-    -- Generar botones de pestañas (ancho ampliado a 110px para abarcar mejor el ancho útil)
+    -- Generar botones de pestañas (ancho ajustado a 104px para quedar holgadamente entre los postes verticales)
     local prevBtn = nil
     for i, def in ipairs(TAB_DEFS) do
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
-        btn:SetSize(110, 26)
+        btn:SetSize(104, 26)
         btn:SetFrameLevel(mainFrame:GetFrameLevel() + 10)
         
         -- Textura de fondo mimetizada
@@ -128,9 +128,9 @@ function Dashboard:Create()
         btn.fs = fs
 
         if i == 1 then
-            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 28, 42)
+            btn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 50, 70)
         else
-            btn:SetPoint("LEFT", prevBtn, "RIGHT", 4, 0)
+            btn:SetPoint("LEFT", prevBtn, "RIGHT", 3, 0)
         end
 
         btn:SetScript("OnClick", function(self)
