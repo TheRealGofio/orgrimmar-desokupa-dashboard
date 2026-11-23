@@ -146,7 +146,7 @@ function Dashboard:Create()
     hordeOverlay:EnableMouse(false) -- No bloquea los botones y controles interiores
 
     local hordeFrameTex = hordeOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
-    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_horde.png")
+    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_3.png")
     hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -118, 285)
     hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 118, -205)
     mainFrame.hordeFrameTex = hordeFrameTex
