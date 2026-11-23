@@ -152,9 +152,29 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
     -- 2. Intento por GetPlayerInfoByGUID (API nativa de Blizzard para resolver raza por GUID de jugador)
     if unitGUID and type(GetPlayerInfoByGUID) == "function" and not ODD.API.Forever:IsSecret(unitGUID) then
         local ok, _, classFilename, localizedRace, englishRace, sex, name, realm = pcall(GetPlayerInfoByGUID, unitGUID)
-        if ok and englishRace then
-            local isGnome = (englishRace:lower() == "gnome" or (localizedRace and localizedRace:lower():find("gnom")))
-            return isGnome, englishRace, name, classFilename, nil
+        if ok and (englishRace or localizedRace) then
+            local isGnome = false
+            if englishRace and type(englishRace) == "string" and englishRace:lower():find("gnome") then
+                isGnome = true
+            elseif localizedRace and type(localizedRace) == "string" and localizedRace:lower():find("gnom") then
+                isGnome = true
+            end
+            if isGnome then
+                return true, englishRace or "Gnome", name, classFilename, nil
+            end
+        end
+        -- Variante con doble descarte si el retorno es (localizedRace, englishRace)
+        local ok2, _, _, locRace2, engRace2, _, name2, realm2 = pcall(GetPlayerInfoByGUID, unitGUID)
+        if ok2 and (engRace2 or locRace2) then
+            local isGnome2 = false
+            if engRace2 and type(engRace2) == "string" and engRace2:lower():find("gnome") then
+                isGnome2 = true
+            elseif locRace2 and type(locRace2) == "string" and locRace2:lower():find("gnom") then
+                isGnome2 = true
+            end
+            if isGnome2 then
+                return true, engRace2 or "Gnome", name2, nil, nil
+            end
         end
     end
 
@@ -207,7 +227,6 @@ end
 function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
     -- Protección contra 'secret values' en el motor moderno de WoW Forever
     if ODD.API.Forever:IsSecret(attackerGUID) or ODD.API.Forever:IsSecret(targetGUID) then
-        ODD:Debug("Kill descartada: valores clasificados como secretos por el cliente.")
         return
     end
 
@@ -224,7 +243,7 @@ function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
 
     -- Si no vino attackerGUID (o vino masked), pero es una muerte directa observada sobre el target al que el jugador estaba pegando solo:
     if not isAuthorized and isDirectKill then
-        if UnitGUID("target") == targetGUID and UnitCanAttack("player", "target") then
+        if UnitGUID("target") == targetGUID then
             isAuthorized = true
         end
     end
@@ -433,7 +452,7 @@ function Tracker:Initialize()
     -- Observador en tiempo real por salud de objetivo (método GRS para bajas en solitario y tótems/DoTs)
     ODD.Events:Register("UNIT_HEALTH", function(event, unit)
         if unit ~= "target" then return end
-        if not UnitExists("target") or not UnitCanAttack("player", "target") then return end
+        if not UnitExists("target") then return end
 
         local guid = UnitGUID("target")
         if not guid or ODD.API.Forever:IsSecret(guid) then return end

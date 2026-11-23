@@ -4,6 +4,12 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.8-alpha] - 2026-11-23
+
+### ⚔️ Detección Directa de Bajas y Descarte de UnitCanAttack
+- **Eliminación del bloqueo de `UnitCanAttack` tras la muerte:** En el momento exacto en que un jugador muere en WoW, `UnitCanAttack("player", "target")` pasa a devolver `false` porque un cadáver no es atacable. Esto provocaba que tanto `UNIT_HEALTH` como la comprobación de autoría en solitario descartaran la baja justo al producirse la muerte.
+- **Doble resolución en `GetPlayerInfoByGUID`:** Soportada la estructura variante de retorno de `GetPlayerInfoByGUID` para asegurar que razas localizadas ("Gnomo") y en inglés ("Gnome") se validen siempre.
+
 ## [0.1.7-alpha] - 2026-11-23
 
 ### 🛡️ Protección de Motor contra Valores Secretos (Secret Values Taint)
