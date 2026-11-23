@@ -64,41 +64,43 @@ function Tracker:CheckTargetAuras()
 
     -- Inspeccionar auras del gnomo de forma compatible con la API moderna/Forever
     -- En WoW moderno (10.x/11.x/12.x/Forever), UnitAura clásica está retirada a favor de C_UnitAuras
-    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-        for i = 1, 40 do
-            local aura = C_UnitAuras.GetAuraDataByIndex("target", i, "HELPFUL")
-            if not aura then break end
-            local lowerName = (aura.name or ""):lower()
+    pcall(function()
+        if C_UnitAuras and type(C_UnitAuras.GetAuraDataByIndex) == "function" then
+            for i = 1, 40 do
+                local aura = C_UnitAuras.GetAuraDataByIndex("target", i, "HELPFUL")
+                if not aura then break end
+                local lowerName = (aura.name or ""):lower()
 
-            if lowerName:find("beber") or lowerName:find("drink") 
-               or lowerName:find("comer") or lowerName:find("food") 
-               or lowerName:find("restauraci") or lowerName:find("refreshment") then
-                wasEating = true
+                if lowerName:find("beber") or lowerName:find("drink") 
+                   or lowerName:find("comer") or lowerName:find("food") 
+                   or lowerName:find("restauraci") or lowerName:find("refreshment") then
+                    wasEating = true
+                end
+
+                if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+                   or lowerName:find("zancudo") or lowerName:find("strider") then
+                    wasMounted = true
+                end
             end
+        elseif type(_G["UnitAura"]) == "function" then
+            for i = 1, 40 do
+                local name = _G["UnitAura"]("target", i, "HELPFUL")
+                if not name then break end
+                local lowerName = name:lower()
 
-            if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
-               or lowerName:find("zancudo") or lowerName:find("strider") then
-                wasMounted = true
+                if lowerName:find("beber") or lowerName:find("drink") 
+                   or lowerName:find("comer") or lowerName:find("food") 
+                   or lowerName:find("restauraci") or lowerName:find("refreshment") then
+                    wasEating = true
+                end
+
+                if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
+                   or lowerName:find("zancudo") or lowerName:find("strider") then
+                    wasMounted = true
+                end
             end
         end
-    elseif _G["UnitAura"] then
-        for i = 1, 40 do
-            local name = _G["UnitAura"]("target", i, "HELPFUL")
-            if not name then break end
-            local lowerName = name:lower()
-
-            if lowerName:find("beber") or lowerName:find("drink") 
-               or lowerName:find("comer") or lowerName:find("food") 
-               or lowerName:find("restauraci") or lowerName:find("refreshment") then
-                wasEating = true
-            end
-
-            if lowerName:find("mecazancudo") or lowerName:find("mechanostrider") 
-               or lowerName:find("zancudo") or lowerName:find("strider") then
-                wasMounted = true
-            end
-        end
-    end
+    end)
 
     if wasEating or wasMounted then
         combatAuraCache[guid] = {
@@ -148,28 +150,68 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
     return false, "UNVERIFIED", nil, nil, nil
 end
 
+-- Comprueba si el atacante es el jugador local o una mascota/tótem propia
+function Tracker:IsPlayerOrPet(attackerGUID)
+    local playerGUID = UnitGUID("player")
+    if not playerGUID then return false end
+
+    -- Coincidencia directa con el GUID del jugador
+    if attackerGUID == playerGUID then
+        return true
+    end
+
+    -- Comprobación por mascota activa
+    local petGUID = UnitGUID("pet")
+    if petGUID and attackerGUID == petGUID then
+        return true
+    end
+
+    -- Comprobación por token nativo (WoW resuelve tótems/mascotas/guardianes asociados al player)
+    if type(UnitTokenFromGUID) == "function" and attackerGUID then
+        local ok, token = pcall(UnitTokenFromGUID, attackerGUID)
+        if ok and token then
+            if token == "player" or token == "pet" then
+                return true
+            end
+            if type(UnitIsUnit) == "function" then
+                if UnitIsUnit(token, "player") or UnitIsUnit(token, "pet") then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
 -- Procesa un killing blow con verificación estricta de autoría y raza
-function Tracker:OnKillEvent(attackerGUID, targetGUID)
+function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
     -- Protección contra 'secret values' en el motor moderno de WoW Forever
     if ODD.API.Forever:IsSecret(attackerGUID) or ODD.API.Forever:IsSecret(targetGUID) then
-        ODD:Debug("PARTY_KILL descartado: valores clasificados como secretos por el cliente.")
+        ODD:Debug("Kill descartada: valores clasificados como secretos por el cliente.")
         return
     end
 
     local playerGUID = UnitGUID("player")
-    if not playerGUID or not targetGUID or not attackerGUID then return end
+    if not playerGUID or not targetGUID then return end
     if ODD.API.Forever:IsSecret(playerGUID) then return end
 
-    -- Comprobación segura de igualdad entre cadenas sin taint de secret
-    local isPlayerAttacker = false
-    local okComp, match = pcall(function() return attackerGUID == playerGUID end)
-    if okComp and match then
-        isPlayerAttacker = true
+    -- 1. Regla de Autoría:
+    -- Si tenemos attackerGUID, comprobamos si es el jugador, su mascota o sus tótems
+    local isAuthorized = false
+    if attackerGUID then
+        isAuthorized = self:IsPlayerOrPet(attackerGUID)
     end
 
-    -- 1. Regla: Solo cuenta si el atacante directo es el propio jugador
-    if not isPlayerAttacker then
-        -- Descartado: kill de otro miembro del grupo o de terceros
+    -- Si no vino attackerGUID (o vino masked), pero es una muerte directa observada sobre el target al que el jugador estaba pegando solo:
+    if not isAuthorized and isDirectKill then
+        if UnitGUID("target") == targetGUID and UnitCanAttack("player", "target") then
+            isAuthorized = true
+        end
+    end
+
+    if not isAuthorized then
+        -- Descartado: kill de otro jugador o de terceros
         return
     end
 
@@ -357,15 +399,22 @@ function Tracker:Initialize()
         if not targetGUID and UnitGUID("target") then
             targetGUID = UnitGUID("target")
         end
-        Tracker:OnKillEvent(attackerGUID, targetGUID)
+        Tracker:OnKillEvent(attackerGUID, targetGUID, false)
     end)
 
-    -- Fallback: Detección por muerte de objetivo si PARTY_KILL se pierde
-    ODD.Events:Register("UNIT_DIED", function(event, unitTarget)
-        if unitTarget and UnitGUID(unitTarget) then
-            Tracker:OnKillEvent(UnitGUID("player"), UnitGUID(unitTarget))
+    -- Observador en tiempo real por salud de objetivo (método GRS para bajas en solitario y tótems/DoTs)
+    ODD.Events:Register("UNIT_HEALTH", function(event, unit)
+        if unit == "target" and UnitExists("target") and UnitCanAttack("player", "target") then
+            local hp = UnitHealth("target")
+            local isDead = UnitIsDead("target")
+            if (hp ~= nil and hp <= 0) or isDead then
+                local guid = UnitGUID("target")
+                if guid then
+                    Tracker:OnKillEvent(UnitGUID("player"), guid, true)
+                end
+            end
         end
     end)
 
-    ODD:Debug("Módulo Gnomómetro inicializado escuchando PARTY_KILL, placas y GetPlayerInfoByGUID.")
+    ODD:Debug("Módulo Gnomómetro inicializado escuchando PARTY_KILL, UNIT_HEALTH, placas y GetPlayerInfoByGUID.")
 end

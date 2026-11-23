@@ -4,6 +4,13 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
+## [0.1.6-alpha] - 2026-11-23
+
+### ⚔️ Detección en Solitario, Mascotas y Tótems
+- **Atribución Universal de Bajas:** Detecta kills tanto en solitario como en grupo. Añadido soporte para mascotas, tótems (Chamanes) y guardianes mediante `UnitTokenFromGUID` y `UnitGUID("pet")`.
+- **Detección por `UNIT_HEALTH`:** Añadido observador en tiempo real de salud cero y muerte sobre el objetivo (`UnitHealth("target") <= 0` o `UnitIsDead("target")`), asegurando que las muertes por DoTs o golpes finales en solitario se registren inmediatamente aunque `PARTY_KILL` tarde o no despache payload.
+- **Blindaje de Inspección de Auras:** Envuelto el escaneo de auras en `pcall` seguro con comprobaciones de tipo (`type(...) == "function"`) para prevenir errores de lua ante cualquier variación de API del cliente.
+
 ## [0.1.5-alpha] - 2026-11-22
 
 ### 🔍 Detección Infalible de Gnomos (Inspirado en arquitectura GRS)
