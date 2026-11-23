@@ -1,10 +1,10 @@
-# Changelog - Orgrimmar Desokupa Dashboard (ODD)
+﻿# Changelog - Orgrimmar Desokupa Dashboard (ODD)
 
 Todas las versiones notables y cambios de este proyecto están documentados aquí.
 
 ---
 
-## [0.3.6-alpha] - 2026-11-23
+## [0.3.5-alpha] - 2026-11-23
 
 ### 🏆 Sistema de Puntos de Logro
 - **Puntuación por Dificultad:** Se asignan puntos (de 5 a 50 pts) a cada logro y medalla según su complejidad y rareza.
