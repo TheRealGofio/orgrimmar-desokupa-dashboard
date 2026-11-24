@@ -20,8 +20,53 @@ local TAB_DEFS = {
     { name = "Settings", labelKey = "TAB_SETTINGS", creator = function(p) return ODD.UI.SettingsTab:Create(p) end },
 }
 
+local THEME_PALETTES = {
+    classic = {
+        name = "Orco Clásico",
+        tabActive = { 0.52, 0.12, 0.12, 0.95 },   -- Rojo Horda
+        tabBorder = { 0.40, 0.10, 0.10, 0.70 },
+        accentHex = "FFFFD100",                   -- Oro Orgrimmar
+        highlight = { 1.0, 0.82, 0.0 },
+    },
+    molten = {
+        name = "Hierro y Magma",
+        tabActive = { 0.75, 0.22, 0.05, 0.95 },   -- Naranja Magma Ardiente
+        tabBorder = { 0.80, 0.30, 0.05, 0.75 },
+        accentHex = "FFFF4500",                   -- Naranja Fuego
+        highlight = { 1.0, 0.35, 0.0 },
+    },
+    fel = {
+        name = "Añublo Vil",
+        tabActive = { 0.12, 0.48, 0.14, 0.95 },   -- Verde Vil Tóxico
+        tabBorder = { 0.20, 0.65, 0.20, 0.75 },
+        accentHex = "FF00FF66",                   -- Verde Vil brillante
+        highlight = { 0.1, 1.0, 0.3 },
+    },
+    frost = {
+        name = "Hielo Rasganorte",
+        tabActive = { 0.08, 0.32, 0.58, 0.95 },   -- Azul Gélido Cobalto
+        tabBorder = { 0.15, 0.45, 0.75, 0.75 },
+        accentHex = "FF00CCFF",                   -- Cian Escarcha
+        highlight = { 0.2, 0.8, 1.0 },
+    },
+    troll = {
+        name = "Vudú Trol",
+        tabActive = { 0.45, 0.10, 0.55, 0.95 },   -- Púrpura Mojo Vudú
+        tabBorder = { 0.60, 0.15, 0.75, 0.75 },
+        accentHex = "FFBA55D3",                   -- Orquídea / Púrpura Vudú
+        highlight = { 0.8, 0.3, 0.9 },
+    },
+}
+
+function Dashboard:GetActivePalette()
+    local curKey = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
+    return THEME_PALETTES[curKey] or THEME_PALETTES.classic
+end
+
 local function SwitchTab(tabIndex)
     activeTab = tabIndex
+    local palette = Dashboard:GetActivePalette()
+
     for i, f in ipairs(tabFrames) do
         if i == tabIndex then
             f:Show()
@@ -31,11 +76,17 @@ local function SwitchTab(tabIndex)
     end
     for i, btn in ipairs(tabButtons) do
         if i == tabIndex then
-            btn.bg:SetColorTexture(0.5, 0.1, 0.1, 0.95) -- Rojo Horda activo
+            btn.bg:SetColorTexture(palette.tabActive[1], palette.tabActive[2], palette.tabActive[3], palette.tabActive[4])
             btn.fs:SetTextColor(1, 1, 1, 1)
+            if btn.border then
+                btn.border:SetColorTexture(palette.tabBorder[1], palette.tabBorder[2], palette.tabBorder[3], palette.tabBorder[4])
+            end
         else
             btn.bg:SetColorTexture(0.12, 0.12, 0.12, 0.85) -- Inactivo negro carbón
             btn.fs:SetTextColor(0.8, 0.8, 0.8, 1)
+            if btn.border then
+                btn.border:SetColorTexture(0.2, 0.2, 0.2, 0.5)
+            end
         end
     end
 end
@@ -120,6 +171,7 @@ function Dashboard:Create()
         border:SetPoint("TOPLEFT", btn, "TOPLEFT", 0, 0)
         border:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 0, 0)
         border:SetColorTexture(0.3, 0.1, 0.1, 0.6)
+        btn.border = border
 
         -- Texto
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -153,10 +205,41 @@ function Dashboard:Create()
     -- Capa de fondo que dibuja la ilustración completa (marco de madera + fondo negro)
     -- Se ubica en BACKGROUND (subnivel -5) detrás del contentFrame para que los textos y estadísticas se pinten encima
     local hordeFrameTex = mainFrame:CreateTexture(nil, "BACKGROUND", nil, -5)
-    hordeFrameTex:SetTexture("Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_4.png")
+    local activeTheme = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
+    local THEME_TEXTURES = {
+        classic = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_4.png",
+        molten  = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_molten.png",
+        fel     = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_fel.png",
+        frost   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_frost.png",
+        troll   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_troll.png",
+    }
+    local texPath = THEME_TEXTURES[activeTheme] or THEME_TEXTURES.classic
+    hordeFrameTex:SetTexture(texPath)
     hordeFrameTex:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", -173, 340)
     hordeFrameTex:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", 173, -316)
     mainFrame.hordeFrameTex = hordeFrameTex
+
+    -- Función pública para cambiar el tema en tiempo real
+    function Dashboard:SetTheme(themeKey)
+        local path = THEME_TEXTURES[themeKey] or THEME_TEXTURES.classic
+        if hordeFrameTex then
+            hordeFrameTex:SetTexture(path)
+        end
+        if ODD.Database then
+            ODD.Database:SetSetting("theme", themeKey)
+        end
+        local palette = Dashboard:GetActivePalette()
+        -- 1. Actualizar de inmediato las cabeceras de todas las pestañas
+        if ODD.UI and ODD.UI.Components and ODD.UI.Components.UpdateHeadersTheme then
+            ODD.UI.Components:UpdateHeadersTheme(palette)
+        end
+        -- 2. Refrescar inmediatamente el estilo cromático de los botones de pestañas
+        SwitchTab(activeTab)
+        -- 3. Refrescar la pestaña actual si tiene elementos temáticos
+        if tabFrames[activeTab] and tabFrames[activeTab].Refresh then
+            tabFrames[activeTab]:Refresh()
+        end
+    end
 
     -- Frame interactivo que abarca todo el tamaño exterior de la imagen para permitir arrastre desde la madera
     local artDragFrame = CreateFrame("Frame", "ODD_ArtDragFrame", mainFrame)

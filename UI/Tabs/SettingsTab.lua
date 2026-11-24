@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -17,9 +17,9 @@ function SettingsTab:Create(parent)
     ODD.UI.Components:CreateSectionHeader(frame, L["TAB_SETTINGS"] .. " - Configuracion y Perfil", -12)
 
     -- ========================================================
-    -- BLOQUE 1: ROL PREFERIDO EN HERMANDAD
+    -- BLOQUE 1: ROL PREFERIDO Y TEMA DEL MARCO
     -- ========================================================
-    local profileHeader = ODD.UI.Components:CreateSectionHeader(frame, "Rol en Hermandad:", -38)
+    local profileHeader = ODD.UI.Components:CreateSectionHeader(frame, "Personalización y Rol:", -38)
 
     local roleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     roleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -66)
@@ -49,6 +49,60 @@ function SettingsTab:Create(parent)
         ODD.Guild.Profiles:SetCustomRole(newRole)
         UpdateRoleDisplay()
         ODD:Log("Rol declarado actualizado a: %s", newRole)
+    end)
+
+    -- Selector de Tema Visual del Marco
+    local themeLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    themeLabel:SetPoint("LEFT", roleBtn, "RIGHT", 28, 0)
+    themeLabel:SetText("Tema del Marco:")
+
+    local themeOptions = {
+        { key = "classic", name = "Orco Clásico",   color = "FFFFD100" },
+        { key = "molten",  name = "Hierro y Magma",  color = "FFFF4000" },
+        { key = "fel",     name = "Añublo Vil",      color = "FF00FF00" },
+        { key = "frost",   name = "Hielo Rasganorte",color = "FF00CCFF" },
+        { key = "troll",   name = "Vudú Trol",       color = "FFAA44FF" },
+    }
+
+    local themeBtn = CreateFrame("Button", "ODD_ThemeSelectorBtn", frame)
+    themeBtn:SetSize(180, 22)
+    themeBtn:SetPoint("LEFT", themeLabel, "RIGHT", 12, 0)
+    themeBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    local tBg = themeBtn:CreateTexture(nil, "BACKGROUND")
+    tBg:SetAllPoints(themeBtn)
+    tBg:SetColorTexture(0.18, 0.18, 0.22, 0.9)
+    local tFs = themeBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    tFs:SetPoint("CENTER", themeBtn, "CENTER", 0, 0)
+    themeBtn.fs = tFs
+
+    local function UpdateThemeDisplay()
+        local curKey = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
+        local found = themeOptions[1]
+        for _, opt in ipairs(themeOptions) do
+            if opt.key == curKey then
+                found = opt
+                break
+            end
+        end
+        tFs:SetText(string.format("|c%s%s|r (clic cambia)", found.color, found.name))
+    end
+
+    themeBtn:SetScript("OnClick", function()
+        local curKey = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
+        local nextIdx = 1
+        for idx, opt in ipairs(themeOptions) do
+            if opt.key == curKey then
+                nextIdx = (idx % #themeOptions) + 1
+                break
+            end
+        end
+        local newTheme = themeOptions[nextIdx]
+        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.SetTheme then
+            ODD.UI.Dashboard:SetTheme(newTheme.key)
+        else
+            ODD.Database:SetSetting("theme", newTheme.key)
+        end
+        UpdateThemeDisplay()
     end)
 
     -- ========================================================
@@ -137,6 +191,7 @@ function SettingsTab:Create(parent)
 
     local function RefreshSettings()
         UpdateRoleDisplay()
+        UpdateThemeDisplay()
 
         for _, btn in ipairs(checkboxes) do
             local currentVal = ODD.Database:GetSetting(btn.settingKey)

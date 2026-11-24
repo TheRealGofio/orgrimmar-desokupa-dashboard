@@ -92,7 +92,7 @@ function Database:SetSetting(key, val)
         self.global = _G["ODDDB"]
     end
     if self.global and self.global.settings then
-        self.global.settings[key] = (val == true)
+        self.global.settings[key] = val
         _G["ODDDB"] = self.global
         ODD:Log("Ajuste guardado: %s = %s", tostring(key), tostring(val))
     end

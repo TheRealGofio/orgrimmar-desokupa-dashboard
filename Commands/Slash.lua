@@ -58,10 +58,15 @@ SlashCmdList["ODD"] = function(msg)
                 if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.DisplayAchievementInChat then
                     local pName = UnitName("player") or "TuPersonaje"
                     local _, pClass = UnitClass("player")
-                    ODD.Network.Sync:DisplayAchievementInChat(pName, pClass or "SHAMAN", "gnome_25", "Fumigador Oficial", 15, time(), false)
+                    ODD.Network.Sync.DisplayAchievementInChat(nil, pName, pClass or "SHAMAN", "gnome_25", "Fumigador Oficial", 15, time(), false)
                 end
+            elseif arg == "update" or arg == "version" then
+                ODD:Log("Simulando detección P2P de versión desactualizada...")
+                local warnMsg = string.format("|cFFFF8000[ODD]|r |cFFFF2020¡Nueva versión disponible!|r Tienes una versión desactualizada (|cFFFFD100v%s|r). Ya puedes descargar la nueva versión (|cFF00FF00v0.4.0-alpha|r) desde GitHub o WowUp.",
+                    tostring(ODD.version))
+                DEFAULT_CHAT_FRAME:AddMessage(warnMsg)
             else
-                ODD:Log("Comandos de simulación: /odd testmsg kill  |  /odd testmsg achieve")
+                ODD:Log("Comandos de simulación: /odd testmsg kill  |  /odd testmsg achieve  |  /odd testmsg update")
             end
         elseif cmd == "sound" or cmd == "sonido" then
             if arg == "kill" then

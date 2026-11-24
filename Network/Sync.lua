@@ -7,6 +7,27 @@ ODD.Network.Sync = Sync
 -- Historial de mensajes recientes recibidos para evitar duplicados (sender:msgId)
 local seenMessages = {}
 local presenceList = {} -- miembros con ODD detectados online
+local versionWarned = false -- flag para alertar de versión desactualizada solo una vez por sesión
+
+-- Helper semántico para comparar versiones (ej: "0.3.10-alpha" vs "0.3.9-alpha")
+-- Devuelve 1 si verA > verB, -1 si verA < verB, 0 si son iguales
+local function CompareVersions(verA, verB)
+    if not verA or not verB then return 0 end
+    if verA == verB then return 0 end
+
+    local function parse(vStr)
+        local major, minor, patch, pre = tostring(vStr):match("^(%d+)%.(%d+)%.(%d+)-?(%w*)")
+        return tonumber(major) or 0, tonumber(minor) or 0, tonumber(patch) or 0, pre or ""
+    end
+
+    local majA, minA, patA = parse(verA)
+    local majB, minB, patB = parse(verB)
+
+    if majA ~= majB then return (majA > majB) and 1 or -1 end
+    if minA ~= minB then return (minA > minB) and 1 or -1 end
+    if patA ~= patB then return (patA > patB) and 1 or -1 end
+    return 0
+end
 
 function Sync:Initialize()
     if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then
@@ -403,6 +424,18 @@ function Sync:OnMessageReceived(text, channel, sender)
                 lastSeen = time(),
                 origin = string.format("Declarado por %s (no verificado)", senderName),
             }
+
+            -- Comprobación de versión desactualizada P2P
+            if data.ver and not versionWarned then
+                local cmp = CompareVersions(data.ver, ODD.version)
+                if cmp > 0 then
+                    versionWarned = true
+                    ODD.newerVersionAvailable = data.ver
+                    local warnMsg = string.format("|cFFFF8000[ODD]|r |cFFFF2020¡Nueva versión disponible!|r Tienes una versión desactualizada (|cFFFFD100v%s|r). Ya puedes descargar la nueva versión (|cFF00FF00v%s|r) desde GitHub o WowUp.",
+                        tostring(ODD.version), tostring(data.ver))
+                    DEFAULT_CHAT_FRAME:AddMessage(warnMsg)
+                end
+            end
             if data.gk or data.ap then
                 presenceList[senderName].gnomeKills = tonumber(data.gk) or 0
                 presenceList[senderName].achievementPoints = tonumber(data.ap) or 0
