@@ -139,7 +139,7 @@ function Sync:BroadcastHello(delaySeconds)
     end)
 end
 
--- Réplica de Caché Gossip P2P: Envía a un compañero o a la hermandad las filas de miembros que
+-- Réplica de Caché Gossip P2P: Envía a la hermandad las filas de miembros que
 -- tenemos en nuestra base de datos local y que podrían faltarle a otros
 function Sync:BroadcastGossipCache(targetRequester)
     if not ODD.API.Forever:IsInGuild() then return end
@@ -156,7 +156,8 @@ function Sync:BroadcastGossipCache(targetRequester)
         if #batch == 0 then return end
         local payload = table.concat(batch, "#")
         local msgId = ODD.Network.Protocol:GenerateMsgId()
-        local line = ODD.Network.Protocol:FormatLine("GOSSIP", msgId, targetRequester or "*", "RAW", payload)
+        -- Siempre enviar con target "*" a nivel de hermandad para evitar rechazos de nombres cortos/apellidos
+        local line = ODD.Network.Protocol:FormatLine("GOSSIP", msgId, "*", "RAW", payload)
         ODD.Network.Queue:Enqueue(line, "GUILD")
         batch = {}
         currentLen = 0
@@ -167,7 +168,8 @@ function Sync:BroadcastGossipCache(targetRequester)
         if clean ~= myShort and ((p.gnomeKills and p.gnomeKills > 0) or (p.achievementPoints and p.achievementPoints > 0)) then
             -- Formato compacto: Nombre=Clase,Bajas,Puntos,UpdatedAt
             local entry = string.format("%s=%s,%d,%d,%d", name, p.className or "WARRIOR", p.gnomeKills or 0, p.achievementPoints or 0, p.updatedAt or 0)
-            if (currentLen + #entry + 2) > 180 then
+            -- Límite conservador de 120 bytes para que nunca exceda el cable format
+            if (currentLen + #entry + 2) > 120 then
                 FlushBatch()
             end
             table.insert(batch, entry)
@@ -303,9 +305,18 @@ function Sync:TriggerManualSync()
         return
     end
 
-    ODD:Log("Iniciando sincronización con la hermandad...")
+    local globalDB = ODD.Database:GetGlobal()
+    local count = 0
+    if globalDB and globalDB.profiles then
+        for _ in pairs(globalDB.profiles) do count = count + 1 end
+    end
+    ODD:Log("Sincronizando con la hermandad... (%d perfiles en tu base de datos local).", count)
     lastWindowSyncTime = 0 -- Forzar sin throttle
     self:RequestGuildSync()
+    -- Emitir también un barrido de nuestra caché a la hermandad
+    C_Timer.After(0.5, function()
+        Sync:BroadcastGossipCache("*")
+    end)
 end
 
 -- Helper para refrescar vistas abiertas en la interfaz
@@ -355,11 +366,13 @@ function Sync:OnMessageReceived(text, channel, sender)
     if seenMessages[dedupeKey] then return end
     seenMessages[dedupeKey] = GetTime()
 
-    -- Comprobación de destinatario
+    -- Comprobación de destinatario: aceptar broadcasts "*" y mensajes dirigidos por nombre completo o de pila
     if parsed.target ~= "*" and parsed.target ~= myName and parsed.target ~= senderName then
         local shortTarget = Ambiguate(parsed.target, "none"):lower()
         local shortMy = Ambiguate(myName, "none"):lower()
-        if shortTarget ~= shortMy then
+        local firstTarget = shortTarget:match("^(%S+)") or shortTarget
+        local firstMy = shortMy:match("^(%S+)") or shortMy
+        if shortTarget ~= shortMy and firstTarget ~= firstMy then
             return
         end
     end
