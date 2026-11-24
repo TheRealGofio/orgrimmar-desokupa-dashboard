@@ -1,8 +1,11 @@
-## Interface: 16001
-## Title: Orgrimmar Desokupa Dashboard (ODD)
+## Interface: 16001, 11506, 11505, 11504, 11503, 11502, 11500, 11200
+## Title: |cffff8000Orgrimmar Desokupa Dashboard|r (ODD)
 ## Notes: Dashboard y analiticas para hermandades de la Horda en WoW Forever.
 ## Author: Orgrimmar Desokupa Team
 ## Version: 0.3.8-alpha
+## IconTexture: Interface\Icons\INV_Misc_Head_Gnome_01
+## X-Category: Guild, PvP, Combat
+## X-Website: https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard
 ## SavedVariables: ODDDB
 ## SavedVariablesPerCharacter: ODDCharacterDB
 
