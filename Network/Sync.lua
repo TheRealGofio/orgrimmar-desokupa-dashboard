@@ -91,6 +91,27 @@ function Sync:BroadcastHello(delaySeconds)
             end
         end
 
+        -- Añadir bajas de contratos semanales para sincronización P2P
+        if ODD.Guild and ODD.Guild.Contracts then
+            local store = ODD.Guild.Contracts:EnsureStorage()
+            local weekID = ODD.Guild.Contracts:GetCurrentWeekID()
+            if store and (next(store.zoneKills or {}) or next(store.classKills or {})) then
+                data.cw = weekID
+                -- Serializar firmas compactas: "sig1;sig2"
+                local zSigs = {}
+                for sig, _ in pairs(store.zoneKills or {}) do
+                    table.insert(zSigs, sig)
+                end
+                if #zSigs > 0 then data.czk = table.concat(zSigs, "|") end
+
+                local cSigs = {}
+                for sig, _ in pairs(store.classKills or {}) do
+                    table.insert(cSigs, sig)
+                end
+                if #cSigs > 0 then data.cck = table.concat(cSigs, "|") end
+            end
+        end
+
         local codec, encoded = ODD.Network.Codec:Encode(data)
         local msgId = ODD.Network.Protocol:GenerateMsgId()
         local line = ODD.Network.Protocol:FormatLine("HELLO", msgId, "*", codec, encoded)
@@ -213,6 +234,23 @@ function Sync:OnMessageReceived(text, channel, sender)
                 end
             end
 
+            -- Procesar sincronización de contratos semanales
+            if data.cw and (data.czk or data.cck) and ODD.Guild and ODD.Guild.Contracts then
+                local remoteZ = {}
+                if data.czk then
+                    for sig in string.gmatch(data.czk, "([^|]+)") do
+                        remoteZ[sig] = { killer = senderName, timestamp = time() }
+                    end
+                end
+                local remoteC = {}
+                if data.cck then
+                    for sig in string.gmatch(data.cck, "([^|]+)") do
+                        remoteC[sig] = { killer = senderName, timestamp = time() }
+                    end
+                end
+                ODD.Guild.Contracts:MergeRemoteKills(data.cw, remoteZ, remoteC)
+            end
+
             if data.profs and data.profs ~= "" then
                 local globalDB = ODD.Database:GetGlobal()
                 if globalDB then
@@ -241,6 +279,9 @@ function Sync:OnMessageReceived(text, channel, sender)
             end
             if ODD.UI.HQTab and ODD.UI.HQTab.RefreshPresence then
                 ODD.UI.HQTab:RefreshPresence()
+            end
+            if ODD.UI.HQTab and ODD.UI.HQTab.RefreshContracts then
+                ODD.UI.HQTab:RefreshContracts()
             end
             if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then
                 ODD.UI.GnomometerTab:Refresh()

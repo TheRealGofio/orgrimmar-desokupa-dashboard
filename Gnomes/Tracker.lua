@@ -372,6 +372,17 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     -- Guardado persistente
     _G["ODDCharacterDB"] = charDB
 
+    -- Notificar y procesar Contratos Semanales de Hermandad
+    if ODD.Guild and ODD.Guild.Contracts and ODD.Guild.Contracts.OnLocalKill then
+        ODD.Guild.Contracts:OnLocalKill({
+            guid = targetGUID,
+            name = victimName,
+            classFile = victimClass,
+            zone = killRecord.zone,
+            timestamp = killRecord.timestamp,
+        })
+    end
+
     local infoStr = ""
     if victimName then
         infoStr = string.format(" [%s - %s Nivel %s]", victimName, victimClass or "?", tostring(victimLevel or "?"))

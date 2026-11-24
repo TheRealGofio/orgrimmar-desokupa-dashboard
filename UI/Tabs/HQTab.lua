@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -13,6 +13,10 @@ local statPersonalTotal = nil
 local statGuildTotal = nil
 local statTodayTotal = nil
 local statWeekTotal = nil
+
+-- Elementos de Contratos Semanales
+local contractCards = {}
+local contractTimerLabel = nil
 
 local lastKillDetails = nil
 local topKillersList = nil
@@ -160,6 +164,44 @@ function HQTab:RefreshStats()
     end
 end
 
+function HQTab:RefreshContracts()
+    if not ODD.Guild or not ODD.Guild.Contracts then return end
+    local progress = ODD.Guild.Contracts:GetProgress()
+
+    if contractTimerLabel then
+        contractTimerLabel:SetText(string.format("Reinicio en: |cFFFFD100%s|r", progress.timeRemaining or "--"))
+    end
+
+    local items = {
+        { card = contractCards[1], data = progress.zone, kind = "TERRITORIAL" },
+        { card = contractCards[2], data = progress.class, kind = "ESPECIALISTA" },
+    }
+
+    for _, it in ipairs(items) do
+        local c = it.card
+        local d = it.data
+        if c and d then
+            c.titleFs:SetText(string.format("|cFFFFFFFF%s|r", d.title or "Contrato"))
+            c.descFs:SetText(d.desc or "")
+            c.badgeFs:SetText(it.kind == "TERRITORIAL" and "|cFF00FFCC[ZONA: " .. (d.zone or "") .. "]|r" or "|cFFFF8000[CLASE: " .. (d.className or "") .. "]|r")
+
+            -- Barra y progreso
+            local pStr = string.format("%d / %d (%d%%)", d.current or 0, d.target or 20, d.percent or 0)
+            if d.isComplete then
+                c.countFs:SetText("|cFF00FF00¡COMPLETADO!|r " .. pStr)
+                c.fill:SetColorTexture(0.1, 0.8, 0.2, 0.9)
+            else
+                c.countFs:SetText(pStr)
+                c.fill:SetColorTexture(0.85, 0.2, 0.1, 0.9)
+            end
+
+            local barMaxW = 220
+            local w = math.max(2, math.floor((barMaxW * (d.percent or 0)) / 100))
+            c.fill:SetWidth(w)
+        end
+    end
+end
+
 -- Helper para crear tarjetas de estadísticas destacadas
 local function CreateStatCard(parent, title, x, y, width, height)
     local card = CreateFrame("Frame", nil, parent)
@@ -279,30 +321,96 @@ function HQTab:Create(parent)
     end
 
     -- ========================================================
+    -- CONTRATOS SEMANALES DE HERMANDAD (P2P DETERMINISTAS)
+    -- ========================================================
+    local contractSectionY = -228
+    local cHeader = ODD.UI.Components:CreateSectionHeader(frame, "Contratos Semanales de Desalojo (Objetivos de Hermandad):", contractSectionY)
+
+    contractTimerLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    contractTimerLabel:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, contractSectionY)
+    contractTimerLabel:SetText("Reinicio en: --")
+
+    local contractContainer = CreateFrame("Frame", nil, frame)
+    contractContainer:SetSize(760, 68)
+    contractContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, contractSectionY - 20)
+
+    for i = 1, 2 do
+        local cBox = CreateFrame("Frame", nil, contractContainer)
+        cBox:SetSize(370, 64)
+        cBox:SetPoint("TOPLEFT", contractContainer, "TOPLEFT", (i == 1) and 0 or 390, 0)
+
+        local cBg = cBox:CreateTexture(nil, "BACKGROUND")
+        cBg:SetAllPoints(cBox)
+        cBg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+
+        local cBorder = cBox:CreateTexture(nil, "BORDER")
+        cBorder:SetPoint("TOPLEFT", cBox, "TOPLEFT", 0, 0)
+        cBorder:SetPoint("BOTTOMRIGHT", cBox, "BOTTOMRIGHT", 0, 0)
+        cBorder:SetColorTexture(0.3, 0.1, 0.1, 0.4)
+
+        local badgeFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        badgeFs:SetPoint("TOPLEFT", cBox, "TOPLEFT", 10, -8)
+        badgeFs:SetText(i == 1 and "|cFF00FFCC[TERRITORIAL]|r" or "|cFFFF8000[ESPECIALISTA]|r")
+        cBox.badgeFs = badgeFs
+
+        local titleFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        titleFs:SetPoint("LEFT", badgeFs, "RIGHT", 6, 0)
+        titleFs:SetText("Cargando contrato...")
+        cBox.titleFs = titleFs
+
+        local descFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        descFs:SetPoint("TOPLEFT", badgeFs, "BOTTOMLEFT", 0, -4)
+        descFs:SetPoint("RIGHT", cBox, "RIGHT", -10, 0)
+        descFs:SetJustifyH("LEFT")
+        descFs:SetText("...")
+        cBox.descFs = descFs
+
+        -- Barra de progreso
+        local barBg = cBox:CreateTexture(nil, "BACKGROUND")
+        barBg:SetPoint("BOTTOMLEFT", cBox, "BOTTOMLEFT", 10, 10)
+        barBg:SetSize(220, 10)
+        barBg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+        cBox.barBg = barBg
+
+        local fill = cBox:CreateTexture(nil, "ARTWORK")
+        fill:SetPoint("LEFT", barBg, "LEFT", 0, 0)
+        fill:SetSize(0, 10)
+        fill:SetColorTexture(0.85, 0.2, 0.1, 0.9)
+        cBox.fill = fill
+
+        local countFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        countFs:SetPoint("LEFT", barBg, "RIGHT", 8, 0)
+        countFs:SetText("0 / 20 (0%)")
+        cBox.countFs = countFs
+
+        contractCards[i] = cBox
+    end
+
+    -- ========================================================
     -- DETALLES ADICIONALES Y CONTRIBUCIÓN
     -- ========================================================
     local bottomBox = CreateFrame("Frame", nil, frame)
-    bottomBox:SetSize(760, 140)
-    bottomBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -228)
+    bottomBox:SetSize(760, 96)
+    bottomBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -320)
     local bBg = bottomBox:CreateTexture(nil, "BACKGROUND")
     bBg:SetAllPoints(bottomBox)
     bBg:SetColorTexture(0.08, 0.08, 0.08, 0.6)
 
     -- Última baja
     lastKillDetails = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    lastKillDetails:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -14)
+    lastKillDetails:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -10)
     lastKillDetails:SetText("Último desalojo: Calculando...")
 
     -- Subcabecera contribución
     local contribHeader = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    contribHeader:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -46)
+    contribHeader:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -34)
     contribHeader:SetText("|cFFFFD100Máximos Exterminadores de la Hermandad:|r")
 
     -- Lista Top 6
-    topKillersList = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    topKillersList:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -70)
+    topKillersList = bottomBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    topKillersList:SetPoint("TOPLEFT", bottomBox, "TOPLEFT", 14, -54)
     topKillersList:SetJustifyH("LEFT")
-    topKillersList:SetSpacing(4)
+    topKillersList:SetSpacing(2)
     topKillersList:SetText("1. Tú: 0 bajas")
 
     local function Refresh()
@@ -326,6 +434,7 @@ function HQTab:Create(parent)
 
         HQTab:RefreshPresence()
         HQTab:RefreshStats()
+        HQTab:RefreshContracts()
         UpdatePlayerModel()
     end
 

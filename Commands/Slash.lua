@@ -38,6 +38,13 @@ SlashCmdList["ODD"] = function(msg)
                 local testName = (arg and arg ~= "") and arg or "Argemus"
                 ODD.Gnomes.Radar:TriggerAlert("Player-Test-01", testName, "PRIEST", 37, "target")
             end
+        elseif cmd == "contract" or cmd == "contrato" then
+            if ODD.Guild and ODD.Guild.Contracts then
+                local p = ODD.Guild.Contracts:GetProgress()
+                ODD:Log("=== CONTRATOS SEMANALES DE HERMANDAD (%s) ===", p.timeRemaining or "--")
+                print(string.format("  1. |cFF00FFCC%s|r: %s -> |cFFFFD100%d/%d (%d%%)|r", p.zone.title, p.zone.zone, p.zone.current, p.zone.target, p.zone.percent))
+                print(string.format("  2. |cFFFF8000%s|r: Gnomo %s -> |cFFFFD100%d/%d (%d%%)|r", p.class.title, p.class.className, p.class.current, p.class.target, p.class.percent))
+            end
         elseif cmd == "sound" or cmd == "sonido" then
             if arg == "kill" then
                 ODD:Log("Reproduciendo sonido de Kill...")
