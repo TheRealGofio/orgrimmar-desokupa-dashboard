@@ -38,3 +38,29 @@ No avanzar a funciones que dependan de APIs inciertas antes de presentar las con
 - La comunicación necesita versión, cola/throttling, fragmentación, deduplicación, sincronización incremental, límites de entrada, reintentos y control de tormentas.
 - Persistir esquema versionado y procedencia de cada dato. No sincronizar datos privados por defecto.
 - Actualizar este archivo si cambian la arquitectura, las convenciones o los flujos descritos.
+
+## Procedimiento Estricto de Release (Publicación y Empaquetado)
+
+Para garantizar compatibilidad con **WowUp**, **CurseForge** y descargas manuales en WoW, el empaquetado del archivo `.zip` **NUNCA** debe contener los archivos sueltos en la raíz. Debe contener obligatoriamente una carpeta contenedora raíz llamada `OrgrimmarDesokupaDashboard`.
+
+### Pasos obligatorios para cada Release:
+1. **Actualizar Versión:**
+   - En `OrgrimmarDesokupaDashboard.toc` (`## Version: X.Y.Z-alpha`).
+   - En `Core/Init.lua` (`ODD.version = "X.Y.Z-alpha"`).
+2. **Sincronizar en caliente al cliente local:**
+   - Usar `[System.IO.File]::WriteAllText` o `WriteAllBytes` hacia `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\OrgrimmarDesokupaDashboard`.
+3. **Empaquetado del ZIP (Staging con carpeta raíz):**
+   - Crear directorio temporal en Desktop: `C:\Users\david\Desktop\staging_odd\OrgrimmarDesokupaDashboard`.
+   - Copiar el código del addon dentro de esa carpeta contenedora (excluyendo `.git`, `.gemini`, `docs`, `*.zip`, `*.tmp`).
+   - Comprimir `staging_odd` hacia `C:\Users\david\Desktop\OrgrimmarDesokupaDashboard-vX.Y.Z-alpha.zip`.
+   - Eliminar el directorio temporal `staging_odd`.
+   - *Verificación*: Las entradas del zip deben empezar siempre por `OrgrimmarDesokupaDashboard/`.
+4. **Git Commit & Tag:**
+   - `git add .`
+   - `git commit -m "Release vX.Y.Z-alpha: ..."`
+   - `git tag -a vX.Y.Z-alpha -m "..."`
+   - `git push origin main`
+   - `git push origin vX.Y.Z-alpha`
+5. **Publicación en GitHub CLI:**
+   - Usar la ruta completa: `& "C:\Program Files\GitHub CLI\gh.exe" release create vX.Y.Z-alpha "C:\Users\david\Desktop\OrgrimmarDesokupaDashboard-vX.Y.Z-alpha.zip" --title "..." --notes "..."`.
+
