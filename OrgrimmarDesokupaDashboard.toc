@@ -2,7 +2,7 @@
 ## Title: |cffff8000Orgrimmar Desokupa Dashboard|r (ODD)
 ## Notes: Dashboard y analiticas para hermandades de la Horda en WoW Forever.
 ## Author: Orgrimmar Desokupa Team
-## Version: 0.3.13-alpha
+## Version: 0.3.14-alpha
 ## IconTexture: Interface\Icons\INV_Misc_Head_Gnome_01
 ## X-Category: Guild, PvP, Combat
 ## X-Website: https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard

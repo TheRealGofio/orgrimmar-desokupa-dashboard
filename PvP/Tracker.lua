@@ -51,8 +51,28 @@ function PvP:GetLocalStats()
 end
 
 -- ========================================================
--- SISTEMA DE NÉMESIS / VENGANZA (OBJETIVOS PRIORITARIOS)
+-- SISTEMA DE NÉMESIS / VENGANZA (OBJETIVOS PRIORITARIOS EN MUNDO ABIERTO)
 -- ========================================================
+
+-- Comprueba si el jugador está en mundo abierto (excluye BGs, Arenas, Mazmorras y Bandas)
+function PvP:IsWorldPvP()
+    local inInstance = false
+    if type(IsInInstance) == "function" then
+        local ok, inst = pcall(IsInInstance)
+        if ok and inst == true then
+            return false
+        end
+    end
+
+    if C_PvP and type(C_PvP.IsActiveBattlefield) == "function" then
+        local okPvp, active = pcall(C_PvP.IsActiveBattlefield)
+        if okPvp and active == true then
+            return false
+        end
+    end
+
+    return true
+end
 
 -- Extrae los datos del enemigo que asestó el killing blow según C_DeathRecap
 local function FindDeathRecapKiller(diedAt, playerGUID)
@@ -93,6 +113,9 @@ end
 -- Procesa la muerte del jugador y busca al asesino
 local function ProcessDeathRecap(ticket, diedAt, attempt)
     if ticket ~= deathTicket then return end
+
+    -- Regla estricta: Némesis NO aplica en Battlegrounds, Arenas ni Mazmorras/Bandas
+    if not PvP:IsWorldPvP() then return end
 
     local playerGUID = ODD.API.Forever:SanitizeGUID(UnitGUID("player"))
     local killer = FindDeathRecapKiller(diedAt, playerGUID)
@@ -173,6 +196,9 @@ end
 
 -- Registra cuando te vengas y abates a un enemigo de la lista de Némesis
 function PvP:CheckNemesisAvenged(victimGUID, victimName, victimClass, victimRace)
+    -- Regla estricta: Las venganzas de Némesis solo computan en Mundo Abierto (no en BGs ni estancias)
+    if not self:IsWorldPvP() then return end
+
     local charDB = ODD.Database:GetChar()
     if not charDB or not charDB.observations or not charDB.observations.pvp then return end
 
