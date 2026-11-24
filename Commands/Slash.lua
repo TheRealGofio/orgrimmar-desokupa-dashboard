@@ -45,6 +45,24 @@ SlashCmdList["ODD"] = function(msg)
                 print(string.format("  1. |cFF00FFCC%s|r: %s -> |cFFFFD100%d/%d (%d%%)|r", p.zone.title, p.zone.zone, p.zone.current, p.zone.target, p.zone.percent))
                 print(string.format("  2. |cFFFF8000%s|r: Gnomo %s -> |cFFFFD100%d/%d (%d%%)|r", p.class.title, p.class.className, p.class.current, p.class.target, p.class.percent))
             end
+        elseif cmd == "testmsg" or cmd == "testchat" or cmd == "sim" then
+            if arg == "kill" then
+                ODD:Log("Simulando mensaje de baja silencioso...")
+                if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.DisplayKillInChat then
+                    local pName = UnitName("player") or "TuPersonaje"
+                    local _, pClass = UnitClass("player")
+                    ODD.Network.Sync:DisplayKillInChat(pName, pClass or "SHAMAN", "Manitas", "MAGE", 42, "Laderas de Trabalomas", 19, false)
+                end
+            elseif arg == "achieve" or arg == "logro" then
+                ODD:Log("Simulando mensaje de logro con enlace interactivo...")
+                if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.DisplayAchievementInChat then
+                    local pName = UnitName("player") or "TuPersonaje"
+                    local _, pClass = UnitClass("player")
+                    ODD.Network.Sync:DisplayAchievementInChat(pName, pClass or "SHAMAN", "gnome_25", "Fumigador Oficial", 15, time(), false)
+                end
+            else
+                ODD:Log("Comandos de simulación: /odd testmsg kill  |  /odd testmsg achieve")
+            end
         elseif cmd == "sound" or cmd == "sonido" then
             if arg == "kill" then
                 ODD:Log("Reproduciendo sonido de Kill...")

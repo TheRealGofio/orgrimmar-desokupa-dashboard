@@ -182,8 +182,7 @@ function HQTab:RefreshContracts()
         local d = it.data
         if c and d then
             c.titleFs:SetText(string.format("|cFFFFFFFF%s|r", d.title or "Contrato"))
-            c.descFs:SetText(d.desc or "")
-            c.badgeFs:SetText(it.kind == "TERRITORIAL" and "|cFF00FFCC[ZONA: " .. (d.zone or "") .. "]|r" or "|cFFFF8000[CLASE: " .. (d.className or "") .. "]|r")
+            c.badgeFs:SetText(it.kind == "TERRITORIAL" and ("|cFF00FFCC[ZONA: " .. (d.zone or "") .. "]|r") or ("|cFFFF8000[CLASE: Gnomo " .. (d.className or "") .. "]|r"))
 
             -- Barra y progreso
             local pStr = string.format("%d / %d (%d%%)", d.current or 0, d.target or 20, d.percent or 0)
@@ -331,12 +330,12 @@ function HQTab:Create(parent)
     contractTimerLabel:SetText("Reinicio en: --")
 
     local contractContainer = CreateFrame("Frame", nil, frame)
-    contractContainer:SetSize(760, 68)
+    contractContainer:SetSize(760, 76)
     contractContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, contractSectionY - 20)
 
     for i = 1, 2 do
         local cBox = CreateFrame("Frame", nil, contractContainer)
-        cBox:SetSize(370, 64)
+        cBox:SetSize(370, 72)
         cBox:SetPoint("TOPLEFT", contractContainer, "TOPLEFT", (i == 1) and 0 or 390, 0)
 
         local cBg = cBox:CreateTexture(nil, "BACKGROUND")
@@ -348,24 +347,21 @@ function HQTab:Create(parent)
         cBorder:SetPoint("BOTTOMRIGHT", cBox, "BOTTOMRIGHT", 0, 0)
         cBorder:SetColorTexture(0.3, 0.1, 0.1, 0.4)
 
+        -- Fila 1: Badge de Zona / Clase (arriba a la izquierda)
         local badgeFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        badgeFs:SetPoint("TOPLEFT", cBox, "TOPLEFT", 10, -8)
-        badgeFs:SetText(i == 1 and "|cFF00FFCC[TERRITORIAL]|r" or "|cFFFF8000[ESPECIALISTA]|r")
+        badgeFs:SetPoint("TOPLEFT", cBox, "TOPLEFT", 10, -7)
+        badgeFs:SetText(i == 1 and "|cFF00FFCC[ZONA]|r" or "|cFFFF8000[CLASE]|r")
         cBox.badgeFs = badgeFs
 
+        -- Fila 2: Nombre de la misión (debajo del badge, para que tenga todo el ancho)
         local titleFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        titleFs:SetPoint("LEFT", badgeFs, "RIGHT", 6, 0)
+        titleFs:SetPoint("TOPLEFT", badgeFs, "BOTTOMLEFT", 0, -2)
+        titleFs:SetPoint("RIGHT", cBox, "RIGHT", -10, 0)
+        titleFs:SetJustifyH("LEFT")
         titleFs:SetText("Cargando contrato...")
         cBox.titleFs = titleFs
 
-        local descFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        descFs:SetPoint("TOPLEFT", badgeFs, "BOTTOMLEFT", 0, -4)
-        descFs:SetPoint("RIGHT", cBox, "RIGHT", -10, 0)
-        descFs:SetJustifyH("LEFT")
-        descFs:SetText("...")
-        cBox.descFs = descFs
-
-        -- Barra de progreso
+        -- Fila 3: Barra de progreso y texto de bajas
         local barBg = cBox:CreateTexture(nil, "BACKGROUND")
         barBg:SetPoint("BOTTOMLEFT", cBox, "BOTTOMLEFT", 10, 10)
         barBg:SetSize(220, 10)
@@ -390,8 +386,8 @@ function HQTab:Create(parent)
     -- DETALLES ADICIONALES Y CONTRIBUCIÓN
     -- ========================================================
     local bottomBox = CreateFrame("Frame", nil, frame)
-    bottomBox:SetSize(760, 96)
-    bottomBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -320)
+    bottomBox:SetSize(760, 90)
+    bottomBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -326)
     local bBg = bottomBox:CreateTexture(nil, "BACKGROUND")
     bBg:SetAllPoints(bottomBox)
     bBg:SetColorTexture(0.08, 0.08, 0.08, 0.6)

@@ -427,29 +427,15 @@ local KILL_ANNOUNCEMENT_TEMPLATES = {
     "¡Otro gnomo que muerde el polvo! %s despachado en %s sin derecho a recurso. (Total: %d)",
 }
 
--- Envía el mensaje de exterminio al chat de hermandad
+-- Envía el anuncio de exterminio a la hermandad mediante mensaje de Addon P2P silencioso
 function Tracker:AnnounceToGuild(killRecord, totalKills)
     if not ODD.API.Forever:IsInGuild() then return end
 
     -- Comprobar si los anuncios a la guild están silenciados en Ajustes
     if ODD.Database:GetSetting("muteGuildAnnouncements") then return end
 
-    local victimStr = killRecord.victimName or "un gnomo"
-    if killRecord.victimLevel and killRecord.victimClass then
-        victimStr = string.format("%s (%s nivel %s)", killRecord.victimName, killRecord.victimClass, tostring(killRecord.victimLevel))
-    end
-
-    local zoneStr = killRecord.zone or "Mundo Abierto"
-    local idx = math.random(1, #KILL_ANNOUNCEMENT_TEMPLATES)
-    local template = KILL_ANNOUNCEMENT_TEMPLATES[idx]
-    local phrase = string.format(template, victimStr, zoneStr, totalKills)
-
-    local msg = string.format("[ODD] %s", phrase)
-
-    -- SendChatMessage nativo al canal de hermandad
-    local sendChat = (C_ChatInfo and C_ChatInfo.SendChatMessage) or _G["SendChatMessage"]
-    if sendChat then
-        pcall(sendChat, msg, "GUILD")
+    if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.BroadcastKill then
+        ODD.Network.Sync:BroadcastKill(killRecord, totalKills)
     end
 end
 

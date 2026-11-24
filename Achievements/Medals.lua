@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Medals = {}
@@ -90,6 +90,16 @@ local function IsGrayLevel(playerLevel, victimLevel)
     end
 
     return vNum <= grayThreshold
+end
+
+function Medals:GetMedalByID(medalID)
+    if not medalID then return nil end
+    for _, def in ipairs(MEDAL_DEFS) do
+        if def.id == medalID then
+            return def
+        end
+    end
+    return nil
 end
 
 function Medals:GetPlayerMedals()
@@ -324,12 +334,10 @@ function Medals:CheckNewAchievements()
             end
             ODD:Log("|cFFFFD100¡Logro desbloqueado!|r %s - %s", m.name, m.desc)
 
-            -- Anuncio al chat de hermandad si no está silenciado
+            -- Anuncio silencioso por canal de Addon a los compañeros de hermandad
             if ODD.API.Forever:IsInGuild() and not ODD.Database:GetSetting("muteGuildAnnouncements") then
-                local msg = string.format("He conseguido el logro %s", m.name)
-                local sendChat = (C_ChatInfo and C_ChatInfo.SendChatMessage) or _G["SendChatMessage"]
-                if sendChat then
-                    pcall(sendChat, msg, "GUILD")
+                if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.BroadcastAchievement then
+                    ODD.Network.Sync:BroadcastAchievement(m.id, m.name, m.points or 10)
                 end
             end
         end

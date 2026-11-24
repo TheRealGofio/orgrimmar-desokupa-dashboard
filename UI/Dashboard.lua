@@ -169,6 +169,16 @@ function Dashboard:Create()
     return mainFrame
 end
 
+function Dashboard:SwitchToTab(tabName)
+    for i, def in ipairs(TAB_DEFS) do
+        if def.name:lower() == tabName:lower() then
+            SwitchTab(i)
+            return true
+        end
+    end
+    return false
+end
+
 function ODD.UI:Initialize()
     Dashboard:Create()
     if ODD.UI.MinimapBtn and ODD.UI.MinimapBtn.Initialize then
@@ -176,6 +186,21 @@ function ODD.UI:Initialize()
     end
     if ODD.UI.HUD and ODD.Database:GetSetting("showHUD") then
         ODD.UI.HUD:SetShown(true)
+    end
+
+    -- Hook nativo a SetItemRef para enlaces interactivos en el chat
+    if not ODD.UI.ItemRefHooked and type(hooksecurefunc) == "function" then
+        ODD.UI.ItemRefHooked = true
+        hooksecurefunc("SetItemRef", function(link, text, button)
+            if not link then return end
+            local linkType, id, medalId, points, playerName, timestamp = strsplit(":", link)
+            if linkType == "item" and id == "ODDACH" then
+                -- Clic en enlace de logro interactivo: |Hitem:ODDACH:medalId:points:playerName:timestamp|h
+                if ODD.UI and ODD.UI.AchievementModal and ODD.UI.AchievementModal.Show then
+                    ODD.UI.AchievementModal:Show(medalId, playerName, tonumber(timestamp), tonumber(points))
+                end
+            end
+        end)
     end
 end
 
