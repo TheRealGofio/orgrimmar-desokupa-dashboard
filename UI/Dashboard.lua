@@ -202,6 +202,39 @@ function ODD.UI:Initialize()
             end
         end)
     end
+
+    -- Filtro de chat nativo: intercepta {ODD:achId:pts:time} [Nombre] y lo convierte en enlace interactivo local
+    if not ODD.UI.ChatFilterRegistered and type(ChatFrame_AddMessageEventFilter) == "function" then
+        ODD.UI.ChatFilterRegistered = true
+        local function ODD_ChatLinkFilter(self, event, msg, sender, ...)
+            if msg and msg:find("{ODD:") then
+                local cleanSender = sender and Ambiguate(sender, "none") or "Compañero"
+                -- Reemplazar {ODD:id:pts:time} [Nombre] por el hipervínculo interactivo local
+                local newMsg = msg:gsub("{ODD:([%w_]+):(%d+):(%d+)}%s*%[([^%]]+)%]", function(achId, pts, t, achName)
+                    return string.format("|cFF00FFCC|Hitem:ODDACH:%s:%s:%s:%s|h[%s]|h|r", achId, pts, cleanSender, t, achName)
+                end)
+                return false, newMsg, sender, ...
+            end
+            return false
+        end
+
+        local chatEvents = {
+            "CHAT_MSG_GUILD",
+            "CHAT_MSG_OFFICER",
+            "CHAT_MSG_PARTY",
+            "CHAT_MSG_PARTY_LEADER",
+            "CHAT_MSG_RAID",
+            "CHAT_MSG_RAID_LEADER",
+            "CHAT_MSG_SAY",
+            "CHAT_MSG_YELL",
+            "CHAT_MSG_WHISPER",
+            "CHAT_MSG_WHISPER_INFORM",
+            "CHAT_MSG_CHANNEL",
+        }
+        for _, ev in ipairs(chatEvents) do
+            ChatFrame_AddMessageEventFilter(ev, ODD_ChatLinkFilter)
+        end
+    end
 end
 
 function ODD.UI:Toggle()

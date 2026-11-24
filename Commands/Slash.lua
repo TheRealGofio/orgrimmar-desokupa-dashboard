@@ -70,11 +70,14 @@ SlashCmdList["ODD"] = function(msg)
             elseif arg == "achieve" or arg == "logro" then
                 ODD:Log("Reproduciendo sonido de Logro...")
                 if ODD.Audio and ODD.Audio.PlayAchievementSound then ODD.Audio:PlayAchievementSound() end
-            elseif arg == "radar" or arg == "gnomo" then
-                ODD:Log("Reproduciendo sonido de Alerta de Gnomo (Radar)...")
-                if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound() end
+            elseif arg == "radar" or arg == "gnomo" or arg == "male" then
+                ODD:Log("Reproduciendo sonido de Gnomo Macho (Radar)...")
+                if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound(2) end
+            elseif arg == "female" or arg == "gnoma" then
+                ODD:Log("Reproduciendo sonido de Gnoma Hembra (Radar)...")
+                if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound(3) end
             else
-                ODD:Log("Comandos de sonido: /odd sound kill | /odd sound achieve | /odd sound radar")
+                ODD:Log("Comandos de sonido: /odd sound kill | /odd sound achieve | /odd sound male | /odd sound female")
                 if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound() end
             end
         elseif cmd == "status" then

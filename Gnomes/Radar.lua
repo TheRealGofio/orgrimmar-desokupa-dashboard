@@ -221,9 +221,15 @@ function Radar:TriggerAlert(guid, name, classFile, level, unitToken)
         recentAlerts[guid] = now
     end
 
-    -- 1. Sonido de radar
+    -- 1. Sonido de radar adaptado al género (Male / Female)
+    local unitSex = nil
+    if unitToken and UnitExists(unitToken) and type(UnitSex) == "function" then
+        local okSex, sVal = pcall(UnitSex, unitToken)
+        if okSex then unitSex = sVal end
+    end
+
     if ODD.Audio and ODD.Audio.PlayRadarAlertSound then
-        ODD.Audio:PlayRadarAlertSound()
+        ODD.Audio:PlayRadarAlertSound(unitSex)
     end
 
     -- 2. Alerta visual interactiva

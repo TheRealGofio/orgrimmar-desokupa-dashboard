@@ -90,16 +90,32 @@ function MedalsTab:Refresh()
             row:SetScript("OnMouseUp", function(self, button)
                 if IsShiftKeyDown() and self.medalData then
                     local m = self.medalData
-                    local status = m.completed and "Completado" or string.format("%d/%d", m.progress, m.maxReq)
-                    local shareText = string.format("[ODD] Medalla: %s (%d pts) - %s: %s", m.name, m.points or 10, m.desc, status)
-                    if type(ChatEdit_InsertLink) == "function" then
-                        if not ChatEdit_InsertLink(shareText) then
-                            -- Si la caja de chat no está activa, abrirla con el texto
-                            local editBox = ChatEdit_ChooseBoxForSend()
-                            if editBox then
-                                ChatEdit_ActivateChat(editBox)
-                                editBox:Insert(shareText)
+                    local myPoints = tonumber(m.points) or 10
+                    local achId = tostring(m.id or m.key or "ACH")
+                    local t = time()
+                    -- Formato de texto ordinario limpio para el servidor de WoW:
+                    -- Se envía sin pipes ni |Hitem para que el servidor jamás lo bloquee.
+                    -- Los jugadores con ODD lo verán transformado en un enlace interactivo clickeable que abre el Modal.
+                    local shareText = string.format("{ODD:%s:%d:%d} [%s]", achId, myPoints, t, m.name or "Logro")
+
+                    local inGuild = IsInGuild and IsInGuild()
+                    local editBox = ChatEdit_ChooseBoxForSend and ChatEdit_ChooseBoxForSend()
+
+                    if editBox then
+                        ChatEdit_ActivateChat(editBox)
+                        if inGuild then
+                            editBox:SetAttribute("chatType", "GUILD")
+                            editBox.chatType = "GUILD"
+                            if ChatEdit_UpdateHeader then
+                                ChatEdit_UpdateHeader(editBox)
                             end
+                        end
+                        editBox:Insert(shareText)
+                    elseif type(ChatFrame_OpenChat) == "function" then
+                        if inGuild then
+                            ChatFrame_OpenChat("/g " .. shareText)
+                        else
+                            ChatFrame_OpenChat(shareText)
                         end
                     end
                 end

@@ -12,17 +12,30 @@ local SOUND_ACHIEVEMENT_OGG = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Me
 local SOUND_RADAR_MP3 = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Sounds\\radar.mp3"
 local SOUND_RADAR_OGG = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Sounds\\radar.ogg"
 
+-- Rutas directas a los gritos de batalla nativos de Gnomo del cliente de WoW
+local GNOME_MALE_VOICES = {
+    "Sound\\character\\Gnome\\GnomeVocalMale\\GnomeMaleCharge01.ogg",
+    "Sound\\character\\Gnome\\GnomeVocalMale\\GnomeMaleCharge02.ogg",
+    "Sound\\character\\Gnome\\GnomeVocalMale\\GnomeMaleCharge03.ogg",
+    "Sound\\character\\Gnome\\GnomeVocalMale\\GnomeMaleCheer01.ogg",
+}
+
+local GNOME_FEMALE_VOICES = {
+    "Sound\\character\\Gnome\\GnomeVocalFemale\\GnomeFemaleCharge01.ogg",
+    "Sound\\character\\Gnome\\GnomeVocalFemale\\GnomeFemaleCharge02.ogg",
+    "Sound\\character\\Gnome\\GnomeVocalFemale\\GnomeFemaleCheer01.ogg",
+}
+
 -- Identificadores de sonido nativos de WoW (SoundKit IDs)
--- 8959: RAID_WARNING (campana/alarma de aviso)
--- 5964: GNOME_MALE_AGGRO ("¡Por Gnomeregan!" / voz de gnomo)
--- 5979: GNOME_FEMALE_AGGRO (Voz de gnoma)
+-- 2828: Gnome Male Charge ("¡Por Gnomeregan!" auténtico)
+-- 2840: Gnome Female Charge (Grito de guerra gnoma auténtica)
 -- 8458: PVP_THROUGH_QUEUE (trompeta de batalla PvP)
 -- 888:  UI_EPICLOOT_TOAST (fanfarria de botín/logro)
 local SOUNDKIT_IDS = {
-    GNOME_ALERT  = (SOUNDKIT and SOUNDKIT.GNOME_MALE_AGGRO) or 5964,
-    RAID_WARNING = (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959,
-    PVP_KILL     = (SOUNDKIT and SOUNDKIT.PVP_THROUGH_QUEUE) or (SOUNDKIT and SOUNDKIT.IG_PVP_UPDATE) or 8458,
-    ACHIEVEMENT  = (SOUNDKIT and SOUNDKIT.UI_EPICLOOT_TOAST) or (SOUNDKIT and SOUNDKIT.ACHIEVEMENT_UNLOCKED) or 888,
+    GNOME_MALE_CHARGE   = 2828,
+    GNOME_FEMALE_CHARGE = 2840,
+    PVP_KILL            = (SOUNDKIT and SOUNDKIT.PVP_THROUGH_QUEUE) or (SOUNDKIT and SOUNDKIT.IG_PVP_UPDATE) or 8458,
+    ACHIEVEMENT         = (SOUNDKIT and SOUNDKIT.UI_EPICLOOT_TOAST) or (SOUNDKIT and SOUNDKIT.ACHIEVEMENT_UNLOCKED) or 888,
 }
 
 -- Reproduce un sonido de archivo o sonido nativo
@@ -72,15 +85,46 @@ function Audio:PlayAchievementSound()
     return self:Play({ SOUND_ACHIEVEMENT_OGG, SOUND_ACHIEVEMENT_MP3 }, SOUNDKIT_IDS.ACHIEVEMENT)
 end
 
--- Sonido al detectar un gnomo enemigo cercano (Radar): Voz de gnomo nativa y alarma
-function Audio:PlayRadarAlertSound()
-    -- Reproducir voz de gnomo nativa de WoW
-    local gnomeId = SOUNDKIT_IDS.GNOME_ALERT
-    if type(PlaySound) == "function" then
-        pcall(PlaySound, gnomeId, "Master")
-        -- También alarma de aviso si el volumen de voces estuviera bajo
-        pcall(PlaySound, SOUNDKIT_IDS.RAID_WARNING, "Master")
+-- Sonido al detectar un gnomo enemigo cercano (Radar): Voz de gnomo según género a máximo volumen
+function Audio:PlayRadarAlertSound(sex)
+    if ODD.Database and ODD.Database:GetSetting("muteSounds") then
+        return false
     end
-    -- Y si hay archivo custom
-    self:Play({ SOUND_RADAR_OGG, SOUND_RADAR_MP3 }, gnomeId)
+
+    -- En WoW UnitSex: 1 = Neutro/Desconocido, 2 = Male, 3 = Female
+    local isFemale = false
+    if sex == 3 or sex == "FEMALE" or sex == "female" then
+        isFemale = true
+    elseif sex == 2 or sex == "MALE" or sex == "male" then
+        isFemale = false
+    else
+        -- Si no se pudo determinar el sexo, aleatorio 50/50
+        isFemale = (math.random(1, 2) == 2)
+    end
+
+    local voiceList = isFemale and GNOME_FEMALE_VOICES or GNOME_MALE_VOICES
+    local soundKitId = isFemale and SOUNDKIT_IDS.GNOME_FEMALE_CHARGE or SOUNDKIT_IDS.GNOME_MALE_CHARGE
+    local played = false
+
+    -- 1. Intentar reproducir archivos OGG internos directos de la voz correspondiente (canal Master)
+    if type(PlaySoundFile) == "function" then
+        local pickPath = voiceList[math.random(1, #voiceList)]
+        local ok, handle = pcall(PlaySoundFile, pickPath, "Master")
+        if ok and handle ~= false and handle ~= nil then
+            played = true
+        end
+    end
+
+    -- 2. Fallback a SoundKit IDs oficiales de gnomo según género (2828: Male, 2840: Female)
+    if not played and type(PlaySound) == "function" then
+        local ok, handle = pcall(PlaySound, soundKitId, "Master")
+        if ok and handle ~= false and handle ~= nil then
+            played = true
+        end
+    end
+
+    -- 3. Fallback a Media/Sounds local si lo hubiera
+    if not played then
+        self:Play({ SOUND_RADAR_OGG, SOUND_RADAR_MP3 }, soundKitId)
+    end
 end
