@@ -94,6 +94,11 @@ Events:Register("PLAYER_LOGIN", function()
 end)
 
 Events:Register("PLAYER_LOGOUT", function()
+    -- Guardar datos actuales del personaje en el perfil de la cuenta compartida
+    if ODD.Guild and ODD.Guild.Profiles and ODD.Guild.Profiles.SaveToGlobalProfiles then
+        pcall(function() ODD.Guild.Profiles:SaveToGlobalProfiles() end)
+    end
+
     -- Asegurar persistencia forzada en las variables globales registradas en el TOC
     if ODD.Database and ODD.Database.global then
         _G["ODDDB"] = ODD.Database.global

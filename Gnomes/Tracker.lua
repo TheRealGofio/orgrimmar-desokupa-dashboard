@@ -460,6 +460,11 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     -- Guardado persistente
     _G["ODDCharacterDB"] = charDB
 
+    -- Guardar de inmediato en el perfil global de la cuenta para sincronizar alters
+    if ODD.Guild and ODD.Guild.Profiles and ODD.Guild.Profiles.SaveToGlobalProfiles then
+        pcall(function() ODD.Guild.Profiles:SaveToGlobalProfiles() end)
+    end
+
     -- Notificar y procesar Contratos Semanales de Hermandad
     if ODD.Guild and ODD.Guild.Contracts and ODD.Guild.Contracts.OnLocalKill then
         ODD.Guild.Contracts:OnLocalKill({

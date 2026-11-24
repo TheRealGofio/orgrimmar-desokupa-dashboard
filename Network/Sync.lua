@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Sync = {}
@@ -8,6 +8,7 @@ ODD.Network.Sync = Sync
 local seenMessages = {}
 local presenceList = {} -- miembros con ODD detectados online
 local versionWarned = false -- flag para alertar de versión desactualizada solo una vez por sesión
+local lastGossipTime = 0 -- control de frecuencia de réplica de caché global
 
 -- Helper semántico para comparar versiones (ej: "0.3.10-alpha" vs "0.3.9-alpha")
 -- Devuelve 1 si verA > verB, -1 si verA < verB, 0 si son iguales
@@ -138,6 +139,44 @@ function Sync:BroadcastHello(delaySeconds)
     end)
 end
 
+-- Réplica de Caché Gossip P2P: Envía a un compañero o a la hermandad las filas de miembros que
+-- tenemos en nuestra base de datos local y que podrían faltarle a otros
+function Sync:BroadcastGossipCache(targetRequester)
+    if not ODD.API.Forever:IsInGuild() then return end
+    local globalDB = ODD.Database:GetGlobal()
+    if not globalDB or not globalDB.profiles then return end
+
+    local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player")
+    local myShort = Ambiguate(myName or "", "none"):lower()
+
+    local batch = {}
+    local currentLen = 0
+
+    local function FlushBatch()
+        if #batch == 0 then return end
+        local payload = table.concat(batch, "#")
+        local msgId = ODD.Network.Protocol:GenerateMsgId()
+        local line = ODD.Network.Protocol:FormatLine("GOSSIP", msgId, targetRequester or "*", "RAW", payload)
+        ODD.Network.Queue:Enqueue(line, "GUILD")
+        batch = {}
+        currentLen = 0
+    end
+
+    for name, p in pairs(globalDB.profiles) do
+        local clean = Ambiguate(name, "none"):lower()
+        if clean ~= myShort and ((p.gnomeKills and p.gnomeKills > 0) or (p.achievementPoints and p.achievementPoints > 0)) then
+            -- Formato compacto: Nombre=Clase,Bajas,Puntos,UpdatedAt
+            local entry = string.format("%s=%s,%d,%d,%d", name, p.className or "WARRIOR", p.gnomeKills or 0, p.achievementPoints or 0, p.updatedAt or 0)
+            if (currentLen + #entry + 2) > 180 then
+                FlushBatch()
+            end
+            table.insert(batch, entry)
+            currentLen = currentLen + #entry + 1
+        end
+    end
+    FlushBatch()
+end
+
 -- Emite anuncio de baja mortal a través del canal de addon silencioso
 function Sync:BroadcastKill(killRecord, totalKills)
     if not ODD.API.Forever:IsInGuild() then return end
@@ -238,9 +277,6 @@ end
 -- Solicitud de sincronización de hermandad
 local lastWindowSyncTime = 0
 
--- Solicitud de sincronización de hermandad
-local lastWindowSyncTime = 0
-
 function Sync:RequestGuildSync()
     if not ODD.API.Forever:IsInGuild() then return end
 
@@ -251,7 +287,7 @@ function Sync:RequestGuildSync()
     end
     lastWindowSyncTime = now
 
-    ODD:Debug("Sincronización en vivo activada al abrir la ventana.")
+    ODD:Debug("Sincronización en vivo activada.")
     -- 1. Emitir nuestro estado actual de inmediato
     self:BroadcastHello(0)
 
@@ -270,6 +306,25 @@ function Sync:TriggerManualSync()
     ODD:Log("Iniciando sincronización con la hermandad...")
     lastWindowSyncTime = 0 -- Forzar sin throttle
     self:RequestGuildSync()
+end
+
+-- Helper para refrescar vistas abiertas en la interfaz
+local function RefreshAllOpenTabs()
+    if ODD.UI.HQTab and ODD.UI.HQTab.RefreshStats then
+        ODD.UI.HQTab:RefreshStats()
+    end
+    if ODD.UI.HQTab and ODD.UI.HQTab.RefreshPresence then
+        ODD.UI.HQTab:RefreshPresence()
+    end
+    if ODD.UI.HQTab and ODD.UI.HQTab.RefreshContracts then
+        ODD.UI.HQTab:RefreshContracts()
+    end
+    if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then
+        ODD.UI.GnomometerTab:Refresh()
+    end
+    if ODD.UI.HistoryTab and ODD.UI.HistoryTab.Refresh then
+        ODD.UI.HistoryTab:Refresh()
+    end
 end
 
 function Sync:OnMessageReceived(text, channel, sender)
@@ -301,8 +356,12 @@ function Sync:OnMessageReceived(text, channel, sender)
     seenMessages[dedupeKey] = GetTime()
 
     -- Comprobación de destinatario
-    if parsed.target ~= "*" and parsed.target ~= myName then
-        return -- Mensaje dirigido a otro compañero
+    if parsed.target ~= "*" and parsed.target ~= myName and parsed.target ~= senderName then
+        local shortTarget = Ambiguate(parsed.target, "none"):lower()
+        local shortMy = Ambiguate(myName, "none"):lower()
+        if shortTarget ~= shortMy then
+            return
+        end
     end
 
     if parsed.type == "HELLO" then
@@ -333,19 +392,21 @@ function Sync:OnMessageReceived(text, channel, sender)
                 presenceList[senderName].gnomeKills = tonumber(data.gk) or 0
                 presenceList[senderName].achievementPoints = tonumber(data.ap) or 0
                 presenceList[senderName].topZones = data.tz
+
                 -- Guardar en los perfiles globales para persistencia en el Leaderboard
                 local globalDB = ODD.Database:GetGlobal()
                 if globalDB then
                     globalDB.profiles = globalDB.profiles or {}
                     globalDB.profiles[senderName] = globalDB.profiles[senderName] or {}
-                    globalDB.profiles[senderName].name = senderName
-                    globalDB.profiles[senderName].className = data.cls
-                    globalDB.profiles[senderName].gnomeKills = tonumber(data.gk) or 0
-                    globalDB.profiles[senderName].achievementPoints = tonumber(data.ap) or 0
+                    local prof = globalDB.profiles[senderName]
+                    prof.name = senderName
+                    prof.className = data.cls
+                    prof.gnomeKills = tonumber(data.gk) or 0
+                    prof.achievementPoints = tonumber(data.ap) or 0
                     if data.tz then
-                        globalDB.profiles[senderName].topZones = data.tz
+                        prof.topZones = data.tz
                     end
-                    globalDB.profiles[senderName].updatedAt = time()
+                    prof.updatedAt = time()
                     _G["ODDDB"] = globalDB
                 end
             end
@@ -368,28 +429,62 @@ function Sync:OnMessageReceived(text, channel, sender)
             end
 
             ODD:Debug("Compañero con ODD detectado: %s (v%s)", senderName, tostring(data.ver))
-            
-            -- Actualizar en la UI si está abierta
-            if ODD.UI.HQTab and ODD.UI.HQTab.RefreshStats then
-                ODD.UI.HQTab:RefreshStats()
+            RefreshAllOpenTabs()
+        end
+
+    elseif parsed.type == "REQ" then
+        -- Un compañero solicitó sincronización:
+        -- 1. Respondemos anunciando nuestros datos propios con micro-jitter
+        Sync:BroadcastHello(math.random(1, 10) / 10)
+
+        -- 2. Réplica de Caché Gossip: Si tenemos datos de otros miembros en nuestra base de datos,
+        -- se los enviamos al compañero que acaba de pedir la sincronización
+        local now = GetTime()
+        if (now - lastGossipTime) > 4 then
+            lastGossipTime = now
+            C_Timer.After(math.random(12, 25) / 10, function()
+                Sync:BroadcastGossipCache(senderName)
+            end)
+        end
+
+    elseif parsed.type == "GOSSIP" then
+        -- Recibido paquete con datos de compañeros de hermandad replicados por un par
+        local globalDB = ODD.Database:GetGlobal()
+        if globalDB and parsed.payload and parsed.payload ~= "" then
+            globalDB.profiles = globalDB.profiles or {}
+            local hasChanges = false
+
+            for entry in string.gmatch(parsed.payload, "([^#]+)") do
+                -- Formato: Nombre=Clase,Bajas,Puntos,UpdatedAt
+                local mName, mRest = entry:match("^([^=]+)=(.*)$")
+                if mName and mRest and not IsMe(mName) then
+                    local mCls, mKills, mPts, mUpd = mRest:match("^([^,]+),(%d+),(%d+),(%d+)$")
+                    mKills = tonumber(mKills) or 0
+                    mPts = tonumber(mPts) or 0
+                    mUpd = tonumber(mUpd) or 0
+
+                    local existing = globalDB.profiles[mName]
+                    -- Solo actualizar si no existe o si el registro entrante es más reciente / tiene más bajas
+                    if not existing or (mKills > (existing.gnomeKills or 0)) or (mPts > (existing.achievementPoints or 0)) then
+                        globalDB.profiles[mName] = existing or {}
+                        local prof = globalDB.profiles[mName]
+                        prof.name = mName
+                        prof.className = mCls or prof.className or "WARRIOR"
+                        prof.gnomeKills = math.max(prof.gnomeKills or 0, mKills)
+                        prof.achievementPoints = math.max(prof.achievementPoints or 0, mPts)
+                        prof.updatedAt = math.max(prof.updatedAt or 0, mUpd, time())
+                        hasChanges = true
+                    end
+                end
             end
-            if ODD.UI.HQTab and ODD.UI.HQTab.RefreshPresence then
-                ODD.UI.HQTab:RefreshPresence()
-            end
-            if ODD.UI.HQTab and ODD.UI.HQTab.RefreshContracts then
-                ODD.UI.HQTab:RefreshContracts()
-            end
-            if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then
-                ODD.UI.GnomometerTab:Refresh()
-            end
-            if ODD.UI.HistoryTab and ODD.UI.HistoryTab.Refresh then
-                ODD.UI.HistoryTab:Refresh()
+
+            if hasChanges then
+                _G["ODDDB"] = globalDB
+                RefreshAllOpenTabs()
+                ODD:Debug("Caché de hermandad actualizada vía Gossip desde %s.", senderName)
             end
         end
-    elseif parsed.type == "REQ" then
-        -- Un compañero abrió su ventana y solicitó actualización en vivo
-        -- Respondemos anunciando nuestros datos con un micro-jitter para no colapsar el canal
-        Sync:BroadcastHello(math.random(1, 10) / 10) -- 0.1 a 1.0 segundos
+
     elseif parsed.type == "KILL" then
         local data = ODD.Network.Codec:Decode(parsed.codec, parsed.payload)
         if data and not ODD.Database:GetSetting("muteGuildAnnouncements") then
