@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -105,10 +105,117 @@ function SettingsTab:Create(parent)
         UpdateThemeDisplay()
     end)
 
+    -- Selector de Zoom / Escala con Botones [-] [+] estables y limpios
+    local scaleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    scaleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -96)
+    scaleLabel:SetText("Tamaño / Zoom:")
+
+    -- Botón de reducir [-]
+    local minusBtn = CreateFrame("Button", "ODD_ScaleMinusBtn", frame)
+    minusBtn:SetSize(24, 22)
+    minusBtn:SetPoint("LEFT", scaleLabel, "RIGHT", 14, 0)
+    minusBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    local mBg = minusBtn:CreateTexture(nil, "BACKGROUND")
+    mBg:SetAllPoints(minusBtn)
+    mBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)
+    local mFs = minusBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    mFs:SetPoint("CENTER", minusBtn, "CENTER", 0, 0)
+    mFs:SetText("|cFFFFFFFF-|r")
+    minusBtn.fs = mFs
+
+    -- Indicador numérico central
+    local scaleValFs = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    scaleValFs:SetPoint("LEFT", minusBtn, "RIGHT", 12, 0)
+    scaleValFs:SetText("100%")
+
+    -- Botón de aumentar [+]
+    local plusBtn = CreateFrame("Button", "ODD_ScalePlusBtn", frame)
+    plusBtn:SetSize(24, 22)
+    plusBtn:SetPoint("LEFT", scaleValFs, "RIGHT", 12, 0)
+    plusBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    local pBg = plusBtn:CreateTexture(nil, "BACKGROUND")
+    pBg:SetAllPoints(plusBtn)
+    pBg:SetColorTexture(0.1, 0.25, 0.1, 0.9)
+    local pFs = plusBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    pFs:SetPoint("CENTER", plusBtn, "CENTER", 0, 0)
+    pFs:SetText("|cFFFFFFFF+|r")
+    plusBtn.fs = pFs
+
+    local function UpdateScaleDisplay()
+        local curScale = (ODD.Database and ODD.Database:GetSetting("uiScale")) or 1.0
+        local pct = math.floor(curScale * 100 + 0.5)
+        scaleValFs:SetText(string.format("|cFF00FFCC%d%%|r", pct))
+    end
+
+    minusBtn:SetScript("OnClick", function()
+        local curScale = (ODD.Database and ODD.Database:GetSetting("uiScale")) or 1.0
+        local newScale = math.max(0.65, curScale - 0.05)
+        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.ApplyScale then
+            ODD.UI.Dashboard:ApplyScale(newScale)
+        elseif ODD.Database then
+            ODD.Database:SetSetting("uiScale", newScale)
+        end
+        UpdateScaleDisplay()
+    end)
+
+    plusBtn:SetScript("OnClick", function()
+        local curScale = (ODD.Database and ODD.Database:GetSetting("uiScale")) or 1.0
+        local newScale = math.min(1.25, curScale + 0.05)
+        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.ApplyScale then
+            ODD.UI.Dashboard:ApplyScale(newScale)
+        elseif ODD.Database then
+            ODD.Database:SetSetting("uiScale", newScale)
+        end
+        UpdateScaleDisplay()
+    end)
+
+    -- Botón de Reset 100%
+    local resetScaleBtn = CreateFrame("Button", "ODD_ScaleResetBtn", frame)
+    resetScaleBtn:SetSize(70, 22)
+    resetScaleBtn:SetPoint("LEFT", plusBtn, "RIGHT", 14, 0)
+    resetScaleBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    local rBg = resetScaleBtn:CreateTexture(nil, "BACKGROUND")
+    rBg:SetAllPoints(resetScaleBtn)
+    rBg:SetColorTexture(0.18, 0.18, 0.22, 0.9)
+    local rFs = resetScaleBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    rFs:SetPoint("CENTER", resetScaleBtn, "CENTER", 0, 0)
+    rFs:SetText("100%")
+    resetScaleBtn.fs = rFs
+
+    resetScaleBtn:SetScript("OnClick", function()
+        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.ApplyScale then
+            ODD.UI.Dashboard:ApplyScale(1.0)
+        elseif ODD.Database then
+            ODD.Database:SetSetting("uiScale", 1.0)
+        end
+        UpdateScaleDisplay()
+    end)
+
+    -- Botón de auto-ajuste según resolución
+    local autoScaleBtn = CreateFrame("Button", "ODD_AutoScaleBtn", frame)
+    autoScaleBtn:SetSize(110, 22)
+    autoScaleBtn:SetPoint("LEFT", resetScaleBtn, "RIGHT", 10, 0)
+    autoScaleBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    local asBg = autoScaleBtn:CreateTexture(nil, "BACKGROUND")
+    asBg:SetAllPoints(autoScaleBtn)
+    asBg:SetColorTexture(0.14, 0.22, 0.14, 0.9)
+    local asFs = autoScaleBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    asFs:SetPoint("CENTER", autoScaleBtn, "CENTER", 0, 0)
+    asFs:SetText("|cFF00FF00Auto-Ajustar|r")
+    autoScaleBtn.fs = asFs
+
+    autoScaleBtn:SetScript("OnClick", function()
+        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.ApplyScale then
+            local applied = ODD.UI.Dashboard:ApplyScale(0) -- 0 fuerza el cálculo automático inteligente
+            UpdateScaleDisplay()
+            ODD:Log("Escala auto-ajustada según pantalla: %d%%", math.floor(applied * 100))
+        end
+    end)
+
     -- ========================================================
     -- BLOQUE 2: PRIVACIDAD Y SINCRONIZACION
     -- ========================================================
-    local privHeader = ODD.UI.Components:CreateSectionHeader(frame, "Privacidad y Red P2P:", -106)
+    local privHeader = ODD.UI.Components:CreateSectionHeader(frame, "Privacidad y Red P2P:", -126)
 
     checkboxes = {}
     local function CreateCheck(label, settingKey, yOffset)
@@ -133,7 +240,7 @@ function SettingsTab:Create(parent)
             if settingKey == "showTestingTools" then
                 if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then ODD.UI.GnomometerTab:Refresh() end
                 if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then ODD.UI.PvPTab:Refresh() end
-                if ODD.UI.WorkshopsTab and ODD.UI.WorkshopsTab.Refresh then ODD.UI.WorkshopsTab:Refresh() end
+                if ODD.UI.HistoryTab and ODD.UI.HistoryTab.Refresh then ODD.UI.HistoryTab:Refresh() end
                 if ODD.UI.HQTab and ODD.UI.HQTab.RefreshMedals then ODD.UI.HQTab:RefreshMedals() end
             end
         end)
@@ -142,22 +249,21 @@ function SettingsTab:Create(parent)
         return btn
     end
 
-    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -132)
-    CreateCheck("Compartir rol en la hermandad", "shareProfile", -160)
-    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -188)
-    CreateCheck("Compartir recetas y profesiones conocidas", "shareTrades", -216)
-    CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -244)
-    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -272)
-    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -300)
+    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -150)
+    CreateCheck("Compartir rol en la hermandad", "shareProfile", -174)
+    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -198)
+    CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -222)
+    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -246)
+    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -270)
 
     -- ========================================================
     -- BLOQUE 3: HUD FLOTANTE EN PANTALLA (ESTILO GRS)
     -- ========================================================
-    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -332)
+    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -304)
 
     local hudToggleBtn = CreateFrame("Button", "ODD_HUDToggleSettingsBtn", frame)
-    hudToggleBtn:SetSize(160, 26)
-    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -360)
+    hudToggleBtn:SetSize(160, 24)
+    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -330)
     local hBg = hudToggleBtn:CreateTexture(nil, "BACKGROUND")
     hBg:SetAllPoints()
     hBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)
@@ -192,6 +298,7 @@ function SettingsTab:Create(parent)
     local function RefreshSettings()
         UpdateRoleDisplay()
         UpdateThemeDisplay()
+        UpdateScaleDisplay()
 
         for _, btn in ipairs(checkboxes) do
             local currentVal = ODD.Database:GetSetting(btn.settingKey)

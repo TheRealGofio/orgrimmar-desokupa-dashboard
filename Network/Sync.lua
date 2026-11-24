@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Sync = {}
@@ -98,20 +98,6 @@ function Sync:BroadcastHello(delaySeconds)
             end
         end
 
-        -- Añadir profesiones primarias si está configurado compartir talleres
-        if ODD.Database:GetSetting("shareTrades") then
-            if ODD.Professions and ODD.Professions.Scanner then
-                local mySkills = ODD.Professions.Scanner:GetLocalProfessions(true) -- Solo primarias (hasta 2) para ahorrar bytes
-                if mySkills and #mySkills > 0 then
-                    local pList = {}
-                    for _, p in ipairs(mySkills) do
-                        table.insert(pList, string.format("%s:%d:%d", p.name, p.level, p.maxLevel))
-                    end
-                    data.profs = table.concat(pList, "|")
-                end
-            end
-        end
-
         -- Añadir bajas de contratos semanales para sincronización P2P
         if ODD.Guild and ODD.Guild.Contracts then
             local store = ODD.Guild.Contracts:EnsureStorage()
@@ -159,9 +145,10 @@ function Sync:BroadcastKill(killRecord, totalKills)
 
     local pInfo = ODD.API.Forever:GetPlayerInfo()
     local myClass = pInfo.classFile or select(2, UnitClass("player")) or "WARRIOR"
+    local myFullName = pInfo.name or (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Desconocido"
 
     local data = {
-        k = UnitName("player") or "Desconocido",
+        k = myFullName,
         kc = myClass,
         v = killRecord.victimName or "Gnomo",
         vc = killRecord.victimClass or "MAGE",
@@ -186,9 +173,10 @@ function Sync:BroadcastAchievement(achievementId, achievementName, points)
 
     local pInfo = ODD.API.Forever:GetPlayerInfo()
     local myClass = pInfo.classFile or select(2, UnitClass("player")) or "WARRIOR"
+    local myFullName = pInfo.name or (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Desconocido"
 
     local data = {
-        p = UnitName("player") or "Desconocido",
+        p = myFullName,
         pc = myClass,
         aid = achievementId or "gnome_1",
         an = achievementName or "Logro",
@@ -249,101 +237,6 @@ end
 
 -- Solicitud de sincronización de hermandad
 local lastWindowSyncTime = 0
-
--- Emite anuncio de baja mortal a través del canal de addon silencioso
-function Sync:BroadcastKill(killRecord, totalKills)
-    if not ODD.API.Forever:IsInGuild() then return end
-    if ODD.Database:GetSetting("muteGuildAnnouncements") then return end
-
-    local pInfo = ODD.API.Forever:GetPlayerInfo()
-    local myClass = pInfo.classFile or select(2, UnitClass("player")) or "WARRIOR"
-
-    local data = {
-        k = UnitName("player") or "Desconocido",
-        kc = myClass,
-        v = killRecord.victimName or "Gnomo",
-        vc = killRecord.victimClass or "MAGE",
-        vl = tostring(killRecord.victimLevel or "??"),
-        z = killRecord.zone or "Mundo Abierto",
-        tk = totalKills or 1,
-    }
-
-    local codec, encoded = ODD.Network.Codec:EncodeSimple(data)
-    local msgId = ODD.Network.Protocol:GenerateMsgId()
-    local line = ODD.Network.Protocol:FormatLine("KILL", msgId, "*", codec, encoded)
-    ODD.Network.Queue:Enqueue(line, "GUILD")
-
-    -- Imprimir también en el chat local propio para confirmación visual inmediata
-    self:DisplayKillInChat(data.k, data.kc, data.v, data.vc, data.vl, data.z, data.tk, true)
-end
-
--- Emite anuncio de logro desbloqueado a través del canal de addon silencioso
-function Sync:BroadcastAchievement(achievementId, achievementName, points)
-    if not ODD.API.Forever:IsInGuild() then return end
-    if ODD.Database:GetSetting("muteGuildAnnouncements") then return end
-
-    local pInfo = ODD.API.Forever:GetPlayerInfo()
-    local myClass = pInfo.classFile or select(2, UnitClass("player")) or "WARRIOR"
-
-    local data = {
-        p = UnitName("player") or "Desconocido",
-        pc = myClass,
-        aid = achievementId or "gnome_1",
-        an = achievementName or "Logro",
-        pts = points or 10,
-        t = time(),
-    }
-
-    local codec, encoded = ODD.Network.Codec:EncodeSimple(data)
-    local msgId = ODD.Network.Protocol:GenerateMsgId()
-    local line = ODD.Network.Protocol:FormatLine("ACHIEVE", msgId, "*", codec, encoded)
-    ODD.Network.Queue:Enqueue(line, "GUILD")
-
-    -- Imprimir en el chat local propio con enlace interactivo
-    self:DisplayAchievementInChat(data.p, data.pc, data.aid, data.an, data.pts, data.t, true)
-end
-
-local CLASS_COLORS = {
-    ["WARRIOR"]     = "FFC79C6E",
-    ["PALADIN"]     = "FFF58CBA",
-    ["HUNTER"]      = "FFABD473",
-    ["ROGUE"]       = "FFFFF569",
-    ["PRIEST"]      = "FFFFFFFF",
-    ["DEATHKNIGHT"] = "FFC41F3B",
-    ["SHAMAN"]      = "FF0070DE",
-    ["MAGE"]        = "FF69CCF0",
-    ["WARLOCK"]     = "FF9482C9",
-    ["MONK"]        = "FF00FF96",
-    ["DRUID"]       = "FFFF7D0A",
-    ["DEMONHUNTER"] = "FFA330C9",
-    ["EVOKER"]      = "FF33937F",
-}
-
-function Sync:DisplayKillInChat(killer, killerClass, victim, victimClass, victimLvl, zone, totalKills, isSelf)
-    local kColor = CLASS_COLORS[killerClass] or "FFFFFFFF"
-    local vColor = CLASS_COLORS[victimClass] or "FFFFFFFF"
-    local killerStr = string.format("|c%s%s|r", kColor, killer)
-    local victimStr = string.format("|c%s%s (%s Nivel %s)|r", vColor, victim, victimClass or "?", tostring(victimLvl or "?"))
-
-    local outMsg = string.format("|cFFFF8000[ODD]|r %s ha desalojado a %s en |cFFFFFFFF%s|r. |cFF00FF00(Total: %d)|r",
-        killerStr, victimStr, zone or "Mundo Abierto", tonumber(totalKills) or 1)
-
-    DEFAULT_CHAT_FRAME:AddMessage(outMsg)
-end
-
-function Sync:DisplayAchievementInChat(playerName, playerClass, achId, achName, points, timestamp, isSelf)
-    local pColor = CLASS_COLORS[playerClass] or "FFFFFFFF"
-    local playerStr = string.format("|c%s%s|r", pColor, playerName)
-    local t = timestamp or time()
-    
-    -- Enlace interactivo con protocolo nativo de WoW: |Hitem:ODDACH:id:points:player:timestamp|h[Nombre del logro]|h
-    local achLink = string.format("|cFF00FFCC|Hitem:ODDACH:%s:%d:%s:%d|h[%s]|h|r", tostring(achId), tonumber(points) or 10, playerName or "Compañero", t, achName or "Logro")
-
-    local outMsg = string.format("|cFFFF8000[ODD]|r %s ha conseguido el logro %s |cFFFFD100(+%d pts)|r",
-        playerStr, achLink, tonumber(points) or 10)
-
-    DEFAULT_CHAT_FRAME:AddMessage(outMsg)
-end
 
 -- Solicitud de sincronización de hermandad
 local lastWindowSyncTime = 0
@@ -382,7 +275,7 @@ end
 function Sync:OnMessageReceived(text, channel, sender)
     -- Limpieza de reino en el sender
     local senderName = Ambiguate(sender, "none")
-    local myName = UnitName("player")
+    local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player")
     local myFullName, myRealm = UnitFullName("player")
     local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
 
@@ -474,26 +367,6 @@ function Sync:OnMessageReceived(text, channel, sender)
                 ODD.Guild.Contracts:MergeRemoteKills(data.cw, remoteZ, remoteC)
             end
 
-            if data.profs and data.profs ~= "" then
-                local globalDB = ODD.Database:GetGlobal()
-                if globalDB then
-                    globalDB.profiles = globalDB.profiles or {}
-                    globalDB.profiles[senderName] = globalDB.profiles[senderName] or {}
-                    globalDB.profiles[senderName].professions = {}
-                    for item in string.gmatch(data.profs, "([^|]+)") do
-                        local pName, pLvl, pMax = item:match("^([^:]+):(%d+):(%d+)$")
-                        if pName then
-                            table.insert(globalDB.profiles[senderName].professions, {
-                                name = pName,
-                                level = tonumber(pLvl) or 0,
-                                maxLevel = tonumber(pMax) or 0,
-                            })
-                        end
-                    end
-                    _G["ODDDB"] = globalDB
-                end
-            end
-
             ODD:Debug("Compañero con ODD detectado: %s (v%s)", senderName, tostring(data.ver))
             
             -- Actualizar en la UI si está abierta
@@ -509,8 +382,8 @@ function Sync:OnMessageReceived(text, channel, sender)
             if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then
                 ODD.UI.GnomometerTab:Refresh()
             end
-            if ODD.UI.WorkshopsTab and ODD.UI.WorkshopsTab.Refresh then
-                ODD.UI.WorkshopsTab:Refresh()
+            if ODD.UI.HistoryTab and ODD.UI.HistoryTab.Refresh then
+                ODD.UI.HistoryTab:Refresh()
             end
         end
     elseif parsed.type == "REQ" then
@@ -521,6 +394,9 @@ function Sync:OnMessageReceived(text, channel, sender)
         local data = ODD.Network.Codec:Decode(parsed.codec, parsed.payload)
         if data and not ODD.Database:GetSetting("muteGuildAnnouncements") then
             Sync:DisplayKillInChat(data.k or senderName, data.kc or "WARRIOR", data.v or "Gnomo", data.vc or "MAGE", data.vl or "??", data.z or "Mundo Abierto", data.tk or 1, false)
+        end
+        if data and ODD.UI and ODD.UI.HistoryTab and ODD.UI.HistoryTab.OnRemoteKillReceived then
+            ODD.UI.HistoryTab:OnRemoteKillReceived(data, senderName)
         end
     elseif parsed.type == "ACHIEVE" then
         local data = ODD.Network.Codec:Decode(parsed.codec, parsed.payload)

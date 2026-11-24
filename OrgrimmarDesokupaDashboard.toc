@@ -2,7 +2,7 @@
 ## Title: |cffff8000Orgrimmar Desokupa Dashboard|r (ODD)
 ## Notes: Dashboard y analiticas para hermandades de la Horda en WoW Forever.
 ## Author: Orgrimmar Desokupa Team
-## Version: 0.3.11-alpha
+## Version: 0.3.12-alpha
 ## IconTexture: Interface\Icons\INV_Misc_Head_Gnome_01
 ## X-Category: Guild, PvP, Combat
 ## X-Website: https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard
@@ -42,9 +42,6 @@ Achievements\Medals.lua
 # PvP Fase 4
 PvP\Tracker.lua
 
-# Talleres / Profesiones Fase 4
-Professions\Scanner.lua
-
 # Red y Transporte Fase 2
 Network\Codec.lua
 Network\Protocol.lua
@@ -62,7 +59,7 @@ UI\Tabs\HQTab.lua
 UI\Tabs\GnomometerTab.lua
 UI\Tabs\MedalsTab.lua
 UI\Tabs\PvPTab.lua
-UI\Tabs\WorkshopsTab.lua
+UI\Tabs\HistoryTab.lua
 UI\Tabs\RosterTab.lua
 UI\Tabs\SettingsTab.lua
 UI\Dashboard.lua

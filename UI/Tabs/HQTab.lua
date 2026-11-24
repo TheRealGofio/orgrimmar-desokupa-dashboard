@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -81,7 +81,7 @@ function HQTab:CalculateStats()
 
     -- Total de hermandad: tu total propio + totales declarados por compañeros en ODDDB
     local guildTotal = personalTotal
-    local myName = UnitName("player") or "Tú"
+    local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
     local myFullName, myRealm = UnitFullName("player")
     local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
 
@@ -90,7 +90,7 @@ function HQTab:CalculateStats()
         local cName = Ambiguate(name, "none"):lower()
         local cMyName = Ambiguate(myName, "none"):lower()
         local cComb = myCombinedName:lower()
-        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName)) or (cMyName:find("^" .. cName))
     end
 
     local topContributors = {
@@ -421,7 +421,7 @@ function HQTab:Create(parent)
             myPts = ODD.Achievements.Medals:GetPlayerAchievementPoints()
         end
         local pText = string.format("Personaje: |cFFFFD100%s%s|r  •  Clase: |cFFFFD100%s|r  •  Nivel: |cFFFFD100%s|r  •  Puntos de Logro: |cFF00FFCC%d pts|r", 
-            profile.name or UnitName("player") or "Desconocido", 
+            profile.name or (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Desconocido", 
             roleText,
             profile.class or select(2, UnitClass("player")) or "Desconocido", 
             tostring(profile.level or UnitLevel("player") or "?"),

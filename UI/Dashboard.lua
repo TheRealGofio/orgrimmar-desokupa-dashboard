@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 local L = addonTable.L
 
@@ -15,7 +15,7 @@ local TAB_DEFS = {
     { name = "Gnomometer", labelKey = "TAB_GNOMOMETER", creator = function(p) return ODD.UI.GnomometerTab:Create(p) end },
     { name = "Medals", labelKey = "TAB_MEDALS", creator = function(p) return ODD.UI.MedalsTab:Create(p) end },
     { name = "PvP", labelKey = "TAB_PVP", creator = function(p) return ODD.UI.PvPTab:Create(p) end },
-    { name = "Workshops", labelKey = "TAB_WORKSHOPS", creator = function(p) return ODD.UI.WorkshopsTab:Create(p) end },
+    { name = "History", labelKey = "TAB_HISTORY", creator = function(p) return ODD.UI.HistoryTab:Create(p) end },
     { name = "Roster", labelKey = "TAB_ROSTER", creator = function(p) return ODD.UI.RosterTab:Create(p) end },
     { name = "Settings", labelKey = "TAB_SETTINGS", creator = function(p) return ODD.UI.SettingsTab:Create(p) end },
 }
@@ -118,11 +118,37 @@ function Dashboard:Create()
     mainFrame:SetFrameStrata("HIGH")
     mainFrame:SetToplevel(true)
     mainFrame:SetMovable(true)
+    mainFrame:SetClampedToScreen(true)
     mainFrame:EnableMouse(true)
     mainFrame:RegisterForDrag("LeftButton")
     mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
     mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
     mainFrame:Hide()
+
+    -- Función pública para aplicar escala (zoom)
+    function Dashboard:ApplyScale(customScale)
+        if not mainFrame then return end
+        local scale = customScale or (ODD.Database and ODD.Database:GetSetting("uiScale"))
+        
+        -- Si no hay escala configurada, calcular escala inteligente según altura de pantalla
+        if not scale or scale == 0 then
+            local screenH = UIParent and UIParent:GetHeight() or 768
+            if screenH < 800 then
+                scale = 0.75 -- Portátiles pequeños (720p / 768p)
+            elseif screenH < 960 then
+                scale = 0.85 -- Pantallas medianas o UI Scale elevada
+            else
+                scale = 1.0  -- 1080p, 1440p o superior
+            end
+        end
+
+        scale = math.max(0.65, math.min(1.25, scale))
+        mainFrame:SetScale(scale)
+        if customScale and ODD.Database then
+            ODD.Database:SetSetting("uiScale", scale)
+        end
+        return scale
+    end
 
     -- Fondo negro sólido nativo (mimetizado con el fondo negro de frame_4)
     local solidBlackBg = mainFrame:CreateTexture(nil, "BACKGROUND", nil, -8)
@@ -325,6 +351,7 @@ function ODD.UI:Toggle()
     if f:IsShown() then
         f:Hide()
     else
+        Dashboard:ApplyScale()
         f:Show()
         -- Al abrir la ventana, disparar sincronización en vivo con la hermandad
         if ODD.Network and ODD.Network.Sync then

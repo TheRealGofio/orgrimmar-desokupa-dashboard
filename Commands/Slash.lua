@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 local L = addonTable.L
 
@@ -30,7 +30,7 @@ SlashCmdList["ODD"] = function(msg)
             ODD:Log("Modo de herramientas de prueba: %s", not current and "|cFF00FF00ACTIVADO|r" or "|cFFFF0000DESACTIVADO|r")
             if ODD.UI.GnomometerTab and ODD.UI.GnomometerTab.Refresh then ODD.UI.GnomometerTab:Refresh() end
             if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then ODD.UI.PvPTab:Refresh() end
-            if ODD.UI.WorkshopsTab and ODD.UI.WorkshopsTab.Refresh then ODD.UI.WorkshopsTab:Refresh() end
+            if ODD.UI.HistoryTab and ODD.UI.HistoryTab.Refresh then ODD.UI.HistoryTab:Refresh() end
             if ODD.UI.HQTab and ODD.UI.HQTab.RefreshMedals then ODD.UI.HQTab:RefreshMedals() end
         elseif cmd == "radar" or cmd == "testradar" then
             ODD:Log("Disparando prueba de alerta de radar...")
@@ -49,14 +49,14 @@ SlashCmdList["ODD"] = function(msg)
             if arg == "kill" then
                 ODD:Log("Simulando mensaje de baja silencioso...")
                 if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.DisplayKillInChat then
-                    local pName = UnitName("player") or "TuPersonaje"
+                    local pName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "TuPersonaje"
                     local _, pClass = UnitClass("player")
                     ODD.Network.Sync:DisplayKillInChat(pName, pClass or "SHAMAN", "Manitas", "MAGE", 42, "Laderas de Trabalomas", 19, false)
                 end
             elseif arg == "achieve" or arg == "logro" then
                 ODD:Log("Simulando mensaje de logro con enlace interactivo...")
                 if ODD.Network and ODD.Network.Sync and ODD.Network.Sync.DisplayAchievementInChat then
-                    local pName = UnitName("player") or "TuPersonaje"
+                    local pName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "TuPersonaje"
                     local _, pClass = UnitClass("player")
                     ODD.Network.Sync.DisplayAchievementInChat(nil, pName, pClass or "SHAMAN", "gnome_25", "Fumigador Oficial", 15, time(), false)
                 end

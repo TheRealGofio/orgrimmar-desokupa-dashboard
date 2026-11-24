@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 ODD.Database = ODD.Database or {}
@@ -14,13 +14,13 @@ Schema.DefaultGlobalDB = {
         sharePresence = true,
         shareProfile = true,
         shareStats = true,
-        shareTrades = false,
         muteGuildAnnouncements = false, -- Si está marcado, silencia por completo el envío de anuncios al chat de hermandad
         muteSounds = false,             -- Silenciar todos los efectos de sonido de ODD
         enableGnomeRadar = true,        -- Alerta sonora/visual al detectar un gnomo enemigo cercano
         showHUD = false,                -- Mostrar el HUD compacto flotante en pantalla (estilo GRS)
         hudPos = nil,                   -- Posición guardada del HUD
         theme = "classic",              -- Tema visual del marco: classic, molten, fel, frost, troll
+        uiScale = 1.0,                  -- Escala personalizada del Dashboard (0.7 a 1.2)
     },
     profiles = {},     -- perfiles conocidos de hermandad indexados por GUID/nombre
     rosterCache = {
@@ -51,10 +51,6 @@ Schema.DefaultCharacterDB = {
         pvp = {
             matches = {},
             nemesis = {}, -- [enemyGUID] = { name, class, race, deathsTo = number, killsOn = number, lastEncounter = timestamp, zone = string, status = "WANTED"|"AVENGED" }
-        },
-        professions = {
-            scannedAt = 0,
-            skills = {},
         }
     }
 }

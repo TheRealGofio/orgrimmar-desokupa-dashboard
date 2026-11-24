@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Contracts = {}
@@ -196,7 +196,7 @@ function Contracts:OnLocalKill(killRecord)
     if not store then return end
 
     local zoneDef, classDef, weekID = self:GetActiveContracts()
-    local playerName = UnitName("player") or "Tú"
+    local playerName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
     local now = killRecord.timestamp or time()
     local killSig = string.format("%s_%s_%d", tostring(killRecord.guid), playerName, now)
 

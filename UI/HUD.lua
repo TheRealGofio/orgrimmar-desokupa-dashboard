@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local HUD = {}
@@ -169,7 +169,7 @@ function HUD:Refresh()
     end
 
     local guildTotal = personalTotal
-    local myName = UnitName("player") or "Tú"
+    local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
     local myFullName, myRealm = UnitFullName("player")
     local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
 
@@ -178,7 +178,7 @@ function HUD:Refresh()
         local cName = Ambiguate(name, "none"):lower()
         local cMyName = Ambiguate(myName, "none"):lower()
         local cComb = myCombinedName:lower()
-        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName)) or (cMyName:find("^" .. cName))
     end
 
     local globalDB = ODD.Database:GetGlobal()

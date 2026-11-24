@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -84,7 +84,8 @@ function RosterTab:Refresh()
     local globalDB = ODD.Database:GetGlobal()
     local profiles = (globalDB and globalDB.profiles) or {}
 
-    local myName = UnitName("player") or "Tú"
+    local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
+    local myShortName = UnitName("player") or myName
     local myKills = 0
     local myPoints = 0
     local charDB = ODD.Database:GetChar()
@@ -97,7 +98,7 @@ function RosterTab:Refresh()
 
     local function GetMemberStats(cleanName)
         local cLower = cleanName:lower()
-        if cLower == myName:lower() then
+        if cLower == myName:lower() or cLower == myShortName:lower() then
             return myKills, myPoints
         end
         local prof = profiles[cleanName]

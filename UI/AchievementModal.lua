@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Modal = {}
@@ -115,7 +115,7 @@ function Modal:Show(medalId, playerName, timestamp, points)
     f.descFs:SetText(desc)
     f.pointsFs:SetText(string.format("|cFF00FFCC+%d pts|r", pts))
 
-    local pName = playerName or UnitName("player") or "Compañero"
+    local pName = playerName or (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Compañero"
     local dateStr = date("%d/%m/%Y a las %H:%M", timestamp or time())
 
     f.footerFs:SetText(string.format("Conseguido por |cFFFFD100%s|r el |cFF888888%s|r", pName, dateStr))

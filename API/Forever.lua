@@ -42,27 +42,80 @@ function Forever:SanitizeGUID(value)
     return nil
 end
 
+-- Devuelve el nombre completo oficial (Nombre + Apellido) de cualquier unidad en WoW Forever
+function Forever:GetFullName(unitToken)
+    if not unitToken then return nil end
+
+    -- 1. Intentar GetUnitName(token) en WoW Forever devuelve el nombre completo ("Nombre Apellido")
+    if type(GetUnitName) == "function" then
+        local okGN, gn = pcall(GetUnitName, unitToken)
+        if okGN and gn and gn ~= "" and not self:IsSecret(gn) then
+            local clean = self:SanitizeText(gn)
+            if clean and clean:find("%s+") then
+                return clean
+            end
+        end
+        -- También con showServerName por compatibilidad
+        local okGN2, gn2 = pcall(GetUnitName, unitToken, true)
+        if okGN2 and gn2 and gn2 ~= "" and not self:IsSecret(gn2) then
+            local clean2 = self:SanitizeText(gn2)
+            -- Limpiar posible guion de servidor: "Nombre Apellido-Realm" -> "Nombre Apellido"
+            if clean2 then
+                local beforeRealm = clean2:match("^([^-]+)")
+                if beforeRealm and beforeRealm:find("%s+") then
+                    return beforeRealm:gsub("%s+$", "")
+                end
+            end
+        end
+    end
+
+    -- 2. Si es "player" o coincide con el jugador, consultar el Roster de Hermandad si está disponible
+    if unitToken == "player" then
+        local myGuid = self:SanitizeGUID(UnitGUID("player"))
+        if myGuid and type(GetNumGuildMembers) == "function" and type(GetGuildRosterInfo) == "function" then
+            local numTotal = GetNumGuildMembers() or 0
+            for i = 1, numTotal do
+                local gName, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, gGuid = GetGuildRosterInfo(i)
+                if gGuid and self:SanitizeGUID(gGuid) == myGuid and gName then
+                    local cleanG = self:SanitizeText(gName)
+                    if cleanG and cleanG:find("%s+") then
+                        return cleanG
+                    end
+                end
+            end
+        end
+    end
+
+    -- 3. Intentar UnitFullName
+    if type(UnitFullName) == "function" then
+        local okFN, fn = pcall(UnitFullName, unitToken)
+        if okFN and fn and fn ~= "" and not self:IsSecret(fn) then
+            local cleanFN = self:SanitizeText(fn)
+            if cleanFN and cleanFN:find("%s+") then
+                return cleanFN
+            end
+        end
+    end
+
+    -- 4. Fallback estándar a UnitName
+    local okN, n = pcall(UnitName, unitToken)
+    if okN and n and n ~= "" and not self:IsSecret(n) then
+        return self:SanitizeText(n)
+    end
+
+    return "Desconocido"
+end
+
 -- Obtener información básica y segura del jugador local
 function Forever:GetPlayerInfo()
-    local name, realm = UnitFullName("player")
+    local fullName = self:GetFullName("player")
+    local _, realm = UnitFullName("player")
     local _, classFilename, classId = UnitClass("player")
     local raceName, raceFile, raceId = UnitRace("player")
     local guid = UnitGUID("player")
     local level = UnitLevel("player")
 
-    -- En WoW Forever, los nombres completos (con apellido) están disponibles en el Roster de hermandad
-    local fullName = self:SanitizeText(name)
     local safeGuid = self:SanitizeGUID(guid)
-    if safeGuid and type(GetNumGuildMembers) == "function" and type(GetGuildRosterInfo) == "function" then
-        local numTotal = GetNumGuildMembers()
-        for i = 1, numTotal do
-            local gName, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, gGuid = GetGuildRosterInfo(i)
-            if gGuid and self:SanitizeGUID(gGuid) == safeGuid and gName then
-                fullName = self:SanitizeText(gName)
-                break
-            end
-        end
-    end
 
     return {
         guid = safeGuid,

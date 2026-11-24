@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 
 -- Si el cliente está en inglés, sobrescribir claves manteniendo fallback
 if GetLocale and GetLocale() == "enUS" then
@@ -16,7 +16,7 @@ if GetLocale and GetLocale() == "enUS" then
     L["TAB_GNOMOMETER"] = "Gnomometer"
     L["TAB_MEDALS"] = "Achievements"
     L["TAB_PVP"] = "PvP"
-    L["TAB_WORKSHOPS"] = "Professions"
+    L["TAB_HISTORY"] = "Evictions"
     L["TAB_ROSTER"] = "Members"
     L["TAB_SETTINGS"] = "Settings"
 

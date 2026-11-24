@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Rankings = {}
@@ -35,7 +35,7 @@ function Rankings:GetGnomeLeaderboard(sortBy)
 
     -- 1. Incluir el registro verificado propio (Local Observed)
     local charDB = ODD.Database:GetChar()
-    local myName = UnitName("player") or "Tú"
+    local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
     local myFullName, myRealm = UnitFullName("player")
     local myCombinedName = (myFullName and myRealm and myRealm ~= "") and (myFullName .. "-" .. myRealm) or (myFullName or myName)
     local myClass = select(2, UnitClass("player")) or "WARRIOR"
