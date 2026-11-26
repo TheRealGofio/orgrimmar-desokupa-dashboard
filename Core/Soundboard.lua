@@ -132,23 +132,19 @@ function Soundboard:TriggerSound(soundId, targetScope)
 end
 
 -- Emisión a través del protocolo de red de ODD
+-- Nota: Solo se emite si se está en Grupo (PARTY) o Banda (RAID). La hermandad queda excluida para no spamear.
 function Soundboard:Broadcast(soundId, targetScope)
     if not ODD.Network or not ODD.Network.Protocol or not ODD.Network.Queue then return end
 
-    local scope = targetScope or ODD.Database:GetSetting("soundboardScope") or "GUILD"
-    local channel = "GUILD"
-
-    if scope == "PARTY" or scope == "RAID" or scope == "GROUP" then
-        if IsInRaid and IsInRaid() then
-            channel = "RAID"
-        elseif IsInGroup and IsInGroup() then
-            channel = "PARTY"
-        else
-            channel = "GUILD"
-        end
+    local channel = nil
+    if IsInRaid and IsInRaid() then
+        channel = "RAID"
+    elseif IsInGroup and IsInGroup() then
+        channel = "PARTY"
     end
 
-    if channel == "GUILD" and not (ODD.API and ODD.API.Forever and ODD.API.Forever:IsInGuild()) then
+    -- Si no está en grupo o raid, no se emite a nadie (solo sonará en local para el jugador)
+    if not channel then
         return
     end
 

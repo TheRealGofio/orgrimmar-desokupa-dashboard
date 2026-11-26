@@ -178,14 +178,14 @@ function SoundboardModal:Create()
     scopeBtn:SetSize(90, 18)
     scopeBtn:SetPoint("RIGHT", topBar, "RIGHT", -4, 0)
     scopeBtn:SetNormalFontObject("GameFontHighlightSmall")
-    scopeBtn:SetScript("OnClick", function()
-        if currentScope == "GUILD" then currentScope = "GROUP" else currentScope = "GUILD" end
-        ODD.Database:SetSetting("soundboardScope", currentScope)
-        SoundboardModal:RefreshControls()
-        if ODD.UI and ODD.UI.SoundboardTab and ODD.UI.SoundboardTab.RefreshControls then
-            ODD.UI.SoundboardTab:RefreshControls()
-        end
+    scopeBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Canal de Transmisión", 1, 0.82, 0)
+        GameTooltip:AddLine("Los sonidos se transmiten exclusivamente a tu grupo o banda.", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine("Si no estás en grupo, solo sonará para ti.", 0.6, 0.6, 0.6, true)
+        GameTooltip:Show()
     end)
+    scopeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- ScrollFrame y Rejilla
     scrollFrame = CreateFrame("ScrollFrame", "ODD_SBModalScrollFrame", modalFrame, "UIPanelScrollFrameTemplate")
@@ -254,10 +254,8 @@ function SoundboardModal:RefreshControls()
         filterFavBtn:SetText(filterTab == "FAV" and "|cFFFFD100[Favs]|r" or "|cFF888888[Favs]|r")
     end
 
-    local scope = ODD.Database:GetSetting("soundboardScope") or currentScope or "GUILD"
-    currentScope = scope
     if scopeBtn then
-        scopeBtn:SetText(scope == "GUILD" and "|cFF00FF00[Hermandad]|r" or "|cFF00CCFF[Grupo]|r")
+        scopeBtn:SetText("|cFF00CCFF[Grupo/Raid]|r")
     end
 
     if muteBtn then
@@ -366,8 +364,7 @@ function SoundboardModal:RefreshList()
                 self.border:SetBackdropBorderColor(0.85, 0.65, 0.20, 1.0)
                 GameTooltip:SetOwner(self, "ANCHOR_TOP")
                 GameTooltip:SetText(self.soundData.name, 1, 0.82, 0)
-                local scopeTxt = (currentScope == "GUILD") and "Hermandad" or "Grupo"
-                GameTooltip:AddLine("|cFF00FF00Clic:|r Transmitir a " .. scopeTxt, 0.5, 1, 0.5)
+                GameTooltip:AddLine("|cFF00FF00Clic:|r Transmitir a Grupo/Banda", 0.5, 1, 0.5)
                 GameTooltip:AddLine("|cFFFFFF00Shift + Clic:|r Crear macro en tus barras", 1, 0.82, 0)
                 GameTooltip:Show()
             end)

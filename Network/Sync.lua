@@ -535,10 +535,12 @@ function Sync:OnMessageReceived(text, channel, sender)
             Sync:DisplayAchievementInChat(data.p or senderName, data.pc or "WARRIOR", data.aid or "gnome_1", data.an or "Logro", data.pts or 10, data.t or time(), false)
         end
     elseif parsed.type == "SB" then
-        -- Mensaje de Soundboard recibido por hermandad o grupo
-        local soundId = parsed.payload
-        if soundId and soundId ~= "" and ODD.Soundboard and ODD.Soundboard.PlaySound then
-            ODD.Soundboard:PlaySound(soundId, senderName)
+        -- Mensaje de Soundboard: solo procesar si llega por canal de grupo o banda (ignorar hermandad)
+        if channel == "PARTY" or channel == "RAID" then
+            local soundId = parsed.payload
+            if soundId and soundId ~= "" and ODD.Soundboard and ODD.Soundboard.PlaySound then
+                ODD.Soundboard:PlaySound(soundId, senderName)
+            end
         end
     end
 end

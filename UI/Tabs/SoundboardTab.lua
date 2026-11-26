@@ -241,20 +241,19 @@ function SoundboardTab:Create(parent)
         SoundboardTab:Refresh()
     end)
 
-    -- Selector de ámbito: Hermandad / Grupo
+    -- Indicador de ámbito: Solo Grupo / Banda (Hermandad desactivada)
     scopeBtn = CreateFrame("Button", nil, controlBar)
     scopeBtn:SetSize(130, 20)
     scopeBtn:SetPoint("LEFT", filterTrigBtn, "RIGHT", 10, 0)
     scopeBtn:SetNormalFontObject("GameFontHighlightSmall")
-    scopeBtn:SetScript("OnClick", function()
-        if currentScope == "GUILD" then
-            currentScope = "GROUP"
-        else
-            currentScope = "GUILD"
-        end
-        ODD.Database:SetSetting("soundboardScope", currentScope)
-        SoundboardTab:RefreshControls()
+    scopeBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Canal de Transmisión", 1, 0.82, 0)
+        GameTooltip:AddLine("Los sonidos se transmiten exclusivamente a los miembros de tu grupo o banda.", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine("Si estás solo, el sonido solo sonará para ti.", 0.6, 0.6, 0.6, true)
+        GameTooltip:Show()
     end)
+    scopeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- Botón de Mute rápido
     muteBtn = CreateFrame("Button", nil, controlBar)
@@ -377,7 +376,7 @@ function SoundboardTab:Create(parent)
     note:SetPoint("TOPLEFT", cardLoot, "BOTTOMLEFT", 6, -14)
     note:SetPoint("RIGHT", triggerContainer, "RIGHT", -10, 0)
     note:SetJustifyH("LEFT")
-    note:SetText("Nota: Estos eventos disparan el sonido configurado en tu cliente y lo transmiten silenciosamente al canal activo (Hermandad o Grupo) si está activado.")
+    note:SetText("Nota: Estos eventos disparan el sonido configurado en tu cliente y lo transmiten silenciosamente a tu Grupo o Banda si estás en uno.")
 
     self:RefreshControls()
     self:Refresh()
@@ -394,14 +393,8 @@ function SoundboardTab:RefreshControls()
         filterTrigBtn:SetText(filterTab == "TRIGGERS" and "|cFFFFD100[Eventos]|r" or "|cFF888888[Eventos]|r")
     end
 
-    local scope = ODD.Database:GetSetting("soundboardScope") or currentScope or "GUILD"
-    currentScope = scope
     if scopeBtn then
-        if scope == "GUILD" then
-            scopeBtn:SetText("Canal: |cFF00FF00[Hermandad]|r")
-        else
-            scopeBtn:SetText("Canal: |cFF00CCFF[Grupo/Raid]|r")
-        end
+        scopeBtn:SetText("Canal: |cFF00CCFF[Grupo/Raid]|r")
     end
 
     if muteBtn then
@@ -588,8 +581,7 @@ function SoundboardTab:Refresh()
                 if self.soundData.desc and self.soundData.desc ~= "" then
                     GameTooltip:AddLine(self.soundData.desc, 0.8, 0.8, 0.8, true)
                 end
-                local scopeTxt = (currentScope == "GUILD") and "Hermandad" or "Grupo"
-                GameTooltip:AddLine("|cFF00FF00Clic:|r Reproducir y transmitir a " .. scopeTxt, 0.5, 1, 0.5)
+                GameTooltip:AddLine("|cFF00FF00Clic:|r Reproducir y transmitir a Grupo/Banda", 0.5, 1, 0.5)
                 GameTooltip:AddLine("|cFFFFFF00Shift + Clic:|r Crear macro en tus barras de acción", 1, 0.82, 0)
                 GameTooltip:Show()
             end)
