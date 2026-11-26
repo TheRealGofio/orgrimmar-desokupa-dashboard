@@ -102,14 +102,33 @@ function RosterTab:Refresh()
     end
 
     local function GetMemberStats(cleanName)
+        if not cleanName or cleanName == "" then return 0, 0 end
+        local isSame = ODD.API and ODD.API.Forever and ODD.API.Forever.IsSamePlayer
+        if isSame and (isSame(ODD.API.Forever, cleanName, myName) or isSame(ODD.API.Forever, cleanName, myShortName)) then
+            return myKills, myPoints
+        end
         local cLower = cleanName:lower()
         if cLower == myName:lower() or cLower == myShortName:lower() then
             return myKills, myPoints
         end
+
+        -- 1. Búsqueda directa por clave
         local prof = profiles[cleanName]
         if prof then
             return prof.gnomeKills or 0, prof.achievementPoints or 0
         end
+
+        -- 2. Búsqueda insensible a mayúsculas o nombre parcial ("Nombre" vs "Nombre Apellido")
+        for pName, pData in pairs(profiles) do
+            if isSame and isSame(ODD.API.Forever, pName, cleanName) then
+                return pData.gnomeKills or 0, pData.achievementPoints or 0
+            end
+            local pLower = pName:lower()
+            if pLower == cLower or pLower:find("^" .. cLower) or cLower:find("^" .. pLower) then
+                return pData.gnomeKills or 0, pData.achievementPoints or 0
+            end
+        end
+
         return 0, 0
     end
 

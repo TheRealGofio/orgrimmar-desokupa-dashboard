@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 local Rankings = {}
@@ -47,10 +47,15 @@ function Rankings:GetGnomeLeaderboard(sortBy)
 
     local function IsMe(name)
         if not name then return false end
+        if ODD.API and ODD.API.Forever and ODD.API.Forever.IsSamePlayer then
+            if ODD.API.Forever:IsSamePlayer(name, myName) or ODD.API.Forever:IsSamePlayer(name, myCombinedName) then
+                return true
+            end
+        end
         local cName = Ambiguate(name, "none"):lower()
         local cMyName = Ambiguate(myName, "none"):lower()
         local cComb = myCombinedName:lower()
-        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName)) or (cMyName:find("^" .. cName))
     end
 
     table.insert(list, {

@@ -67,6 +67,11 @@ function HQTab:CalculateStats()
 
     local function IsMe(name)
         if not name then return false end
+        if ODD.API and ODD.API.Forever and ODD.API.Forever.IsSamePlayer then
+            if ODD.API.Forever:IsSamePlayer(name, myName) or ODD.API.Forever:IsSamePlayer(name, myCombinedName) then
+                return true
+            end
+        end
         local cName = Ambiguate(name, "none"):lower()
         local cMyName = Ambiguate(myName, "none"):lower()
         local cComb = myCombinedName:lower()

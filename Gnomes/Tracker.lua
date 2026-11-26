@@ -348,10 +348,15 @@ function Tracker:OnKillEvent(attackerGUID, targetGUID, isDirectKill)
     end
 
     if inGroup then
-        -- En grupo / raid: SOLO cuenta si el atacante del killing blow eres TÚ o TU MASCOTA.
-        -- Si un compañero de grupo dio el golpe de gracia, se descarta tajantemente.
+        -- En grupo / raid: Si safeAttacker coincide con el jugador o su mascota, está autorizado.
+        -- Si safeAttacker vino vacío o no resuelto por el cliente pero es un kill directo sobre nuestro target (isDirectKill),
+        -- permitimos la autoría para evitar pérdida de bajas por tótems/DoTs o bugs de evento.
         if not isAuthorized then
-            return
+            if isDirectKill and safeAttacker == playerGUID then
+                isAuthorized = true
+            else
+                return
+            end
         end
     else
         -- En solitario (sin grupo):
@@ -675,10 +680,6 @@ function Tracker:Initialize()
 
     -- Observador en tiempo real por salud de objetivo (método GRS para bajas en solitario y tótems/DoTs)
     ODD.Events:Register("UNIT_HEALTH", function(event, unit)
-        -- Si estamos en grupo, NO inferir kills por UNIT_HEALTH para evitar robos o falsas atribuciones entre compañeros.
-        -- PARTY_KILL se encargará con el GUID exacto del autor.
-        if IsInGroup and IsInGroup() then return end
-
         if unit ~= "target" and unit ~= "pettarget" then return end
         if not UnitExists(unit) then return end
 
@@ -703,7 +704,17 @@ function Tracker:Initialize()
         end
 
         if isDead or hpZero then
-            Tracker:OnKillEvent(UnitGUID("player"), guid, true)
+            -- Si estamos en grupo, verificar si el objetivo murió mientras estaba en combate contra nosotros
+            local isAuthorizedGroup = false
+            if IsInGroup and IsInGroup() then
+                -- Si el objetivo muerto era nuestro target directo, o atacaba a nuestra mascota/tótem
+                if UnitIsUnit(unit, "target") or UnitIsUnit(unit, "pettarget") then
+                    isAuthorizedGroup = true
+                end
+            end
+            if not (IsInGroup and IsInGroup()) or isAuthorizedGroup then
+                Tracker:OnKillEvent(UnitGUID("player"), guid, true)
+            end
         end
     end)
 

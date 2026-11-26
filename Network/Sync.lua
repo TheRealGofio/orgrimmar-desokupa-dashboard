@@ -359,6 +359,12 @@ local function RefreshAllOpenTabs()
     if ODD.UI.HistoryTab and ODD.UI.HistoryTab.Refresh then
         ODD.UI.HistoryTab:Refresh()
     end
+    if ODD.UI.RosterTab and ODD.UI.RosterTab.Refresh then
+        ODD.UI.RosterTab:Refresh()
+    end
+    if ODD.UI.HUD and ODD.UI.HUD.Refresh then
+        ODD.UI.HUD:Refresh()
+    end
 end
 
 function Sync:OnMessageReceived(text, channel, sender)
@@ -370,10 +376,15 @@ function Sync:OnMessageReceived(text, channel, sender)
 
     local function IsMe(name)
         if not name then return false end
+        if ODD.API and ODD.API.Forever and ODD.API.Forever.IsSamePlayer then
+            if ODD.API.Forever:IsSamePlayer(name, myName) or ODD.API.Forever:IsSamePlayer(name, myCombinedName) then
+                return true
+            end
+        end
         local cName = Ambiguate(name, "none"):lower()
         local cMyName = Ambiguate(myName, "none"):lower()
         local cComb = myCombinedName:lower()
-        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName))
+        return (cName == cMyName) or (name:lower() == cComb) or (name:lower():find("^" .. cMyName)) or (cMyName:find("^" .. cName))
     end
 
     if IsMe(senderName) or IsMe(sender) then return end -- Ignorar mensajes propios reflejados por el canal de hermandad
@@ -523,11 +534,30 @@ function Sync:OnMessageReceived(text, channel, sender)
 
     elseif parsed.type == "KILL" then
         local data = ODD.Network.Codec:Decode(parsed.codec, parsed.payload)
-        if data and not ODD.Database:GetSetting("muteGuildAnnouncements") then
-            Sync:DisplayKillInChat(data.k or senderName, data.kc or "WARRIOR", data.v or "Gnomo", data.vc or "MAGE", data.vl or "??", data.z or "Mundo Abierto", data.tk or 1, false)
-        end
-        if data and ODD.UI and ODD.UI.HistoryTab and ODD.UI.HistoryTab.OnRemoteKillReceived then
-            ODD.UI.HistoryTab:OnRemoteKillReceived(data, senderName)
+        if data then
+            local kName = data.k or senderName
+            local tk = tonumber(data.tk)
+            if kName and tk and tk > 0 then
+                local globalDB = ODD.Database:GetGlobal()
+                if globalDB then
+                    globalDB.profiles = globalDB.profiles or {}
+                    globalDB.profiles[kName] = globalDB.profiles[kName] or {}
+                    local prof = globalDB.profiles[kName]
+                    prof.name = kName
+                    prof.className = data.kc or prof.className or "WARRIOR"
+                    prof.gnomeKills = math.max(prof.gnomeKills or 0, tk)
+                    prof.updatedAt = time()
+                    _G["ODDDB"] = globalDB
+                    RefreshAllOpenTabs()
+                end
+            end
+
+            if not ODD.Database:GetSetting("muteGuildAnnouncements") then
+                Sync:DisplayKillInChat(kName, data.kc or "WARRIOR", data.v or "Gnomo", data.vc or "MAGE", data.vl or "??", data.z or "Mundo Abierto", data.tk or 1, false)
+            end
+            if ODD.UI and ODD.UI.HistoryTab and ODD.UI.HistoryTab.OnRemoteKillReceived then
+                ODD.UI.HistoryTab:OnRemoteKillReceived(data, senderName)
+            end
         end
     elseif parsed.type == "ACHIEVE" then
         local data = ODD.Network.Codec:Decode(parsed.codec, parsed.payload)

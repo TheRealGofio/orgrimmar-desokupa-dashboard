@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD
 
 local Forever = {}
@@ -132,4 +132,33 @@ end
 -- Comprobar si el jugador está en una hermandad activa
 function Forever:IsInGuild()
     return IsInGuild() == true
+end
+
+-- Normaliza nombres de personajes eliminando reino, espacios sobrantes y convirtiendo a minúsculas
+function Forever:NormalizeName(name)
+    if not name or name == "" then return "" end
+    local clean = self:SanitizeText(name) or name
+    -- Eliminar reino: "Nombre-Reino" -> "Nombre"
+    clean = Ambiguate(clean, "none")
+    -- Quitar espacios en los extremos y convertir a minúsculas
+    clean = clean:match("^%s*(.-)%s*$"):lower()
+    return clean
+end
+
+-- Comprueba de forma infalible si dos nombres se refieren al mismo personaje
+function Forever:IsSamePlayer(nameA, nameB)
+    if not nameA or not nameB then return false end
+    local normA = self:NormalizeName(nameA)
+    local normB = self:NormalizeName(nameB)
+    if normA == "" or normB == "" then return false end
+    if normA == normB then return true end
+
+    -- Comparar primer nombre de pila (en caso de "Nombre Apellido" vs "Nombre")
+    local firstA = normA:match("^(%S+)")
+    local firstB = normB:match("^(%S+)")
+    if firstA and firstB and firstA == firstB then
+        return true
+    end
+
+    return false
 end
