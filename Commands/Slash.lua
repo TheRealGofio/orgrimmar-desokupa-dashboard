@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD
 local L = addonTable.L
 
@@ -84,6 +84,27 @@ SlashCmdList["ODD"] = function(msg)
             else
                 ODD:Log("Comandos de sonido: /odd sound kill | /odd sound achieve | /odd sound male | /odd sound female")
                 if ODD.Audio and ODD.Audio.PlayRadarAlertSound then ODD.Audio:PlayRadarAlertSound() end
+            end
+        elseif cmd == "sb" or cmd == "soundboard" then
+            if arg and arg ~= "" then
+                if arg == "mute" then
+                    local isMuted = ODD.Database:GetSetting("muteSoundboard") or false
+                    ODD.Database:SetSetting("muteSoundboard", not isMuted)
+                    ODD:Log("Soundboard: %s", not isMuted and "|cFFFF2020SILENCIADO|r" or "|cFF00FF00ACTIVADO|r")
+                elseif arg == "mini" or arg == "modal" or arg == "popout" or arg == "float" then
+                    if ODD.UI and ODD.UI.SoundboardModal then
+                        ODD.UI.SoundboardModal:Toggle()
+                    end
+                elseif arg:find("^play ") then
+                    local sId = arg:sub(6):match("^%s*(.-)%s*$")
+                    if ODD.Soundboard then ODD.Soundboard:TriggerSound(sId) end
+                else
+                    if ODD.Soundboard then ODD.Soundboard:TriggerSound(arg) end
+                end
+            else
+                if ODD.UI and ODD.UI.SoundboardModal then
+                    ODD.UI.SoundboardModal:Toggle()
+                end
             end
         elseif cmd == "status" then
             ODD:Log("=== Estado de ODD (%s) ===", ODD.version)

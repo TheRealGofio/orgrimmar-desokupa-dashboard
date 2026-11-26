@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 
 ODD.Database = ODD.Database or {}
@@ -16,6 +16,8 @@ Schema.DefaultGlobalDB = {
         shareStats = true,
         muteGuildAnnouncements = false, -- Si está marcado, silencia por completo el envío de anuncios al chat de hermandad
         muteSounds = false,             -- Silenciar todos los efectos de sonido de ODD
+        muteErrors = true,              -- Silenciar mensajes y avisos de error del addon en el chat (activado por defecto)
+        muteSoundboardChat = false,     -- Silenciar los mensajes de aviso en el chat cuando se reproducen sonidos del soundboard
         enableGnomeRadar = true,        -- Alerta sonora/visual al detectar un gnomo enemigo cercano
         showHUD = false,                -- Mostrar el HUD compacto flotante en pantalla (estilo GRS)
         hudPos = nil,                   -- Posición guardada del HUD

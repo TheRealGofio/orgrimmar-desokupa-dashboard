@@ -457,6 +457,12 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
 
     table.insert(gnomes.records, killRecord)
 
+    -- Mantener un máximo de 50 registros detallados en SavedVariables (los contadores totales kills nunca bajan)
+    local MAX_DETAILED_RECORDS = 50
+    if #gnomes.records > MAX_DETAILED_RECORDS then
+        table.remove(gnomes.records, 1) -- Eliminar el más antiguo
+    end
+
     -- Guardado persistente
     _G["ODDCharacterDB"] = charDB
 

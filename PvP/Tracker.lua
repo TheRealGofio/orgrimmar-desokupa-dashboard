@@ -7,6 +7,10 @@ ODD.PvP.Tracker = PvP
 
 local deathTicket = 0
 
+-- Constantes de límite de almacenamiento
+local MAX_NEMESIS_RECORDS = 50 -- Máximo 50 rivales en base de datos
+local AVENGED_TTL_SECONDS = 14 * 86400 -- 14 días para limpiar vengados inactivos
+
 -- Consulta las estadísticas oficiales de PvP del jugador local
 function PvP:GetLocalStats()
     local todayHK, todayHonor = 0, 0
@@ -74,39 +78,80 @@ function PvP:IsWorldPvP()
     return true
 end
 
+-- Poda y limpieza automática de la tabla de Némesis
+local function PruneNemesisTable(nemTable)
+    if not nemTable then return end
+    local now = time()
+
+    -- 1. Eliminar vengados que tengan más de 14 días sin actividad
+    for guid, record in pairs(nemTable) do
+        if record.status == "AVENGED" and (now - (record.lastEncounter or 0)) > AVENGED_TTL_SECONDS then
+            nemTable[guid] = nil
+        end
+    end
+
+    -- 2. Si aún supera el límite máximo, eliminar las entradas menos relevantes
+    local count = 0
+    local list = {}
+    for guid, record in pairs(nemTable) do
+        count = count + 1
+        table.insert(list, { guid = guid, record = record })
+    end
+
+    if count > MAX_NEMESIS_RECORDS then
+        -- Ordenar: los candidatos a ser eliminados primero son vengados antiguos o con pocas muertes
+        table.sort(list, function(a, b)
+            if a.record.status ~= b.record.status then
+                return a.record.status == "AVENGED" -- Eliminar primero VENGADOS
+            end
+            if (a.record.deathsTo or 0) ~= (b.record.deathsTo or 0) then
+                return (a.record.deathsTo or 0) < (b.record.deathsTo or 0) -- Menos muertes primero
+            end
+            return (a.record.lastEncounter or 0) < (b.record.lastEncounter or 0) -- Más viejo primero
+        end)
+
+        local toRemove = count - MAX_NEMESIS_RECORDS
+        for i = 1, toRemove do
+            nemTable[list[i].guid] = nil
+        end
+    end
+end
+
 -- Extrae los datos del enemigo que asestó el killing blow según C_DeathRecap
 local function FindDeathRecapKiller(diedAt, playerGUID)
     local events = nil
     if C_DeathRecap and type(C_DeathRecap.GetRecapEvents) == "function" then
-        local ok, res = pcall(C_DeathRecap.GetRecapEvents)
-        if ok and type(res) == "table" then
-            events = res
+        local ok, evs = pcall(C_DeathRecap.GetRecapEvents)
+        if ok and type(evs) == "table" and #evs > 0 then
+            events = evs
         end
     end
+    if not events and type(GetDeathRecapEvents) == "function" then
+        local ok, evs = pcall(GetDeathRecapEvents)
+        if ok and type(evs) == "table" and #evs > 0 then
+            events = evs
+        end
+    end
+
     if not events then return nil end
 
     local chosen = nil
-    for _, ev in ipairs(events) do
-        if type(ev) == "table" then
-            local sourceGUID = ODD.API.Forever:SanitizeGUID(ev.sourceGUID)
-            local sourceName = ODD.API.Forever:SanitizeText(ev.sourceName)
-            local destGUID = ODD.API.Forever:SanitizeGUID(ev.destGUID)
-            local when = ODD.API.Forever:SanitizeNumber(ev.timestamp)
-            local overkill = ODD.API.Forever:SanitizeNumber(ev.overkill)
+    for _, eventInfo in ipairs(events) do
+        if type(eventInfo) == "table" then
+            local ok, srcGUID, srcName, dstGUID, stamp, overkill = pcall(function()
+                return eventInfo.sourceGUID, eventInfo.sourceName, eventInfo.destGUID, tonumber(eventInfo.timestamp), tonumber(eventInfo.overkill)
+            end)
 
-            if sourceGUID and when and overkill and overkill >= 0 then
-                local recent = (when >= diedAt - 4 and when <= diedAt + 4)
-                local isMe = (not playerGUID) or (not destGUID) or (destGUID == playerGUID)
-                if recent and isMe and (not chosen or when >= chosen.timestamp) then
-                    chosen = {
-                        guid = sourceGUID,
-                        name = sourceName,
-                        timestamp = when,
-                    }
+            if ok and type(srcGUID) == "string" and type(stamp) == "number" and type(overkill) == "number" and overkill >= 0 then
+                local recent = (stamp >= diedAt - 4 and stamp <= diedAt + 4)
+                local isPlayerVictim = (not playerGUID) or (dstGUID == playerGUID)
+                if recent and isPlayerVictim and (not chosen or stamp >= chosen.stamp) then
+                    chosen = { guid = srcGUID, name = srcName, stamp = stamp }
                 end
             end
         end
     end
+
     return chosen
 end
 
@@ -184,6 +229,7 @@ function PvP:RecordNemesisKillOnPlayer(killerGUID, killerName)
     record.status = "WANTED"
 
     nemTable[killerGUID] = record
+    PruneNemesisTable(nemTable)
     _G["ODDCharacterDB"] = charDB
 
     ODD:Log("|cFFFF0000[NÉMESIS]|r ¡Caíste ante |cFFFFD100%s|r (%s)! Marcado como Objetivo Prioritario.", 
@@ -227,14 +273,69 @@ function PvP:CheckNemesisAvenged(victimGUID, victimName, victimClass, victimRace
     end
 end
 
--- Obtiene la lista ordenada de Némesis (primero los BUSCADOS con más muertes sobre ti)
-function PvP:GetNemesisList()
+-- Permite limpiar manualmente o borrar un némesis específico
+function PvP:RemoveNemesis(guid)
+    local charDB = ODD.Database:GetChar()
+    if charDB and charDB.observations and charDB.observations.pvp and charDB.observations.pvp.nemesis then
+        charDB.observations.pvp.nemesis[guid] = nil
+        _G["ODDCharacterDB"] = charDB
+        if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then
+            ODD.UI.PvPTab:Refresh()
+        end
+    end
+end
+
+-- Limpia todos los némesis (limpieza total)
+function PvP:ClearAllNemesis()
+    local charDB = ODD.Database:GetChar()
+    if charDB and charDB.observations and charDB.observations.pvp then
+        local count = 0
+        if charDB.observations.pvp.nemesis then
+            for _ in pairs(charDB.observations.pvp.nemesis) do count = count + 1 end
+        end
+        charDB.observations.pvp.nemesis = {}
+        _G["ODDCharacterDB"] = charDB
+        ODD:Log("Se han eliminado todos los rivales (%d) de tu lista de Némesis.", count)
+        if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then
+            ODD.UI.PvPTab:Refresh()
+        end
+    end
+end
+
+-- Limpia todos los némesis que ya han sido vengados
+function PvP:ClearAvengedNemesis()
+    local charDB = ODD.Database:GetChar()
+    if charDB and charDB.observations and charDB.observations.pvp and charDB.observations.pvp.nemesis then
+        local removed = 0
+        for guid, r in pairs(charDB.observations.pvp.nemesis) do
+            if r.status == "AVENGED" then
+                charDB.observations.pvp.nemesis[guid] = nil
+                removed = removed + 1
+            end
+        end
+        _G["ODDCharacterDB"] = charDB
+        ODD:Log("Se han limpiado %d objetivos vengados de tu lista de Némesis.", removed)
+        if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then
+            ODD.UI.PvPTab:Refresh()
+        end
+    end
+end
+
+-- Obtiene la lista filtrada y ordenada de Némesis
+function PvP:GetNemesisList(filter)
+    filter = filter or "all" -- "all", "wanted", "avenged"
     local charDB = ODD.Database:GetChar()
     local nemTable = (charDB and charDB.observations and charDB.observations.pvp and charDB.observations.pvp.nemesis) or {}
     local list = {}
 
     for guid, nem in pairs(nemTable) do
-        table.insert(list, nem)
+        if filter == "all" then
+            table.insert(list, nem)
+        elseif filter == "wanted" and nem.status == "WANTED" then
+            table.insert(list, nem)
+        elseif filter == "avenged" and nem.status == "AVENGED" then
+            table.insert(list, nem)
+        end
     end
 
     table.sort(list, function(a, b)
@@ -284,36 +385,5 @@ function PvP:Initialize()
         end
     end)
 
-    ODD:Debug("Módulo PvP Tracker y Sistema de Némesis inicializado.")
-end
-
-function PvP:OnMatchComplete(winner, duration)
-    local myFaction = UnitFactionGroup("player")
-    local isWinner = false
-
-    if winner == 0 and myFaction == "Horde" then
-        isWinner = true
-    elseif winner == "Horde" and myFaction == "Horde" then
-        isWinner = true
-    end
-
-    local zone = GetZoneText() or "Campo de Batalla"
-    local charDB = ODD.Database:GetChar()
-    if charDB and charDB.observations and charDB.observations.pvp then
-        local matchRecord = {
-            id = string.format("BG%d", time()),
-            timestamp = time(),
-            zone = zone,
-            victory = isWinner,
-            duration = duration or 0,
-            origin = "local_observed",
-        }
-        table.insert(charDB.observations.pvp.matches, matchRecord)
-        _G["ODDCharacterDB"] = charDB
-
-        ODD:Log("Campo de batalla finalizado en %s: %s", zone, isWinner and "|cFF00FF00Victoria|r" or "|cFFFF0000Derrota|r")
-        if ODD.UI.PvPTab and ODD.UI.PvPTab.Refresh then
-            ODD.UI.PvPTab:Refresh()
-        end
-    end
+    ODD:Debug("Módulo PvP Tracker inicializado con límite de 50 rivales y purga de vengados.")
 end

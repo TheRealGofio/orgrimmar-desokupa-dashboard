@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD
 local L = addonTable.L
 
@@ -15,6 +15,7 @@ local TAB_DEFS = {
     { name = "Gnomometer", labelKey = "TAB_GNOMOMETER", creator = function(p) return ODD.UI.GnomometerTab:Create(p) end },
     { name = "Medals", labelKey = "TAB_MEDALS", creator = function(p) return ODD.UI.MedalsTab:Create(p) end },
     { name = "PvP", labelKey = "TAB_PVP", creator = function(p) return ODD.UI.PvPTab:Create(p) end },
+    { name = "Soundboard", labelKey = "TAB_SOUNDBOARD", creator = function(p) return ODD.UI.SoundboardTab:Create(p) end },
     { name = "History", labelKey = "TAB_HISTORY", creator = function(p) return ODD.UI.HistoryTab:Create(p) end },
     { name = "Roster", labelKey = "TAB_ROSTER", creator = function(p) return ODD.UI.RosterTab:Create(p) end },
     { name = "Settings", labelKey = "TAB_SETTINGS", creator = function(p) return ODD.UI.SettingsTab:Create(p) end },
@@ -91,6 +92,16 @@ local function SwitchTab(tabIndex)
     end
 end
 
+function Dashboard:SwitchTabByName(tabName)
+    if not tabName then return end
+    for i, def in ipairs(TAB_DEFS) do
+        if def.name:lower() == tabName:lower() then
+            SwitchTab(i)
+            break
+        end
+    end
+end
+
 -- Helper global para habilitar arrastre suave desde cualquier frame o pestaña hija
 function Dashboard:EnableFrameDrag(f)
     if not f or f == mainFrame then return end
@@ -160,10 +171,10 @@ function Dashboard:Create()
     _G["ODD_MainDashboardFrame"] = mainFrame
     table.insert(UISpecialFrames, "ODD_MainDashboardFrame")
 
-    -- Botón de cierre elegante estilo Horda
+    -- Botón de cierre elegante estilo Horda (ubicado en el remache de piedra superior derecho del marco)
     local closeBtn = CreateFrame("Button", "ODD_MainCloseBtn", mainFrame, "UIPanelCloseButton")
     closeBtn:SetSize(32, 32)
-    closeBtn:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -20, -56)
+    closeBtn:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", 50, 112)
     closeBtn:SetFrameLevel(mainFrame:GetFrameLevel() + 25)
     closeBtn:SetScript("OnClick", function()
         mainFrame:Hide()
@@ -178,12 +189,12 @@ function Dashboard:Create()
     contentFrame:SetFrameLevel(mainFrame:GetFrameLevel() + 2)
     Dashboard:EnableFrameDrag(contentFrame)
 
-    -- Generar botones de pestañas (ancho ajustado a 104px para quedar holgadamente entre los postes verticales)
+    -- Generar botones de pestañas (ancho ajustado a 90px para 8 pestañas entre los postes)
     local prevBtn = nil
     for i, def in ipairs(TAB_DEFS) do
         local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
         btn:SetID(i)
-        btn:SetSize(104, 26)
+        btn:SetSize(90, 26)
         btn:SetFrameLevel(mainFrame:GetFrameLevel() + 10)
         
         -- Textura de fondo mimetizada

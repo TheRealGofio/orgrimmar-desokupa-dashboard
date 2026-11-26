@@ -100,21 +100,24 @@ function Sync:BroadcastHello(delaySeconds)
         end
 
         -- Añadir bajas de contratos semanales para sincronización P2P
+        -- Limitamos a un máximo de 1-2 firmas recientes por contrato para no saturar el cable (250 bytes)
         if ODD.Guild and ODD.Guild.Contracts then
             local store = ODD.Guild.Contracts:EnsureStorage()
             local weekID = ODD.Guild.Contracts:GetCurrentWeekID()
             if store and (next(store.zoneKills or {}) or next(store.classKills or {})) then
                 data.cw = weekID
-                -- Serializar firmas compactas: "sig1;sig2"
+                -- Serializar como mucho 1 firma por contrato en el HELLO para mantener el paquete ultraligero
                 local zSigs = {}
                 for sig, _ in pairs(store.zoneKills or {}) do
                     table.insert(zSigs, sig)
+                    if #zSigs >= 1 then break end
                 end
                 if #zSigs > 0 then data.czk = table.concat(zSigs, "|") end
 
                 local cSigs = {}
                 for sig, _ in pairs(store.classKills or {}) do
                     table.insert(cSigs, sig)
+                    if #cSigs >= 1 then break end
                 end
                 if #cSigs > 0 then data.cck = table.concat(cSigs, "|") end
             end
@@ -131,6 +134,26 @@ function Sync:BroadcastHello(delaySeconds)
             local fallbackLine = ODD.Network.Protocol:FormatLine("HELLO", msgId, "*", "S1", s1Encoded)
             if #fallbackLine <= ODD.Network.Protocol.MAX_WIRE_BYTES then
                 line = fallbackLine
+            end
+        end
+
+        -- Saneamiento preventivo de seguridad: asegurar que line jamás exceda MAX_WIRE_BYTES (250 bytes)
+        if #line > ODD.Network.Protocol.MAX_WIRE_BYTES then
+            -- 1. Intentar primero con S1 sin contratos
+            data.czk = nil
+            data.cck = nil
+            data.cw = nil
+            local _, s1NoContracts = ODD.Network.Codec:EncodeSimple(data)
+            local trimmedLine = ODD.Network.Protocol:FormatLine("HELLO", msgId, "*", "S1", s1NoContracts)
+            if #trimmedLine <= ODD.Network.Protocol.MAX_WIRE_BYTES then
+                line = trimmedLine
+            else
+                -- 2. Si todavía excediera (por nombres o zonas excesivamente largas), podar campos secundarios no críticos
+                data.tz = nil
+                data.main = nil
+                data.role = nil
+                local _, minimalEncoded = ODD.Network.Codec:EncodeSimple(data)
+                line = ODD.Network.Protocol:FormatLine("HELLO", msgId, "*", "S1", minimalEncoded)
             end
         end
 
@@ -510,6 +533,12 @@ function Sync:OnMessageReceived(text, channel, sender)
         local data = ODD.Network.Codec:Decode(parsed.codec, parsed.payload)
         if data and not ODD.Database:GetSetting("muteGuildAnnouncements") then
             Sync:DisplayAchievementInChat(data.p or senderName, data.pc or "WARRIOR", data.aid or "gnome_1", data.an or "Logro", data.pts or 10, data.t or time(), false)
+        end
+    elseif parsed.type == "SB" then
+        -- Mensaje de Soundboard recibido por hermandad o grupo
+        local soundId = parsed.payload
+        if soundId and soundId ~= "" and ODD.Soundboard and ODD.Soundboard.PlaySound then
+            ODD.Soundboard:PlaySound(soundId, senderName)
         end
     end
 end

@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -190,10 +190,13 @@ function HistoryTab:Refresh()
         end
     end
 
-    -- 3. Filtrar y renderizar lista de desahucios
+    -- 3. Filtrar y renderizar lista de desahucios (limitado a los 50 más recientes para máxima claridad)
     local allEvictions = GetEvictionsList()
     local filtered = {}
+    local MAX_DISPLAY_EVICTIONS = 50
+
     for _, ev in ipairs(allEvictions) do
+        if #filtered >= MAX_DISPLAY_EVICTIONS then break end
         if currentFilter == "all" then
             table.insert(filtered, ev)
         elseif currentFilter == "self" and ev.isSelf then
@@ -204,7 +207,7 @@ function HistoryTab:Refresh()
     end
 
     if totalKillsLabel then
-        totalKillsLabel:SetText(string.format("Total desahucios registrados: |cFFFFD100%d|r (Mostrando: |cFF00FFCC%d|r)", #allEvictions, #filtered))
+        totalKillsLabel:SetText(string.format("Total desahucios registrados: |cFFFFD100%d|r (Mostrando últimos: |cFF00FFCC%d|r)", #allEvictions, #filtered))
     end
 
     for _, r in ipairs(rowFrames) do r:Hide() end

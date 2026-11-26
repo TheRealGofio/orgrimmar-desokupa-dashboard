@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -43,13 +43,18 @@ function RosterTab:Refresh()
 
     summaryLabel:SetText(string.format("Miembros en hermandad: %d  (En linea: |cFF00FF00%d|r)", #members, onlineCount))
 
+    -- Ocultar todas las filas existentes antes de pintar las filtradas
+    for _, r in ipairs(memberRows) do
+        r:Hide()
+    end
+
     -- Filtrar por texto de búsqueda y por casilla 'Solo conectados'
     local query = searchBox and searchBox:GetText():lower() or ""
-    local onlyOnline = onlyOnlineCheck and onlyOnlineCheck:GetChecked() or false
+    local onlyOnline = onlyOnlineCheck and (onlyOnlineCheck:GetChecked() == true) or false
 
     local filtered = {}
     for _, m in ipairs(members) do
-        local matchesQuery = (query == "") or (m.name and m.name:lower():find(query)) or (m.rankName and m.rankName:lower():find(query))
+        local matchesQuery = (query == "") or (m.name and m.name:lower():find(query, 1, true)) or (m.rankName and m.rankName:lower():find(query, 1, true))
         local matchesOnline = (not onlyOnline) or (m.online == true)
         if matchesQuery and matchesOnline then
             table.insert(filtered, m)
