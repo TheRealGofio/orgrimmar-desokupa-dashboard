@@ -18,6 +18,7 @@ Core\Init.lua
 Core\Capabilities.lua
 Core\Events.lua
 Core\Audio.lua
+Core\Soundboard.lua
 
 # Base de datos y esquema
 Database\Schema.lua
@@ -52,6 +53,7 @@ Network\Sync.lua
 # Comandos e Interfaz
 UI\Toast.lua
 UI\AchievementModal.lua
+UI\SoundboardModal.lua
 UI\Components.lua
 UI\HUD.lua
 UI\Minimap.lua
@@ -59,6 +61,7 @@ UI\Tabs\HQTab.lua
 UI\Tabs\GnomometerTab.lua
 UI\Tabs\MedalsTab.lua
 UI\Tabs\PvPTab.lua
+UI\Tabs\SoundboardTab.lua
 UI\Tabs\HistoryTab.lua
 UI\Tabs\RosterTab.lua
 UI\Tabs\SettingsTab.lua

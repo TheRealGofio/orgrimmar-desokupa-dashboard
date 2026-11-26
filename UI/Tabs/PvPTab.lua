@@ -9,6 +9,9 @@ local statLabels = {}
 local bgSummaryLabel = nil
 local nemesisScrollChild = nil
 local nemesisRows = {}
+local currentNemesisFilter = "wanted" -- "wanted", "avenged", "all"
+local filterButtons = {}
+local countLabel = nil
 
 -- Colores de clase estándar
 local CLASS_COLORS = {
@@ -62,13 +65,27 @@ function PvPTab:Refresh()
     local winRate = total > 0 and math.floor((wins / total) * 100) or 0
     bgSummaryLabel:SetText(string.format("Campos de Batalla: |cFF00FF00%d Victorias|r - |cFFFF0000%d Derrotas|r (Ratio: %d%%)", wins, losses, winRate))
 
-    -- 3. Tabla de Némesis / Objetivos Prioritarios de Desahucio
+    -- 3. Estilos de botones de filtro
+    for key, btn in pairs(filterButtons) do
+        if key == currentNemesisFilter then
+            btn:SetText(string.format("|cFFFFD100[%s]|r", btn.rawText))
+        else
+            btn:SetText(string.format("|cFF888888%s|r", btn.rawText))
+        end
+    end
+
+    -- 4. Tabla de Némesis / Objetivos Prioritarios de Desahucio
     if nemesisScrollChild then
         for _, r in ipairs(nemesisRows) do r:Hide() end
 
-        local nemList = ODD.PvP.Tracker:GetNemesisList()
+        local nemList = ODD.PvP.Tracker:GetNemesisList(currentNemesisFilter)
+        local allNemList = ODD.PvP.Tracker:GetNemesisList("all")
         local rowHeight = 26
         local currentY = 0
+
+        if countLabel then
+            countLabel:SetText(string.format("Rivales: |cFFFFD100%d|r (Mostrando: |cFF00FFCC%d|r)", #allNemList, #nemList))
+        end
 
         for i, nem in ipairs(nemList) do
             local row = nemesisRows[i]
@@ -97,79 +114,60 @@ function PvPTab:Refresh()
 
                 -- Último avistamiento (Zona y Fecha)
                 local rZone = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-                rZone:SetPoint("RIGHT", row, "RIGHT", -16, 0)
+                rZone:SetPoint("RIGHT", row, "RIGHT", -46, 0)
                 row.zone = rZone
 
-                -- Soporte para Shift + Clic (Compartir ficha de Némesis en chat)
-                row:EnableMouse(true)
-                row:SetScript("OnEnter", function(self)
-                    self.bg:SetColorTexture(0.35, 0.25, 0.05, 0.5)
+                -- Botón pequeño de descartar / eliminar entrada con [X] en texto limpio ASCII
+                local delBtn = CreateFrame("Button", nil, row)
+                delBtn:SetSize(22, 18)
+                delBtn:SetPoint("RIGHT", row, "RIGHT", -8, 0)
+                delBtn:SetNormalFontObject("GameFontDisableSmall")
+                delBtn:SetText("|cFFFF4444[X]|r")
+                delBtn:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                    if self.nemData then
-                        local n = self.nemData
-                        local statusTxt = (n.status == "WANTED") and "|cFFFF0000[OBJETIVO BUSCADO]|r" or "|cFF00FF00[VENGADO]|r"
-                        GameTooltip:AddLine(string.format("Némesis: %s", n.name or "Desconocido"), 1, 0.82, 0)
-                        GameTooltip:AddLine(statusTxt)
-                        GameTooltip:AddLine(string.format("Veces que te abatió: %d", n.deathsTo or 0), 1, 0.2, 0.2)
-                        GameTooltip:AddLine(string.format("Veces que lo abatiste: %d", n.killsOn or 0), 0.2, 1, 0.2)
-                        GameTooltip:AddLine(string.format("Última zona: %s", n.zone or "Mundo Abierto"), 0.8, 0.8, 0.8)
-                        GameTooltip:AddLine("Shift + Clic: Compartir en chat", 0.6, 0.6, 0.6)
-                    end
+                    GameTooltip:SetText("Descartar de la lista de Némesis")
                     GameTooltip:Show()
                 end)
-                row:SetScript("OnLeave", function(self)
-                    if self.nemData then
-                        if self.nemData.status == "WANTED" then
-                            self.bg:SetColorTexture(0.35, 0.05, 0.05, 0.45)
-                        else
-                            self.bg:SetColorTexture(0.05, 0.22, 0.05, 0.35)
-                        end
-                    end
-                    GameTooltip:Hide()
-                end)
-                row:SetScript("OnMouseUp", function(self, button)
-                    if IsShiftKeyDown() and self.nemData then
-                        local n = self.nemData
-                        local status = (n.status == "WANTED") and "BUSCADO" or "VENGADO"
-                        local shareText = string.format("[ODD] Némesis [%s]: %s (%s) - Balance: %d abatido / %d muertes en %s",
-                            status, n.name or "Enemigo", n.class or "?", n.killsOn or 0, n.deathsTo or 0, n.zone or "Mundo Abierto")
-                        if type(ChatEdit_InsertLink) == "function" then
-                            if not ChatEdit_InsertLink(shareText) then
-                                local editBox = ChatEdit_ChooseBoxForSend()
-                                if editBox then
-                                    ChatEdit_ActivateChat(editBox)
-                                    editBox:Insert(shareText)
-                                end
-                            end
-                        end
-                    end
-                end)
+                delBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+                row.delBtn = delBtn
 
                 nemesisRows[i] = row
             end
 
-            row.nemData = nem
             row:SetPoint("TOPLEFT", nemesisScrollChild, "TOPLEFT", 0, currentY)
             currentY = currentY - rowHeight
 
+            if i % 2 == 0 then
+                row.bg:SetColorTexture(0.12, 0.12, 0.12, 0.4)
+            else
+                row.bg:SetColorTexture(0.16, 0.16, 0.16, 0.4)
+            end
+
             local isWanted = (nem.status == "WANTED")
             if isWanted then
-                row.bg:SetColorTexture(0.35, 0.05, 0.05, 0.45)
                 row.status:SetText("|cFFFF0000[BUSCADO]|r")
             else
-                row.bg:SetColorTexture(0.05, 0.22, 0.05, 0.35)
                 row.status:SetText("|cFF00FF00[VENGADO]|r")
             end
 
-            local classCol = CLASS_COLORS[nem.class] or "FFFFFFFF"
-            local raceStr = (nem.race and nem.race ~= "UNKNOWN") and string.format(" (%s)", nem.race) or ""
-            row.name:SetText(string.format("|c%s%s|r%s", classCol, nem.name or "Enemigo", raceStr))
+            local cColor = CLASS_COLORS[nem.class] or "FFFFFFFF"
+            local raceStr = nem.race and string.format(" (%s)", nem.race) or ""
+            row.name:SetText(string.format("|c%s%s|r%s", cColor, nem.name or "Desconocido", raceStr))
 
-            row.score:SetText(string.format("Te abatió: |cFFFF0000%d|r  •  Lo abatiste: |cFF00FF00%d|r", 
-                nem.deathsTo or 0, nem.killsOn or 0))
+            local deaths = nem.deathsTo or 0
+            local kills = nem.killsOn or 0
+            row.score:SetText(string.format("Te ha matado: |cFFFF2020%d|r  •  Lo has matado: |cFF00FF00%d|r", deaths, kills))
 
-            local dateStr = date("%m/%d %H:%M", nem.lastEncounter or time())
+            local dateStr = nem.lastEncounter and date("%Y-%m-%d", nem.lastEncounter) or ""
             row.zone:SetText(string.format("%s (%s)", nem.zone or "Mundo Abierto", dateStr))
+
+            -- Configurar acción del botón descartar
+            local targetGuid = nem.guid
+            row.delBtn:SetScript("OnClick", function()
+                if targetGuid and ODD.PvP and ODD.PvP.Tracker then
+                    ODD.PvP.Tracker:RemoveNemesis(targetGuid)
+                end
+            end)
 
             row:Show()
         end
@@ -209,10 +207,66 @@ function PvPTab:Create(parent)
     bgSummaryLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -88)
     bgSummaryLabel:SetText("Campos de Batalla: 0 Victorias - 0 Derrotas")
 
+    countLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    countLabel:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -88)
+    countLabel:SetText("")
+
     -- ========================================================
     -- LISTA DE NÉMESIS / OBJETIVOS PRIORITARIOS DE DESAHUCIO
     -- ========================================================
-    local nemHeader = ODD.UI.Components:CreateSectionHeader(frame, "Lista de Némesis (Enemigos que te han abatido):", -118)
+    local nemHeader = ODD.UI.Components:CreateSectionHeader(frame, "Lista de Némesis:", -118)
+
+    -- Botones de Filtrado y Limpieza de Némesis
+    local filterBox = CreateFrame("Frame", nil, frame)
+    filterBox:SetSize(460, 20)
+    filterBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -118)
+
+    local fLbl = filterBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    fLbl:SetPoint("LEFT", filterBox, "LEFT", 0, 0)
+    fLbl:SetText("Ver:")
+
+    local function MakeFilterBtn(key, labelText, xOffset, width)
+        local btn = CreateFrame("Button", nil, filterBox)
+        btn:SetSize(width, 18)
+        btn:SetPoint("LEFT", fLbl, "RIGHT", xOffset, 0)
+        btn:SetNormalFontObject("GameFontHighlightSmall")
+        btn.rawText = labelText
+        btn:SetText(string.format("|cFF888888%s|r", labelText))
+        btn:SetScript("OnClick", function()
+            currentNemesisFilter = key
+            PvPTab:Refresh()
+        end)
+        filterButtons[key] = btn
+        return btn
+    end
+
+    MakeFilterBtn("wanted", "Buscados", 6, 68)
+    MakeFilterBtn("avenged", "Vengados", 78, 68)
+    MakeFilterBtn("all", "Todos", 150, 50)
+
+    -- Botón para limpiar vengados
+    local clearAvengedBtn = CreateFrame("Button", nil, filterBox)
+    clearAvengedBtn:SetSize(100, 18)
+    clearAvengedBtn:SetPoint("LEFT", fLbl, "RIGHT", 204, 0)
+    clearAvengedBtn:SetNormalFontObject("GameFontDisableSmall")
+    clearAvengedBtn:SetText("|cFF888888[Limpiar Vengados]|r")
+    clearAvengedBtn:SetScript("OnClick", function()
+        if ODD.PvP and ODD.PvP.Tracker then
+            ODD.PvP.Tracker:ClearAvengedNemesis()
+        end
+    end)
+
+    -- Botón para limpiar TODO Némesis
+    local clearAllBtn = CreateFrame("Button", nil, filterBox)
+    clearAllBtn:SetSize(90, 18)
+    clearAllBtn:SetPoint("LEFT", clearAvengedBtn, "RIGHT", 6, 0)
+    clearAllBtn:SetNormalFontObject("GameFontDisableSmall")
+    clearAllBtn:SetText("|cFFFF4444[Limpiar Todo]|r")
+    clearAllBtn:SetScript("OnClick", function()
+        if ODD.PvP and ODD.PvP.Tracker then
+            ODD.PvP.Tracker:ClearAllNemesis()
+        end
+    end)
 
     local headerFrame = CreateFrame("Frame", nil, frame)
     headerFrame:SetSize(760, 18)
@@ -231,7 +285,7 @@ function PvPTab:Create(parent)
     colScore:SetText("Marcador Personal")
 
     local colLoc = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    colLoc:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)
+    colLoc:SetPoint("RIGHT", headerFrame, "RIGHT", -46, 0)
     colLoc:SetText("Último Encuentro")
 
     -- Tabla de Némesis con Scroll (cortando limpiamente antes de las pestañas inferiores)

@@ -19,6 +19,13 @@ ODD.UI = {}
 
 -- Función de log controlado
 function ODD:Log(msg, ...)
+    if ODD.Database and type(ODD.Database.GetSetting) == "function" and ODD.Database:GetSetting("muteErrors") then
+        local raw = tostring(msg):lower()
+        if raw:find("error") or raw:find("excede") or raw:find("cable") or raw:find("fallo") then
+            return
+        end
+    end
+
     if select("#", ...) > 0 then
         msg = string.format(msg, ...)
     end

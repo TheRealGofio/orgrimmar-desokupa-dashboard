@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 
 -- Tabla de traducciones
 local L = {}
@@ -17,6 +17,7 @@ L["TAB_HQ"] = "General"
 L["TAB_GNOMOMETER"] = "Gnomómetro"
 L["TAB_MEDALS"] = "Logros"
 L["TAB_PVP"] = "PvP"
+L["TAB_SOUNDBOARD"] = "Sonidos"
 L["TAB_HISTORY"] = "Desahucios"
 L["TAB_ROSTER"] = "Miembros"
 L["TAB_SETTINGS"] = "Ajustes"

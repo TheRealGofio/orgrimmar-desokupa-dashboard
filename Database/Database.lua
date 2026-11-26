@@ -82,7 +82,13 @@ end
 
 function Database:GetSetting(key)
     if self.global and self.global.settings then
-        return self.global.settings[key]
+        local val = self.global.settings[key]
+        if val ~= nil then return val end
+    end
+    -- Fallback a los valores por defecto del Schema si la clave no existía en SavedVariables previas
+    local Schema = ODD.Database and ODD.Database.Schema
+    if Schema and Schema.DefaultGlobalDB and Schema.DefaultGlobalDB.settings then
+        return Schema.DefaultGlobalDB.settings[key]
     end
     return nil
 end
