@@ -4,7 +4,28 @@ Todas las versiones notables y cambios de este proyecto están documentados aqu�
 
 ---
 
-## [0.3.6-alpha] - 2026-11-23
+## [0.4.1-alpha] - 2026-11-26
+
+### 🔄 Sincronización P2P y Resolución de Nombres
+- **Normalización Unificada de Nombres:** Implementación de `NormalizeName` e `IsSamePlayer` en `API/Forever.lua`. Garantiza que las bases de datos locales, el Roster y los rankings no generen duplicados ni discrepancias entre nombres con o sin apellido/reino.
+- **Actualización de Bajas en Tiempo Real:** Al recibir un anuncio de kill `KILL` de un compañero, su cuenta total de bajas se actualiza inmediatamente en la base de datos local y refresca la interfaz sin requerir esperas ni peticiones manuales.
+- **Refresco en Vivo del Roster:** La pestaña Miembros (`RosterTab`) y el `HUD` ahora se actualizan reactivamente al recibir paquetes de presencia `HELLO`, réplicas `GOSSIP` o bajas `KILL`.
+- **Búsqueda Flexible en Miembros:** `RosterTab` realiza búsqueda cruzada de estadísticas independientemente de cómo el cliente catalogue el nombre del miembro en la hermandad.
+
+### ⚔️ Gnomómetro: Detección Robusta de Bajas
+- **Resiliencia ante Restricciones de WoW Forever:** El observador de salud en combate registra las muertes directas del objetivo aunque el evento `PARTY_KILL` del servidor omita el autor o venga protegido por secretos de identidad del cliente (tótems, venenos, DoTs o daño indirecto).
+
+### 🎨 Rediseño del Panel General (Cuartel General)
+- **Modelo 3D Ampliado:** Modelo del personaje aumentado a 220x260px con soporte de rotación interactiva mediante arrastre con ratón.
+- **Tarjeta de Puntos de Logro:** Nueva tarjeta dedicada para los Puntos de Logro integrada en la cabecera principal junto a las bajas personales y de hermandad.
+- **Contratos Semanales Optimizados:** Reorganización espacial y ampliación de los contratos semanales deterministas en la zona inferior.
+
+### 🔊 Soundboard: Ámbito Estricto de Grupo / Banda
+- **Exclusión de Hermandad:** Las emisiones de audio del Soundboard quedan restringidas exclusivamente a grupos (`PARTY`) y bandas (`RAID`). Si el jugador no está en grupo, el sonido solo se reproduce en local, evitando spam en el canal de hermandad.
+
+---
+
+## [0.4.0-alpha] - 2026-11-26
 
 ### ⚔️ Radar de Proximidad Interactivo con Modelo 3D
 - **Detección Anticipada en Mundo Abierto:** Alerte visual y sonora interactiva al detectar gnomos de la Alianza en placas de nombre, mouseover u objetivo visible.
