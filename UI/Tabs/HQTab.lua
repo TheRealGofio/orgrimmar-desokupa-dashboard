@@ -206,10 +206,10 @@ function HQTab:Create(parent)
     oLabel:SetText("Origen: " .. L["STATUS_LOCAL_OBSERVED"])
 
     -- ========================================================
-    -- MODELO 3D NATIVO DEL PERSONAJE (AGRANDADO)
+    -- MODELO 3D NATIVO DEL PERSONAJE
     -- ========================================================
     local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame)
-    modelFrame:SetSize(220, 260)
+    modelFrame:SetSize(210, 220)
     modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -10)
     modelFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
 
@@ -265,7 +265,7 @@ function HQTab:Create(parent)
     ODD.UI.Components:CreateSectionHeader(frame, "Resumen Global de Bajas y Logros:", -92)
 
     local cardW = 164
-    local cardH = 62
+    local cardH = 60
     local cardGap = 9
 
     -- Fila 1 (Y: -116)
@@ -273,28 +273,28 @@ function HQTab:Create(parent)
     statGuildTotal = CreateStatCard(frame, "Bajas de Hermandad", 16 + (cardW + cardGap) * 1, -116, cardW, cardH)
     statAchievePoints = CreateStatCard(frame, "Puntos de Logro", 16 + (cardW + cardGap) * 2, -116, cardW, cardH)
 
-    -- Fila 2 (Y: -184)
+    -- Fila 2 (Y: -182)
     local cardW2 = 250
-    statTodayTotal = CreateStatCard(frame, "Bajas de Hoy", 16, -184, cardW2, 54)
-    statWeekTotal = CreateStatCard(frame, "Bajas de Esta Semana", 16 + cardW2 + 10, -184, cardW2, 54)
+    statTodayTotal = CreateStatCard(frame, "Bajas de Hoy", 16, -182, cardW2, 48)
+    statWeekTotal = CreateStatCard(frame, "Bajas de Esta Semana", 16 + cardW2 + 10, -182, cardW2, 48)
 
     if ODD.UI.Dashboard and ODD.UI.Dashboard.EnableFrameDrag then
         ODD.UI.Dashboard:EnableFrameDrag(profileBox)
     end
 
     -- ========================================================
-    -- CONTRATOS SEMANALES DE HERMANDAD (AMPLIADOS HACIA ABAJO)
+    -- CONTRATOS SEMANALES DE HERMANDAD (OBJETIVOS DETERMINISTAS)
     -- ========================================================
-    local contractSectionY = -250
+    local contractSectionY = -242
     ODD.UI.Components:CreateSectionHeader(frame, "Contratos Semanales de Desalojo (Objetivos de Hermandad):", contractSectionY)
 
     contractTimerLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    contractTimerLabel:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, contractSectionY)
+    contractTimerLabel:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, contractSectionY)
     contractTimerLabel:SetText("Reinicio en: --")
 
     local contractContainer = CreateFrame("Frame", nil, frame)
     contractContainer:SetSize(760, 95)
-    contractContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, contractSectionY - 20)
+    contractContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, contractSectionY - 22)
 
     for i = 1, 2 do
         local cBox = CreateFrame("Frame", nil, contractContainer)
