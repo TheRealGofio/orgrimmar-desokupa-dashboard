@@ -1,36 +1,126 @@
 # Orgrimmar Desokupa Dashboard (ODD)
 
-Addon en fase de investigación para **WoW Forever 1.60.1 (Interface 16001)**.
+[![WoW Forever](https://img.shields.io/badge/WoW%20Forever-1.60.1%20(Interface%2016001)-orange.svg)](https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard)
+[![Release](https://img.shields.io/github/v/release/TheRealGofio/orgrimmar-desokupa-dashboard?color=red)](https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-La Fase 0 documenta qué puede construirse con evidencia real del cliente antes de implementar el dashboard, la sincronización o el tracking de eliminaciones.
+> *«La Horda no negocia con inquilinos ilegales de 90 centímetros. Donde haya un gnomo, habrá un desahucio exprés.»*
 
-## Documentación
+---
 
-- [Informe de investigación](docs/fase-0/01-investigacion.md)
-- [Viabilidad funcional](docs/fase-0/02-viabilidad.md)
-- [Diseño del protocolo](docs/fase-0/03-protocolo.md)
-- [Arquitectura y persistencia](docs/fase-0/04-arquitectura.md)
-- [Validación en juego y plan de implementación](docs/fase-0/05-validacion-y-plan.md)
-- [Fuentes](docs/fase-0/06-fuentes.md)
+## 🎯 ¿Qué es Orgrimmar Desokupa Dashboard?
 
-## Estado
+**Orgrimmar Desokupa Dashboard (ODD)** es un addon nativo en clave de humor para hermandades de la **Horda** en **World of Warcraft Forever (1.60.1 / Interface 16001)**.
 
-- **Fase 0 (Investigación y Diseño):** Completada y documentada en `docs/fase-0/`.
-- **Fase 1 (Base e Infraestructura):** Implementada. Estructura modular Lua nativa, TOC `16001`, ciclo de vida, detección de capacidades, SavedVariables versionados (`ODDDB`, `ODDCharacterDB`), `/odd` y Dashboard con 6 pestañas nativas.
-- **Fase 2 (Transporte y Sincronización P2P):** Implementada. Registro de prefijo `ODD` en `C_ChatInfo`, codec binario/nativo (`CB1`/`S1`), control de saturación token bucket (Queue), deduplicación de mensajes, protocolo de presencia `HELLO` con jitter, botón «Sincronizar hermandad» en Cuartel General y comando `/odd sync`.
-- **Fase 3 (Gnomómetro y Leaderboard de Hermandad):** Implementada. Escucha pasiva de `PARTY_KILL`, verificación rigurosa de autoría (solo killing blow propio), confirmación estricta de raza Gnomo por GUID/UnitRace, exclusión de BGs/mazmorras (solo mundo abierto), deduplicación por cooldown (60s) y **Leaderboard de hermandad en vivo**: ranking ordenado por bajas con colores de clase de Blizzard, etiquetas de rigor (`Verificado` vs `Declarado`) y sincronización P2P vía `HELLO`/`Sync`.
-- **Fase 4 (Frente PvP y Talleres/Artesanía):** Implementada por completo.
-  - *PvP:* Estadísticas directas de honor nativo (Hoy, Ayer, Histórico), escucha de `PLAYER_PVP_KILLS_CHANGED`, registro verificado de victorias/derrotas de BGs con `PVP_MATCH_COMPLETE` y cálculo automático de ratio de victorias (%) con historial deslizable.
-  - *Talleres:* Escáner nativo de profesiones clásicas de WoW Forever, barra de 8 filtros directos por profesión, catálogo deslizable de artesanos, búsqueda interactiva y distinción de procedencia.
-- **Fase 5 (Roster Completo, Medallas y Pulido):** Implementada por completo.
-  - *Roster de Hermandad:* Visualizador interactivo con indicador de conexión (online/offline), ordenación inteligente (conectados primero, luego rango y nombre), buscador en tiempo real, filtro `Solo en linea` y refresco manual.
-  - *Medallas de Hermandad:* Catálogo ampliado con 19 logros dedicados exclusivamente a la caza de gnomos:
-    - *Cadena de Bajas:* Primer Desalojo (1), Control de Plagas (5), Cazagnomos (10), Fumigador Oficial (25), Azote de Gnomeregan (50), Rompeengranajes (75), Terror de la Alianza (100), Exterminador Jefe (250) y Leyenda de Orgrimmar Desokupa (500).
-    - *Especialistas por Clase:* Cortahechizos (Mago), Pisa-diablillos (Brujo), Descubierto de las Sombras (Pícaro), Mordisco al Tobillo Evitado (Guerrero) y Desalojo Interdisciplinar (las 4 clases clásicas de gnomo).
-    - *Hazañas de Nivel:* Peligro en Miniatura (Gnomo nivel 50+) y David contra Goliat al Revés (Gnomo calavera ??).
-    - *Exploración y Caza:* Desokupador Itinerante (3 zonas) y Limpieza Territorial (5 zonas distintas).
-  - *Sincronización al Abrir:* Ping P2P reactivo con micro-jitter cada vez que se abre la ventana.
+Nacido originalmente para la hermandad *Orgrimmar Desokupa*, el addon está diseñado para que **cualquier hermandad de la Horda** pueda instalarlo y disfrutarlo al instante de forma completamente autónoma. Transforma el PvP de mundo abierto en una divertida «empresa de desalojo de gnomos», gamificando la caza de la Alianza con clasificaciones internas, contratos semanales, logros de hermandad, memes sonoros y estadísticas de combate.
 
-## OpenCode
+---
 
-`opencode.jsonc` permite las herramientas automáticamente solo en este proyecto. No modifica la configuración global del usuario.
+## ⚔️ Características Principales
+
+### 🏢 1. Cuartel General (HQ)
+- **Ficha del Desokupador:** Muestra tu personaje, rol declarado (DPS, Tanque, Sanador, Desokupador, Artesano) y un **modelo 3D nativo e interactivo** que puedes rotar en tiempo real.
+- **Resumen Global de Bajas:** Contadores de bajas personales (totales, hoy y esta semana), bajas globales de la hermandad y puntos de logro acumulados.
+- **Contratos Semanales de Desalojo:** Objetivos deterministas que se reinician semanalmente para toda la hermandad (por ejemplo: *Operación Desahucio en Trabalomas* o *Cazarratas de las Sombras*).
+
+### 📏 2. Gnomómetro & Leaderboard
+- **Ranking de Hermandad en Vivo:** Tabla de clasificación ordenada por bajas de gnomos o puntos de logro con colores de clase y títulos honoríficos.
+- **Rigor en los Datos:** Distingue entre bajas **Verificadas** (observadas directamente en tu cliente) y **Declaradas** (recibidas por P2P de compañeros de guild).
+- **Radar de Proximidad:** Alerta visual y sonora instantánea cuando un gnomo enemigo aparece cerca o en tus placas de nombre (*nameplates*).
+
+### 🏆 3. Medallas y Logros de Hermandad
+- **19 Logros Temáticos:** Desde *Primer Desalojo*, *Rompeengranajes* y *Azote de Gnomeregan* hasta hazañas por clase (*Pisa-diablillos*, *Cortahechizos*) y gnomos de nivel calavera (*David contra Goliat al Revés*).
+- **Compartir en Chat:** Modal emergente para inspeccionar logros y botón para compartirlos con enlace interactivo en `/g` o en tu grupo.
+
+### 📜 4. Registro de Desahucios & Zonas Calientes
+- **Heatmap de Zonas:** Identifica los territorios más conflictivos donde vuestra hermandad está concentrando las operaciones.
+- **Historial Detallado:** Registro cronológico con fecha, ejecutor, gnomo eliminado, zona y modificadores especiales (*[Comiendo]*, *[Montura]*, *[Grupo Guild]*).
+
+### 🔊 5. Soundboard de Hermandad
+- **25 Audios y Memes Clásicos:** Reproduce sonidos célebres (*El Butano*, *Bruh*, *Discord Ping*, *Txapote*, *Me están matando*, etc.) que se transmiten instantáneamente a los miembros de tu grupo o banda.
+- **Ventana Flotante:** Posibilidad de abrir el soundboard en una mini-ventana independiente y arrastrable.
+- **Atajos y Macros:** `Shift + Clic` en cualquier sonido para crear automáticamente una macro en tus barras de acción.
+
+### 🛡️ 6. Frente PvP & Lista de Némesis
+- Estadísticas oficiales de honor de WoW Forever (Hoy, Ayer, Histórico y Rango militar).
+- Historial de victorias y derrotas en Campos de Batalla (BGs).
+- **Lista Negra de Némesis:** Rastrea a los enemigos de la Alianza que más te han matado en mundo abierto para planear tu venganza.
+
+### 👥 7. Roster Dinámico de Hermandad
+- Listado de miembros en tiempo real con indicador de conexión, nivel, zona y rango.
+- Buscador rápido por texto y filtro para mostrar solo compañeros conectados.
+
+### 🎨 8. Personalización y Temas Visuales
+- **Selector de Temas Desplegable:** Cambia el aspecto estético del marco principal entre 7 estilos únicos:
+  - 🪓 *Orco Clásico*
+  - 🔥 *Hierro y Magma*
+  - 🧪 *Añublo Vil*
+  - ❄️ *Hielo Rasganorte*
+  - 🎭 *Vudú Trol*
+  - 🍃 *Espíritu Druida*
+  - ☀️ *Luz Sagrada (Paladín)*
+- **Bordes y Florituras Dinámicas:** Las cajas y secciones adaptan su borde ornamental al color característico del tema elegido sobre fondos oscuros de alto contraste.
+- **Escala de Interfaz y Zoom:** Botones para ajustar el tamaño del dashboard o auto-adaptarlo según la resolución de tu pantalla.
+- **HUD Flotante:** Pequeño rastreador compacto en pantalla para monitorizar tus bajas del día sin abrir la ventana grande.
+
+---
+
+## 🌐 ¿Cómo Funciona la Sincronización entre Jugadores?
+
+- **100% P2P (Sin Servidores Externos):** ODD no requiere servidores web, bases de datos externas ni registros de usuario. Toda la sincronización viaja por el canal de chat interno de la hermandad (`C_ChatInfo.SendAddonMessage`).
+- **Completamente Aislado por Hermandad:** Si otra hermandad instala el addon, sus miembros sincronizarán exclusivamente entre ellos. Los datos nunca se mezclan ni interfieren entre guilds.
+- **Respeto a la Privacidad:** Desde la pestaña *Ajustes*, cada jugador puede decidir si desea compartir su presencia, sus estadísticas de combate o silenciar anuncios en el chat.
+
+---
+
+## 📦 Instalación
+
+1. Descarga el archivo más reciente desde [Releases](https://github.com/TheRealGofio/orgrimmar-desokupa-dashboard/releases) (`OrgrimmarDesokupaDashboard-vX.Y.Z-alpha.zip`).
+2. Descomprime el contenido en la carpeta de addons de tu cliente de WoW Forever:
+   ```text
+   World of Warcraft\_forever_\Interface\AddOns\
+   ```
+3. Asegúrate de que la carpeta resultante se llame exactamente:
+   ```text
+   OrgrimmarDesokupaDashboard
+   ```
+4. Inicia el juego o escribe `/reload` si ya estás conectado.
+
+---
+
+## 🕹️ Comandos del Chat
+
+| Comando | Acción |
+| :--- | :--- |
+| `/odd` | Abre o cierra el Dashboard principal. |
+| `/odd sync` | Solicita una sincronización manual de bajas y presencia con los miembros de la hermandad en línea. |
+| `/odd hud` | Muestra u oculta el HUD flotante compacto en pantalla. |
+| `/odd reset` | Restablece la posición central del marco si se ha movido fuera de la pantalla. |
+| `/odd help` | Muestra la ayuda rápida en el chat. |
+
+---
+
+## ⚖️ Política de Addons y Juego Limpio
+
+Este addon cumple estrictamente con la **World of Warcraft Add-On Development Policy** de Blizzard:
+- **Gratuito y de Código Abierto:** Sin micropagos, sin suscripciones y sin funciones de pago.
+- **Sin Automatización ni Botting:** No realiza acciones de combate automáticas, no hackea memoria y opera 100% dentro del entorno protegido de la API oficial de Blizzard.
+- **Sin Publicidad:** Cero anuncios comerciales y sin recaudación de donaciones dentro del juego.
+
+---
+
+## 🛠️ Documentación Técnica & Arquitectura
+
+Para desarrolladores y curiosos del motor de WoW Forever (Interface 16001), la investigación de compatibilidad de API y arquitectura modular se encuentra documentada en la carpeta `docs/fase-0/`:
+- [Informe de Investigación de APIs de Forever](docs/fase-0/01-investigacion.md)
+- [Matriz de Viabilidad Funcional](docs/fase-0/02-viabilidad.md)
+- [Diseño del Protocolo P2P y Codecs](docs/fase-0/03-protocolo.md)
+- [Arquitectura de Módulos y Persistencia](docs/fase-0/04-arquitectura.md)
+- [Plan de Validación en Juego](docs/fase-0/05-validacion-y-plan.md)
+- [Fuentes y Referencias del Cliente](docs/fase-0/06-fuentes.md)
+
+---
+
+## 👥 Créditos
+
+Desarrollado con orgullo y sed de venganza por el equipo de **Orgrimmar Desokupa** para toda la comunidad de **WoW Forever**. ¡Por la Horda!
