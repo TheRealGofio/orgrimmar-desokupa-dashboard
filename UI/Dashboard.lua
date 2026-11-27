@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD
 local L = addonTable.L
 
@@ -283,6 +283,10 @@ function Dashboard:Create()
         -- 3. Refrescar la pestaña actual si tiene elementos temáticos
         if tabFrames[activeTab] and tabFrames[activeTab].Refresh then
             tabFrames[activeTab]:Refresh()
+        end
+        -- 4. Actualizar las tarjetas si usan el color de énfasis dinámico del tema
+        if ODD.UI and ODD.UI.HQTab and ODD.UI.HQTab.UpdateCardColors then
+            ODD.UI.HQTab:UpdateCardColors()
         end
     end
 

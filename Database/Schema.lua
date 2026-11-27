@@ -22,7 +22,7 @@ Schema.DefaultGlobalDB = {
         showHUD = false,                -- Mostrar el HUD compacto flotante en pantalla (estilo GRS)
         hudPos = nil,                   -- Posición guardada del HUD
         theme = "classic",              -- Tema visual del marco: classic, molten, fel, frost, troll, druid
-        cardColor = "bronze",           -- Color de paneles y tarjetas: bronze, steel, ebony, slate, classic
+        cardColor = "theme",            -- Color de paneles y tarjetas: theme, dark, steel, bronze, classic
         uiScale = 1.0,                  -- Escala personalizada del Dashboard (0.7 a 1.2)
     },
     profiles = {},     -- perfiles conocidos de hermandad indexados por GUID/nombre

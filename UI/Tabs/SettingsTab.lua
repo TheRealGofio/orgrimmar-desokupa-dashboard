@@ -112,11 +112,11 @@ function SettingsTab:Create(parent)
     cardColorLabel:SetText("Color de Paneles:")
 
     local cardColorOptions = {
-        { key = "bronze",  name = "Bronce y Cuero",   color = "FFD4A26A" },
-        { key = "steel",   name = "Acero y Carbón",   color = "FF9EAFCB" },
-        { key = "ebony",   name = "Ébano y Oro",      color = "FFE0C16C" },
-        { key = "slate",   name = "Pizarra y Grafito",color = "FF8C9AA8" },
-        { key = "classic", name = "Horda Rojo Clásico",color = "FFAA3333" },
+        { key = "theme",   name = "Énfasis del Tema (Auto)", color = "FF00FFCC" },
+        { key = "dark",    name = "Negro Carbón Puro",      color = "FFA0A0A0" },
+        { key = "steel",   name = "Gris Acero Forjado",     color = "FF9EAFCB" },
+        { key = "bronze",  name = "Bronce y Cuero",         color = "FFD4A26A" },
+        { key = "classic", name = "Horda Rojo Clásico",     color = "FFAA3333" },
     }
 
     local cardColorBtn = CreateFrame("Button", "ODD_CardColorSelectorBtn", frame)

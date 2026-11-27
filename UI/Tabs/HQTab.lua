@@ -20,44 +20,51 @@ local contractTimerLabel = nil
 
 -- Paletas de color para cajas y paneles de información
 HQTab.PALETTES = {
-    bronze = {
-        name = "Bronce y Cuero Curtido",
-        border = { 0.54, 0.38, 0.22, 0.85 },      -- #8A6138 bronce cálido patinado
-        bg = { 0.10, 0.08, 0.06, 0.82 },          -- #1A140F cuero oscuro profundo
-        modelBorder = { 0.48, 0.34, 0.20, 0.70 },
-        modelBg = { 0.07, 0.05, 0.04, 0.70 },
-        barBg = { 0.20, 0.16, 0.12, 0.85 },
-        hex = "FFD4A26A",
+    theme = {
+        name = "Auto (Color de Énfasis del Tema)",
+        isDynamicTheme = true,
+        bg = { 0.05, 0.05, 0.06, 0.88 },          -- Negro carbón mate de alto contraste
+        modelBg = { 0.04, 0.04, 0.05, 0.75 },
+        barBg = { 0.14, 0.14, 0.16, 0.85 },
+        hex = "FF00FFCC",
+    },
+    dark = {
+        name = "Negro Carbón Puro",
+        border = { 0.22, 0.22, 0.24, 0.70 },      -- Gris neutro suave
+        bg = { 0.04, 0.04, 0.05, 0.90 },          -- Negro puro
+        modelBorder = { 0.18, 0.18, 0.20, 0.60 },
+        modelBg = { 0.03, 0.03, 0.04, 0.75 },
+        barBg = { 0.12, 0.12, 0.14, 0.85 },
+        hex = "FFA0A0A0",
     },
     steel = {
-        name = "Acero Forjado y Carbón",
+        name = "Gris Acero Forjado",
         border = { 0.35, 0.40, 0.48, 0.80 },      -- #59667A acero templado
-        bg = { 0.08, 0.09, 0.11, 0.85 },          -- #14171C carbón profundo
+        bg = { 0.07, 0.08, 0.10, 0.88 },          -- Carbón acerado
         modelBorder = { 0.30, 0.35, 0.42, 0.70 },
-        modelBg = { 0.06, 0.07, 0.08, 0.70 },
-        barBg = { 0.16, 0.18, 0.22, 0.85 },
+        modelBg = { 0.05, 0.06, 0.07, 0.75 },
+        barBg = { 0.15, 0.17, 0.20, 0.85 },
         hex = "FF9EAFCB",
     },
-    ebony = {
-        name = "Ébano y Oro Antiguo",
-        border = { 0.58, 0.48, 0.24, 0.80 },      -- #947A3D oro antiguo bruñido
-        bg = { 0.07, 0.07, 0.07, 0.85 },          -- #121212 ébano puro
-        modelBorder = { 0.50, 0.42, 0.20, 0.70 },
-        modelBg = { 0.05, 0.05, 0.05, 0.70 },
-        barBg = { 0.18, 0.16, 0.12, 0.85 },
-        hex = "FFE0C16C",
-    },
-    slate = {
-        name = "Pizarra y Grafito",
-        border = { 0.26, 0.30, 0.35, 0.80 },      -- #424D59 pizarra sobria
-        bg = { 0.07, 0.08, 0.09, 0.85 },          -- #121417 grafito neutro
-        modelBorder = { 0.22, 0.26, 0.30, 0.70 },
-        modelBg = { 0.05, 0.06, 0.07, 0.70 },
-        barBg = { 0.15, 0.17, 0.19, 0.85 },
-        hex = "FF8C9AA8",
+    bronze = {
+        name = "Bronce y Cuero",
+        border = { 0.54, 0.38, 0.22, 0.85 },      -- #8A6138 bronce cálido
+        bg = { 0.09, 0.07, 0.05, 0.88 },          -- Cuero profundo
+        modelBorder = { 0.48, 0.34, 0.20, 0.70 },
+        modelBg = { 0.06, 0.05, 0.04, 0.75 },
+        barBg = { 0.18, 0.14, 0.10, 0.85 },
+        hex = "FFD4A26A",
     },
     classic = {
         name = "Horda Rojo Clásico",
+        border = { 0.30, 0.10, 0.10, 0.60 },
+        bg = { 0.12, 0.12, 0.12, 0.65 },
+        modelBorder = { 0.25, 0.12, 0.08, 0.50 },
+        modelBg = { 0.06, 0.06, 0.06, 0.45 },
+        barBg = { 0.20, 0.20, 0.20, 0.80 },
+        hex = "FFAA3333",
+    },
+}
         border = { 0.30, 0.10, 0.10, 0.60 },
         bg = { 0.12, 0.12, 0.12, 0.65 },
         modelBorder = { 0.25, 0.12, 0.08, 0.50 },
@@ -238,30 +245,44 @@ local function CreateStatCard(parent, title, x, y, width, height)
 end
 
 function HQTab:UpdateCardColors()
-    local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "bronze"
-    local p = HQTab.PALETTES[curKey] or HQTab.PALETTES.bronze
+    local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "theme"
+    local p = HQTab.PALETTES[curKey] or HQTab.PALETTES.theme
+
+    -- Si es modo dinámico según tema del marco
+    local borderRGBA = p.border
+    local modelBorderRGBA = p.modelBorder
+    if p.isDynamicTheme then
+        local themePalette = ODD.UI.Dashboard and ODD.UI.Dashboard.GetActivePalette and ODD.UI.Dashboard:GetActivePalette()
+        if themePalette and themePalette.tabBorder then
+            borderRGBA = { themePalette.tabBorder[1], themePalette.tabBorder[2], themePalette.tabBorder[3], 0.75 }
+            modelBorderRGBA = { themePalette.tabBorder[1], themePalette.tabBorder[2], themePalette.tabBorder[3], 0.55 }
+        else
+            borderRGBA = { 0.40, 0.10, 0.10, 0.70 }
+            modelBorderRGBA = { 0.30, 0.10, 0.10, 0.50 }
+        end
+    end
 
     for _, item in ipairs(registeredPanels) do
         if item.kind == "card" then
             if item.bg and p.bg then
                 item.bg:SetColorTexture(p.bg[1], p.bg[2], p.bg[3], p.bg[4])
             end
-            if item.border and p.border then
-                item.border:SetColorTexture(p.border[1], p.border[2], p.border[3], p.border[4])
+            if item.border and borderRGBA then
+                item.border:SetColorTexture(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4])
             end
         elseif item.kind == "model" then
             if item.bg and p.modelBg then
                 item.bg:SetColorTexture(p.modelBg[1], p.modelBg[2], p.modelBg[3], p.modelBg[4])
             end
-            if item.border and p.modelBorder then
-                item.border:SetColorTexture(p.modelBorder[1], p.modelBorder[2], p.modelBorder[3], p.modelBorder[4])
+            if item.border and modelBorderRGBA then
+                item.border:SetColorTexture(modelBorderRGBA[1], modelBorderRGBA[2], modelBorderRGBA[3], modelBorderRGBA[4])
             end
         elseif item.kind == "contract" then
             if item.bg and p.bg then
                 item.bg:SetColorTexture(p.bg[1], p.bg[2], p.bg[3], p.bg[4])
             end
-            if item.border and p.border then
-                item.border:SetColorTexture(p.border[1], p.border[2], p.border[3], p.border[4])
+            if item.border and borderRGBA then
+                item.border:SetColorTexture(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4])
             end
             if item.barBg and p.barBg then
                 item.barBg:SetColorTexture(p.barBg[1], p.barBg[2], p.barBg[3], p.barBg[4])
@@ -270,8 +291,8 @@ function HQTab:UpdateCardColors()
             if item.bg and p.bg then
                 item.bg:SetColorTexture(p.bg[1], p.bg[2], p.bg[3], 0.55)
             end
-            if item.border and p.border then
-                item.border:SetColorTexture(p.border[1], p.border[2], p.border[3], p.border[4] * 0.7)
+            if item.border and borderRGBA then
+                item.border:SetColorTexture(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4] * 0.7)
             end
         end
     end
