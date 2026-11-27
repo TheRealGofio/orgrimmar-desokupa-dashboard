@@ -11,7 +11,7 @@ local function EnsureModalFrame()
     if modalFrame then return modalFrame end
 
     modalFrame = CreateFrame("Frame", "ODD_AchievementModalFrame", UIParent, "BackdropTemplate")
-    modalFrame:SetSize(460, 115)
+    modalFrame:SetSize(490, 138)
     modalFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 80)
     modalFrame:SetFrameStrata("DIALOG")
     modalFrame:SetClampedToScreen(true)
@@ -34,19 +34,19 @@ local function EnsureModalFrame()
     })
     modalFrame:SetBackdropBorderColor(1, 0.82, 0, 0.95)
 
-    -- Icono del logro con marco circular/cuadrado
+    -- Icono del logro con marco
     local icon = modalFrame:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(54, 54)
-    icon:SetPoint("LEFT", modalFrame, "LEFT", 14, 0)
+    icon:SetSize(52, 52)
+    icon:SetPoint("TOPLEFT", modalFrame, "TOPLEFT", 16, -16)
     modalFrame.icon = icon
 
-    -- Borde del icono
+    -- Borde sutil del icono
     local iconBorder = modalFrame:CreateTexture(nil, "OVERLAY")
-    iconBorder:SetSize(58, 58)
+    iconBorder:SetSize(56, 56)
     iconBorder:SetPoint("CENTER", icon, "CENTER", 0, 0)
     iconBorder:SetColorTexture(0.3, 0.2, 0.05, 0.6)
 
-    -- Cabecera dorada estilo Retail: "LOGRO DE HERMANDAD • [Puntos]"
+    -- Cabecera dorada estilo Retail: "LOGRO DE HERMANDAD"
     local headerFs = modalFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     headerFs:SetPoint("TOPLEFT", icon, "TOPRIGHT", 14, -2)
     headerFs:SetText("|cFFFFD100LOGRO DE HERMANDAD|r")
@@ -54,31 +54,38 @@ local function EnsureModalFrame()
 
     -- Puntos de logro (esquina superior derecha, estilo escudo retail)
     local pointsFs = modalFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    pointsFs:SetPoint("TOPRIGHT", modalFrame, "TOPRIGHT", -36, -10)
+    pointsFs:SetPoint("TOPRIGHT", modalFrame, "TOPRIGHT", -36, -14)
     pointsFs:SetText("|cFF00FFCC+10 pts|r")
     modalFrame.pointsFs = pointsFs
 
     -- Título del logro (Nombre de la medalla)
     local titleFs = modalFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightMedium")
-    titleFs:SetPoint("TOPLEFT", headerFs, "BOTTOMLEFT", 0, -3)
-    titleFs:SetPoint("RIGHT", modalFrame, "RIGHT", -36, 0)
+    titleFs:SetPoint("TOPLEFT", headerFs, "BOTTOMLEFT", 0, -5)
+    titleFs:SetPoint("RIGHT", pointsFs, "LEFT", -10, 0)
     titleFs:SetJustifyH("LEFT")
     titleFs:SetText("Nombre del Logro")
     modalFrame.titleFs = titleFs
 
-    -- Descripción de la hazaña
+    -- Descripción de la hazaña (con suficiente separación y altura)
     local descFs = modalFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    descFs:SetPoint("TOPLEFT", titleFs, "BOTTOMLEFT", 0, -4)
-    descFs:SetPoint("RIGHT", modalFrame, "RIGHT", -16, 0)
+    descFs:SetPoint("TOPLEFT", titleFs, "BOTTOMLEFT", 0, -6)
+    descFs:SetPoint("RIGHT", modalFrame, "RIGHT", -20, 0)
     descFs:SetJustifyH("LEFT")
-    descFs:SetSpacing(2)
+    descFs:SetSpacing(3)
     descFs:SetText("Descripción del logro.")
     modalFrame.descFs = descFs
 
+    -- Línea divisoria sutil antes del pie
+    local divider = modalFrame:CreateTexture(nil, "ARTWORK")
+    divider:SetPoint("BOTTOMLEFT", modalFrame, "BOTTOMLEFT", 16, 32)
+    divider:SetPoint("BOTTOMRIGHT", modalFrame, "BOTTOMRIGHT", -16, 32)
+    divider:SetHeight(1)
+    divider:SetColorTexture(1, 0.82, 0, 0.25)
+
     -- Pie: "Conseguido por [Jugador] el [Fecha / Hora]"
     local footerFs = modalFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    footerFs:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 14, 2)
-    footerFs:SetPoint("RIGHT", modalFrame, "RIGHT", -16, 0)
+    footerFs:SetPoint("BOTTOMLEFT", modalFrame, "BOTTOMLEFT", 18, 12)
+    footerFs:SetPoint("BOTTOMRIGHT", modalFrame, "BOTTOMRIGHT", -18, 12)
     footerFs:SetJustifyH("LEFT")
     footerFs:SetText("Conseguido por...")
     modalFrame.footerFs = footerFs
