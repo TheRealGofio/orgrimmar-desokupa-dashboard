@@ -112,10 +112,11 @@ function SettingsTab:Create(parent)
     cardColorLabel:SetText("Color de Paneles:")
 
     local cardColorOptions = {
-        { key = "classic", name = "Horda Oscuro (Defecto)", color = "FFAA3333" },
-        { key = "crema",   name = "Crema / Pergamino",      color = "FFF5E6C8" },
-        { key = "ambar",   name = "Ámbar Suave",            color = "FFE8B44A" },
-        { key = "hueso",   name = "Hueso Neutro",           color = "FFEDE3D0" },
+        { key = "bronze",  name = "Bronce y Cuero",   color = "FFD4A26A" },
+        { key = "steel",   name = "Acero y Carbón",   color = "FF9EAFCB" },
+        { key = "ebony",   name = "Ébano y Oro",      color = "FFE0C16C" },
+        { key = "slate",   name = "Pizarra y Grafito",color = "FF8C9AA8" },
+        { key = "classic", name = "Horda Rojo Clásico",color = "FFAA3333" },
     }
 
     local cardColorBtn = CreateFrame("Button", "ODD_CardColorSelectorBtn", frame)

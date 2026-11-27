@@ -20,41 +20,50 @@ local contractTimerLabel = nil
 
 -- Paletas de color para cajas y paneles de información
 HQTab.PALETTES = {
+    bronze = {
+        name = "Bronce y Cuero Curtido",
+        border = { 0.54, 0.38, 0.22, 0.85 },      -- #8A6138 bronce cálido patinado
+        bg = { 0.10, 0.08, 0.06, 0.82 },          -- #1A140F cuero oscuro profundo
+        modelBorder = { 0.48, 0.34, 0.20, 0.70 },
+        modelBg = { 0.07, 0.05, 0.04, 0.70 },
+        barBg = { 0.20, 0.16, 0.12, 0.85 },
+        hex = "FFD4A26A",
+    },
+    steel = {
+        name = "Acero Forjado y Carbón",
+        border = { 0.35, 0.40, 0.48, 0.80 },      -- #59667A acero templado
+        bg = { 0.08, 0.09, 0.11, 0.85 },          -- #14171C carbón profundo
+        modelBorder = { 0.30, 0.35, 0.42, 0.70 },
+        modelBg = { 0.06, 0.07, 0.08, 0.70 },
+        barBg = { 0.16, 0.18, 0.22, 0.85 },
+        hex = "FF9EAFCB",
+    },
+    ebony = {
+        name = "Ébano y Oro Antiguo",
+        border = { 0.58, 0.48, 0.24, 0.80 },      -- #947A3D oro antiguo bruñido
+        bg = { 0.07, 0.07, 0.07, 0.85 },          -- #121212 ébano puro
+        modelBorder = { 0.50, 0.42, 0.20, 0.70 },
+        modelBg = { 0.05, 0.05, 0.05, 0.70 },
+        barBg = { 0.18, 0.16, 0.12, 0.85 },
+        hex = "FFE0C16C",
+    },
+    slate = {
+        name = "Pizarra y Grafito",
+        border = { 0.26, 0.30, 0.35, 0.80 },      -- #424D59 pizarra sobria
+        bg = { 0.07, 0.08, 0.09, 0.85 },          -- #121417 grafito neutro
+        modelBorder = { 0.22, 0.26, 0.30, 0.70 },
+        modelBg = { 0.05, 0.06, 0.07, 0.70 },
+        barBg = { 0.15, 0.17, 0.19, 0.85 },
+        hex = "FF8C9AA8",
+    },
     classic = {
-        name = "Horda Oscuro (Defecto)",
+        name = "Horda Rojo Clásico",
         border = { 0.30, 0.10, 0.10, 0.60 },
         bg = { 0.12, 0.12, 0.12, 0.65 },
         modelBorder = { 0.25, 0.12, 0.08, 0.50 },
         modelBg = { 0.06, 0.06, 0.06, 0.45 },
         barBg = { 0.20, 0.20, 0.20, 0.80 },
         hex = "FFAA3333",
-    },
-    crema = {
-        name = "Crema / Pergamino",
-        border = { 0.96, 0.90, 0.78, 0.85 }, -- #F5E6C8
-        bg = { 0.18, 0.16, 0.14, 0.75 },
-        modelBorder = { 0.96, 0.90, 0.78, 0.60 },
-        modelBg = { 0.10, 0.09, 0.08, 0.55 },
-        barBg = { 0.25, 0.22, 0.18, 0.85 },
-        hex = "FFF5E6C8",
-    },
-    ambar = {
-        name = "Ámbar Suave",
-        border = { 0.91, 0.71, 0.29, 0.85 }, -- #E8B44A
-        bg = { 0.20, 0.16, 0.10, 0.75 },
-        modelBorder = { 0.91, 0.71, 0.29, 0.60 },
-        modelBg = { 0.12, 0.09, 0.05, 0.55 },
-        barBg = { 0.28, 0.22, 0.12, 0.85 },
-        hex = "FFE8B44A",
-    },
-    hueso = {
-        name = "Hueso Neutro",
-        border = { 0.93, 0.89, 0.82, 0.85 }, -- #EDE3D0
-        bg = { 0.16, 0.16, 0.15, 0.75 },
-        modelBorder = { 0.93, 0.89, 0.82, 0.60 },
-        modelBg = { 0.09, 0.09, 0.09, 0.55 },
-        barBg = { 0.24, 0.23, 0.22, 0.85 },
-        hex = "FFEDE3D0",
     },
 }
 
@@ -229,8 +238,8 @@ local function CreateStatCard(parent, title, x, y, width, height)
 end
 
 function HQTab:UpdateCardColors()
-    local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "classic"
-    local p = HQTab.PALETTES[curKey] or HQTab.PALETTES.classic
+    local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "bronze"
+    local p = HQTab.PALETTES[curKey] or HQTab.PALETTES.bronze
 
     for _, item in ipairs(registeredPanels) do
         if item.kind == "card" then
