@@ -91,19 +91,8 @@ function Components:ApplyThemeToFrame(box, corners, alpha)
     end
 end
 
--- Actualiza todos los frames y cabeceras registrados cuando cambia el tema
-function Components:UpdateHeadersTheme(palette)
-    if not palette then return end
-    for _, fs in ipairs(sectionHeaders) do
-        if fs and fs.SetTextColor and palette.highlight then
-            fs:SetTextColor(palette.highlight[1], palette.highlight[2], palette.highlight[3], 1)
-        end
-    end
-
-    for _, entry in ipairs(registeredThemedFrames) do
-        Components:ApplyThemeToFrame(entry.frame, entry.corners, entry.alpha)
-    end
-end
+-- Crea una sección o panel con título y estado
+function Components:CreateSectionHeader(parent, title, yOffset)
     local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     fs:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, yOffset)
     fs:SetText(title)
@@ -120,13 +109,17 @@ end
     return fs
 end
 
--- Actualiza todas las cabeceras registradas al cambiar de tema en caliente
+-- Actualiza todos los frames y cabeceras registrados cuando cambia el tema
 function Components:UpdateHeadersTheme(palette)
-    if not palette or not palette.highlight then return end
+    if not palette then return end
     for _, fs in ipairs(sectionHeaders) do
-        if fs and fs.SetTextColor then
+        if fs and fs.SetTextColor and palette.highlight then
             fs:SetTextColor(palette.highlight[1], palette.highlight[2], palette.highlight[3], 1)
         end
+    end
+
+    for _, entry in ipairs(registeredThemedFrames) do
+        Components:ApplyThemeToFrame(entry.frame, entry.corners, entry.alpha)
     end
 end
 
