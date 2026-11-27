@@ -537,18 +537,15 @@ function SoundboardTab:Refresh()
 
             local border = CreateFrame("Frame", nil, btn, "BackdropTemplate")
             border:SetAllPoints(true)
+            border:SetFrameLevel(btn:GetFrameLevel()) -- Mantener a nivel de fondo para no tapar el texto
             border:SetBackdrop({
-                bgFile = "Interface\\Buttons\\WHITE8X8",
                 edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-                tile = true,
-                tileSize = 8,
                 edgeSize = 10,
                 insets = { left = 2, right = 2, top = 2, bottom = 2 },
             })
-            border:SetBackdropColor(0.0, 0.0, 0.0, 0.65)
             btn.border = border
             if ODD.UI and ODD.UI.Components and ODD.UI.Components.RegisterThemedFrame then
-                ODD.UI.Components:RegisterThemedFrame(border, nil, 0.65)
+                ODD.UI.Components:RegisterThemedFrame(border, nil, 0.0)
             end
 
             local badge = btn:CreateTexture(nil, "ARTWORK")
@@ -566,6 +563,7 @@ function SoundboardTab:Refresh()
             title:SetPoint("RIGHT", btn, "RIGHT", -26, 0)
             title:SetJustifyH("LEFT")
             title:SetWordWrap(false)
+            title:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE") -- Tipografía nítida y brillante con reborde
             btn.title = title
 
             local fav = CreateFrame("Button", nil, btn)
@@ -622,7 +620,7 @@ function SoundboardTab:Refresh()
         btn.badgeText:SetTextColor(color.r, color.g, color.b, 1)
         btn.badgeText:SetText(GetSoundInitials(s.name))
 
-        btn.title:SetText(string.format("|cFFFFD100%s|r", s.name))
+        btn.title:SetText(string.format("|cFFFFFFFF%s|r", s.name))
 
         local isFav = ODD.Soundboard:IsFavorite(s.id)
         if isFav then
