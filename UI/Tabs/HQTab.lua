@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -57,14 +57,6 @@ HQTab.PALETTES = {
     },
     classic = {
         name = "Horda Rojo Clásico",
-        border = { 0.30, 0.10, 0.10, 0.60 },
-        bg = { 0.12, 0.12, 0.12, 0.65 },
-        modelBorder = { 0.25, 0.12, 0.08, 0.50 },
-        modelBg = { 0.06, 0.06, 0.06, 0.45 },
-        barBg = { 0.20, 0.20, 0.20, 0.80 },
-        hex = "FFAA3333",
-    },
-}
         border = { 0.30, 0.10, 0.10, 0.60 },
         bg = { 0.12, 0.12, 0.12, 0.65 },
         modelBorder = { 0.25, 0.12, 0.08, 0.50 },
