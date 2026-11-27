@@ -51,7 +51,7 @@ function SettingsTab:Create(parent)
         ODD:Log("Rol declarado actualizado a: %s", newRole)
     end)
 
-    -- Selector de Tema Visual del Marco
+    -- Selector de Tema Visual del Marco (Menú desplegable / Dropdown)
     local themeLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     themeLabel:SetPoint("LEFT", roleBtn, "RIGHT", 28, 0)
     themeLabel:SetText("Tema del Marco:")
@@ -65,19 +65,43 @@ function SettingsTab:Create(parent)
         { key = "druid",   name = "Espíritu Druida", color = "FFFF7D0A" },
     }
 
-    local themeBtn = CreateFrame("Button", "ODD_ThemeSelectorBtn", frame)
-    themeBtn:SetSize(180, 22)
-    themeBtn:SetPoint("LEFT", themeLabel, "RIGHT", 12, 0)
-    themeBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
-    local tBg = themeBtn:CreateTexture(nil, "BACKGROUND")
-    tBg:SetAllPoints(themeBtn)
-    tBg:SetColorTexture(0.18, 0.18, 0.22, 0.9)
-    local tFs = themeBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    tFs:SetPoint("CENTER", themeBtn, "CENTER", 0, 0)
-    themeBtn.fs = tFs
+    local themeDropdown = CreateFrame("Frame", "ODD_ThemeDropdownMenu", frame, "UIDropDownMenuTemplate")
+    themeDropdown:SetPoint("LEFT", themeLabel, "RIGHT", -6, -2)
+
+    local function OnThemeSelected(self, arg1)
+        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.SetTheme then
+            ODD.UI.Dashboard:SetTheme(arg1)
+        else
+            ODD.Database:SetSetting("theme", arg1)
+        end
+        UIDropDownMenu_SetSelectedValue(themeDropdown, arg1)
+        for _, opt in ipairs(themeOptions) do
+            if opt.key == arg1 then
+                UIDropDownMenu_SetText(themeDropdown, string.format("|c%s%s|r", opt.color, opt.name))
+                break
+            end
+        end
+    end
+
+    local function InitializeThemeDropdown(self, level)
+        local curKey = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
+        for _, opt in ipairs(themeOptions) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = string.format("|c%s%s|r", opt.color, opt.name)
+            info.value = opt.key
+            info.arg1 = opt.key
+            info.func = OnThemeSelected
+            info.checked = (opt.key == curKey)
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end
+
+    UIDropDownMenu_Initialize(themeDropdown, InitializeThemeDropdown)
+    UIDropDownMenu_SetWidth(themeDropdown, 160)
 
     local function UpdateThemeDisplay()
         local curKey = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
+        UIDropDownMenu_SetSelectedValue(themeDropdown, curKey)
         local found = themeOptions[1]
         for _, opt in ipairs(themeOptions) do
             if opt.key == curKey then
@@ -85,85 +109,12 @@ function SettingsTab:Create(parent)
                 break
             end
         end
-        tFs:SetText(string.format("|c%s%s|r (clic cambia)", found.color, found.name))
+        UIDropDownMenu_SetText(themeDropdown, string.format("|c%s%s|r", found.color, found.name))
     end
-
-    themeBtn:SetScript("OnClick", function()
-        local curKey = (ODD.Database and ODD.Database:GetSetting("theme")) or "classic"
-        local nextIdx = 1
-        for idx, opt in ipairs(themeOptions) do
-            if opt.key == curKey then
-                nextIdx = (idx % #themeOptions) + 1
-                break
-            end
-        end
-        local newTheme = themeOptions[nextIdx]
-        if ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.SetTheme then
-            ODD.UI.Dashboard:SetTheme(newTheme.key)
-        else
-            ODD.Database:SetSetting("theme", newTheme.key)
-        end
-        UpdateThemeDisplay()
-    end)
-
-    -- Selector de Color de Paneles / Tarjetas
-    local cardColorLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    cardColorLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -96)
-    cardColorLabel:SetText("Color de Paneles:")
-
-    local cardColorOptions = {
-        { key = "theme",   name = "Énfasis del Tema (Auto)", color = "FF00FFCC" },
-        { key = "dark",    name = "Negro Carbón Puro",      color = "FFA0A0A0" },
-        { key = "steel",   name = "Gris Acero Forjado",     color = "FF9EAFCB" },
-        { key = "bronze",  name = "Bronce y Cuero",         color = "FFD4A26A" },
-        { key = "classic", name = "Horda Rojo Clásico",     color = "FFAA3333" },
-    }
-
-    local cardColorBtn = CreateFrame("Button", "ODD_CardColorSelectorBtn", frame)
-    cardColorBtn:SetSize(200, 22)
-    cardColorBtn:SetPoint("LEFT", cardColorLabel, "RIGHT", 12, 0)
-    cardColorBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
-    local ccBg = cardColorBtn:CreateTexture(nil, "BACKGROUND")
-    ccBg:SetAllPoints(cardColorBtn)
-    ccBg:SetColorTexture(0.18, 0.18, 0.22, 0.9)
-    local ccFs = cardColorBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    ccFs:SetPoint("CENTER", cardColorBtn, "CENTER", 0, 0)
-    cardColorBtn.fs = ccFs
-
-    local function UpdateCardColorDisplay()
-        local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "classic"
-        local found = cardColorOptions[1]
-        for _, opt in ipairs(cardColorOptions) do
-            if opt.key == curKey then
-                found = opt
-                break
-            end
-        end
-        ccFs:SetText(string.format("|c%s%s|r (clic cambia)", found.color, found.name))
-    end
-
-    cardColorBtn:SetScript("OnClick", function()
-        local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "classic"
-        local nextIdx = 1
-        for idx, opt in ipairs(cardColorOptions) do
-            if opt.key == curKey then
-                nextIdx = (idx % #cardColorOptions) + 1
-                break
-            end
-        end
-        local newOpt = cardColorOptions[nextIdx]
-        if ODD.Database then
-            ODD.Database:SetSetting("cardColor", newOpt.key)
-        end
-        if ODD.UI and ODD.UI.HQTab and ODD.UI.HQTab.UpdateCardColors then
-            ODD.UI.HQTab:UpdateCardColors()
-        end
-        UpdateCardColorDisplay()
-    end)
 
     -- Selector de Zoom / Escala con Botones [-] [+] estables y limpios
     local scaleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    scaleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -126)
+    scaleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -96)
     scaleLabel:SetText("Tamaño / Zoom:")
 
     -- Botón de reducir [-]
@@ -271,7 +222,7 @@ function SettingsTab:Create(parent)
     -- ========================================================
     -- BLOQUE 2: PRIVACIDAD Y SINCRONIZACION
     -- ========================================================
-    local privHeader = ODD.UI.Components:CreateSectionHeader(frame, "Privacidad y Red P2P:", -156)
+    local privHeader = ODD.UI.Components:CreateSectionHeader(frame, "Privacidad y Red P2P:", -126)
 
     checkboxes = {}
     local function CreateCheck(label, settingKey, yOffset)
@@ -305,23 +256,23 @@ function SettingsTab:Create(parent)
         return btn
     end
 
-    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -180)
-    CreateCheck("Compartir rol en la hermandad", "shareProfile", -204)
-    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -228)
-    CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -252)
-    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -276)
-    CreateCheck("Silenciar avisos de error técnicos en el chat", "muteErrors", -300)
-    CreateCheck("Silenciar avisos en el chat al reproducir sonidos del Soundboard", "muteSoundboardChat", -324)
-    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -348)
+    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -150)
+    CreateCheck("Compartir rol en la hermandad", "shareProfile", -174)
+    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -198)
+    CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -222)
+    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -246)
+    CreateCheck("Silenciar avisos de error técnicos en el chat", "muteErrors", -270)
+    CreateCheck("Silenciar avisos en el chat al reproducir sonidos del Soundboard", "muteSoundboardChat", -294)
+    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -318)
 
     -- ========================================================
     -- BLOQUE 3: HUD FLOTANTE EN PANTALLA (ESTILO GRS)
     -- ========================================================
-    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -376)
+    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -346)
 
     local hudToggleBtn = CreateFrame("Button", "ODD_HUDToggleSettingsBtn", frame)
     hudToggleBtn:SetSize(160, 24)
-    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -400)
+    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -370)
     local hBg = hudToggleBtn:CreateTexture(nil, "BACKGROUND")
     hBg:SetAllPoints()
     hBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)
@@ -356,7 +307,6 @@ function SettingsTab:Create(parent)
     local function RefreshSettings()
         UpdateRoleDisplay()
         UpdateThemeDisplay()
-        UpdateCardColorDisplay()
         UpdateScaleDisplay()
 
         for _, btn in ipairs(checkboxes) do
