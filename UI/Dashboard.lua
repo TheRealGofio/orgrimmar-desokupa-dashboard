@@ -57,6 +57,13 @@ local THEME_PALETTES = {
         accentHex = "FFBA55D3",                   -- Orquídea / Púrpura Vudú
         highlight = { 0.8, 0.3, 0.9 },
     },
+    druid = {
+        name = "Espíritu Druida",
+        tabActive = { 0.45, 0.25, 0.08, 0.95 },   -- Ámbar / Cuero Druida
+        tabBorder = { 0.65, 0.40, 0.12, 0.80 },
+        accentHex = "FFFF7D0A",                   -- Naranja Druida clásico de WoW
+        highlight = { 1.0, 0.49, 0.04 },
+    },
 }
 
 function Dashboard:GetActivePalette()
@@ -249,6 +256,7 @@ function Dashboard:Create()
         fel     = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_fel.png",
         frost   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_frost.png",
         troll   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_troll.png",
+        druid   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_druid.png",
     }
     local texPath = THEME_TEXTURES[activeTheme] or THEME_TEXTURES.classic
     hordeFrameTex:SetTexture(texPath)

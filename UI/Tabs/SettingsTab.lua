@@ -62,6 +62,7 @@ function SettingsTab:Create(parent)
         { key = "fel",     name = "Añublo Vil",      color = "FF00FF00" },
         { key = "frost",   name = "Hielo Rasganorte",color = "FF00CCFF" },
         { key = "troll",   name = "Vudú Trol",       color = "FFAA44FF" },
+        { key = "druid",   name = "Espíritu Druida", color = "FFFF7D0A" },
     }
 
     local themeBtn = CreateFrame("Button", "ODD_ThemeSelectorBtn", frame)
