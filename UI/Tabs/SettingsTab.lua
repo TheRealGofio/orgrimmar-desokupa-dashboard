@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -106,9 +106,63 @@ function SettingsTab:Create(parent)
         UpdateThemeDisplay()
     end)
 
+    -- Selector de Color de Paneles / Tarjetas
+    local cardColorLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    cardColorLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -96)
+    cardColorLabel:SetText("Color de Paneles:")
+
+    local cardColorOptions = {
+        { key = "classic", name = "Horda Oscuro (Defecto)", color = "FFAA3333" },
+        { key = "crema",   name = "Crema / Pergamino",      color = "FFF5E6C8" },
+        { key = "ambar",   name = "Ámbar Suave",            color = "FFE8B44A" },
+        { key = "hueso",   name = "Hueso Neutro",           color = "FFEDE3D0" },
+    }
+
+    local cardColorBtn = CreateFrame("Button", "ODD_CardColorSelectorBtn", frame)
+    cardColorBtn:SetSize(200, 22)
+    cardColorBtn:SetPoint("LEFT", cardColorLabel, "RIGHT", 12, 0)
+    cardColorBtn:SetFrameLevel(frame:GetFrameLevel() + 3)
+    local ccBg = cardColorBtn:CreateTexture(nil, "BACKGROUND")
+    ccBg:SetAllPoints(cardColorBtn)
+    ccBg:SetColorTexture(0.18, 0.18, 0.22, 0.9)
+    local ccFs = cardColorBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    ccFs:SetPoint("CENTER", cardColorBtn, "CENTER", 0, 0)
+    cardColorBtn.fs = ccFs
+
+    local function UpdateCardColorDisplay()
+        local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "classic"
+        local found = cardColorOptions[1]
+        for _, opt in ipairs(cardColorOptions) do
+            if opt.key == curKey then
+                found = opt
+                break
+            end
+        end
+        ccFs:SetText(string.format("|c%s%s|r (clic cambia)", found.color, found.name))
+    end
+
+    cardColorBtn:SetScript("OnClick", function()
+        local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "classic"
+        local nextIdx = 1
+        for idx, opt in ipairs(cardColorOptions) do
+            if opt.key == curKey then
+                nextIdx = (idx % #cardColorOptions) + 1
+                break
+            end
+        end
+        local newOpt = cardColorOptions[nextIdx]
+        if ODD.Database then
+            ODD.Database:SetSetting("cardColor", newOpt.key)
+        end
+        if ODD.UI and ODD.UI.HQTab and ODD.UI.HQTab.UpdateCardColors then
+            ODD.UI.HQTab:UpdateCardColors()
+        end
+        UpdateCardColorDisplay()
+    end)
+
     -- Selector de Zoom / Escala con Botones [-] [+] estables y limpios
     local scaleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    scaleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -96)
+    scaleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -126)
     scaleLabel:SetText("Tamaño / Zoom:")
 
     -- Botón de reducir [-]
@@ -216,7 +270,7 @@ function SettingsTab:Create(parent)
     -- ========================================================
     -- BLOQUE 2: PRIVACIDAD Y SINCRONIZACION
     -- ========================================================
-    local privHeader = ODD.UI.Components:CreateSectionHeader(frame, "Privacidad y Red P2P:", -126)
+    local privHeader = ODD.UI.Components:CreateSectionHeader(frame, "Privacidad y Red P2P:", -156)
 
     checkboxes = {}
     local function CreateCheck(label, settingKey, yOffset)
@@ -250,23 +304,23 @@ function SettingsTab:Create(parent)
         return btn
     end
 
-    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -150)
-    CreateCheck("Compartir rol en la hermandad", "shareProfile", -174)
-    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -198)
-    CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -222)
-    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -246)
-    CreateCheck("Silenciar avisos de error técnicos en el chat", "muteErrors", -270)
-    CreateCheck("Silenciar avisos en el chat al reproducir sonidos del Soundboard", "muteSoundboardChat", -294)
-    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -318)
+    CreateCheck("Compartir presencia y versión de ODD", "sharePresence", -180)
+    CreateCheck("Compartir rol en la hermandad", "shareProfile", -204)
+    CreateCheck("Compartir estadísticas de combate declaradas", "shareStats", -228)
+    CreateCheck("Silenciar anuncios de hermandad (NO enviar bajas por /g)", "muteGuildAnnouncements", -252)
+    CreateCheck("Silenciar efectos de sonido (kill de gnomo y logros)", "muteSounds", -276)
+    CreateCheck("Silenciar avisos de error técnicos en el chat", "muteErrors", -300)
+    CreateCheck("Silenciar avisos en el chat al reproducir sonidos del Soundboard", "muteSoundboardChat", -324)
+    CreateCheck("Activar Radar de Proximidad (alerta sonora al avistar gnomos)", "enableGnomeRadar", -348)
 
     -- ========================================================
     -- BLOQUE 3: HUD FLOTANTE EN PANTALLA (ESTILO GRS)
     -- ========================================================
-    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -346)
+    local hudHeader = ODD.UI.Components:CreateSectionHeader(frame, "HUD Flotante (Rastreador en Pantalla):", -376)
 
     local hudToggleBtn = CreateFrame("Button", "ODD_HUDToggleSettingsBtn", frame)
     hudToggleBtn:SetSize(160, 24)
-    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -370)
+    hudToggleBtn:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -400)
     local hBg = hudToggleBtn:CreateTexture(nil, "BACKGROUND")
     hBg:SetAllPoints()
     hBg:SetColorTexture(0.25, 0.1, 0.1, 0.9)
@@ -301,6 +355,7 @@ function SettingsTab:Create(parent)
     local function RefreshSettings()
         UpdateRoleDisplay()
         UpdateThemeDisplay()
+        UpdateCardColorDisplay()
         UpdateScaleDisplay()
 
         for _, btn in ipairs(checkboxes) do

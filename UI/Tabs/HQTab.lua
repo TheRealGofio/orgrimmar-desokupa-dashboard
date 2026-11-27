@@ -1,4 +1,4 @@
-local addonName, addonTable = ...
+﻿local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -17,6 +17,49 @@ local statAchievePoints = nil
 -- Elementos de Contratos Semanales
 local contractCards = {}
 local contractTimerLabel = nil
+
+-- Paletas de color para cajas y paneles de información
+HQTab.PALETTES = {
+    classic = {
+        name = "Horda Oscuro (Defecto)",
+        border = { 0.30, 0.10, 0.10, 0.60 },
+        bg = { 0.12, 0.12, 0.12, 0.65 },
+        modelBorder = { 0.25, 0.12, 0.08, 0.50 },
+        modelBg = { 0.06, 0.06, 0.06, 0.45 },
+        barBg = { 0.20, 0.20, 0.20, 0.80 },
+        hex = "FFAA3333",
+    },
+    crema = {
+        name = "Crema / Pergamino",
+        border = { 0.96, 0.90, 0.78, 0.85 }, -- #F5E6C8
+        bg = { 0.18, 0.16, 0.14, 0.75 },
+        modelBorder = { 0.96, 0.90, 0.78, 0.60 },
+        modelBg = { 0.10, 0.09, 0.08, 0.55 },
+        barBg = { 0.25, 0.22, 0.18, 0.85 },
+        hex = "FFF5E6C8",
+    },
+    ambar = {
+        name = "Ámbar Suave",
+        border = { 0.91, 0.71, 0.29, 0.85 }, -- #E8B44A
+        bg = { 0.20, 0.16, 0.10, 0.75 },
+        modelBorder = { 0.91, 0.71, 0.29, 0.60 },
+        modelBg = { 0.12, 0.09, 0.05, 0.55 },
+        barBg = { 0.28, 0.22, 0.12, 0.85 },
+        hex = "FFE8B44A",
+    },
+    hueso = {
+        name = "Hueso Neutro",
+        border = { 0.93, 0.89, 0.82, 0.85 }, -- #EDE3D0
+        bg = { 0.16, 0.16, 0.15, 0.75 },
+        modelBorder = { 0.93, 0.89, 0.82, 0.60 },
+        modelBg = { 0.09, 0.09, 0.09, 0.55 },
+        barBg = { 0.24, 0.23, 0.22, 0.85 },
+        hex = "FFEDE3D0",
+    },
+}
+
+-- Lista de tarjetas y bordes registrados para actualización en caliente
+local registeredPanels = {}
 
 function HQTab:RefreshPresence()
     -- Eliminado el mensaje de compañeros con ODD en línea según rediseño
@@ -180,7 +223,49 @@ local function CreateStatCard(parent, title, x, y, width, height)
     valLabel:SetPoint("CENTER", card, "CENTER", 0, -6)
     valLabel:SetText("0")
 
+    table.insert(registeredPanels, { bg = bg, border = border, kind = "card" })
+
     return valLabel
+end
+
+function HQTab:UpdateCardColors()
+    local curKey = (ODD.Database and ODD.Database:GetSetting("cardColor")) or "classic"
+    local p = HQTab.PALETTES[curKey] or HQTab.PALETTES.classic
+
+    for _, item in ipairs(registeredPanels) do
+        if item.kind == "card" then
+            if item.bg and p.bg then
+                item.bg:SetColorTexture(p.bg[1], p.bg[2], p.bg[3], p.bg[4])
+            end
+            if item.border and p.border then
+                item.border:SetColorTexture(p.border[1], p.border[2], p.border[3], p.border[4])
+            end
+        elseif item.kind == "model" then
+            if item.bg and p.modelBg then
+                item.bg:SetColorTexture(p.modelBg[1], p.modelBg[2], p.modelBg[3], p.modelBg[4])
+            end
+            if item.border and p.modelBorder then
+                item.border:SetColorTexture(p.modelBorder[1], p.modelBorder[2], p.modelBorder[3], p.modelBorder[4])
+            end
+        elseif item.kind == "contract" then
+            if item.bg and p.bg then
+                item.bg:SetColorTexture(p.bg[1], p.bg[2], p.bg[3], p.bg[4])
+            end
+            if item.border and p.border then
+                item.border:SetColorTexture(p.border[1], p.border[2], p.border[3], p.border[4])
+            end
+            if item.barBg and p.barBg then
+                item.barBg:SetColorTexture(p.barBg[1], p.barBg[2], p.barBg[3], p.barBg[4])
+            end
+        elseif item.kind == "profile" then
+            if item.bg and p.bg then
+                item.bg:SetColorTexture(p.bg[1], p.bg[2], p.bg[3], 0.55)
+            end
+            if item.border and p.border then
+                item.border:SetColorTexture(p.border[1], p.border[2], p.border[3], p.border[4] * 0.7)
+            end
+        end
+    end
 end
 
 function HQTab:Create(parent)
@@ -196,6 +281,12 @@ function HQTab:Create(parent)
     local pBg = profileBox:CreateTexture(nil, "BACKGROUND")
     pBg:SetAllPoints(profileBox)
     pBg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
+
+    local pBorder = profileBox:CreateTexture(nil, "BORDER")
+    pBorder:SetPoint("TOPLEFT", profileBox, "TOPLEFT", 0, 0)
+    pBorder:SetPoint("BOTTOMRIGHT", profileBox, "BOTTOMRIGHT", 0, 0)
+    pBorder:SetColorTexture(0.25, 0.12, 0.08, 0.3)
+    table.insert(registeredPanels, { bg = pBg, border = pBorder, kind = "profile" })
 
     pLabel = profileBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     pLabel:SetPoint("TOPLEFT", profileBox, "TOPLEFT", 12, -8)
@@ -222,6 +313,7 @@ function HQTab:Create(parent)
     mBorder:SetPoint("TOPLEFT", modelFrame, "TOPLEFT", 0, 0)
     mBorder:SetPoint("BOTTOMRIGHT", modelFrame, "BOTTOMRIGHT", 0, 0)
     mBorder:SetColorTexture(0.25, 0.12, 0.08, 0.5)
+    table.insert(registeredPanels, { bg = mBg, border = mBorder, kind = "model" })
 
     local mHint = modelFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     mHint:SetPoint("BOTTOM", modelFrame, "BOTTOM", 0, 4)
@@ -342,6 +434,8 @@ function HQTab:Create(parent)
         countFs:SetText("0 / 20 (0%)")
         cBox.countFs = countFs
 
+        table.insert(registeredPanels, { bg = cBg, border = cBorder, barBg = barBg, kind = "contract" })
+
         contractCards[i] = cBox
     end
 
@@ -361,6 +455,7 @@ function HQTab:Create(parent)
 
         HQTab:RefreshStats()
         HQTab:RefreshContracts()
+        HQTab:UpdateCardColors()
         UpdatePlayerModel()
     end
 
