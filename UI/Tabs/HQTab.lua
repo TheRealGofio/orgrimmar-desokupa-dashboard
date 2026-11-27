@@ -160,20 +160,53 @@ function HQTab:RefreshContracts()
     end
 end
 
+-- Helper para añadir florituras góticas/metálicas en las 4 esquinas de una caja
+local function AttachCornerDecorations(frame)
+    local corners = {}
+    local size = 10
+    local coords = {
+        TL = { x = -2, y = 2,  coord = { 0.5, 0.625, 0.0, 0.125 } },
+        TR = { x = 2,  y = 2,  coord = { 0.625, 0.5, 0.0, 0.125 } },
+        BL = { x = -2, y = -2, coord = { 0.5, 0.625, 0.125, 0.0 } },
+        BR = { x = 2,  y = -2, coord = { 0.625, 0.5, 0.125, 0.0 } },
+    }
+
+    local positions = {
+        { "TOPLEFT", frame, "TOPLEFT", coords.TL.x, coords.TL.y, coords.TL.coord },
+        { "TOPRIGHT", frame, "TOPRIGHT", coords.TR.x, coords.TR.y, coords.TR.coord },
+        { "BOTTOMLEFT", frame, "BOTTOMLEFT", coords.BL.x, coords.BL.y, coords.BL.coord },
+        { "BOTTOMRIGHT", frame, "BOTTOMRIGHT", coords.BR.x, coords.BR.y, coords.BR.coord },
+    }
+
+    for _, p in ipairs(positions) do
+        local tex = frame:CreateTexture(nil, "OVERLAY")
+        tex:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
+        tex:SetSize(size, size)
+        tex:SetPoint(p[1], p[2], p[3], p[4], p[5])
+        tex:SetTexCoord(p[6][1], p[6][2], p[6][3], p[6][4])
+        table.insert(corners, tex)
+    end
+    return corners
+end
+
 -- Helper para crear tarjetas de estadísticas destacadas
 local function CreateStatCard(parent, title, x, y, width, height)
-    local card = CreateFrame("Frame", nil, parent)
+    local card = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     card:SetSize(width, height)
     card:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
 
-    local bg = card:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(card)
-    bg:SetColorTexture(0.12, 0.12, 0.12, 0.65)
+    card:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 8,
+        edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 },
+    })
+    card:SetBackdropColor(0.0, 0.0, 0.0, 0.50) -- Fondo negro limpio y translúcido
+    card:SetBackdropBorderColor(0.40, 0.10, 0.10, 0.80)
 
-    local border = card:CreateTexture(nil, "BORDER")
-    border:SetPoint("TOPLEFT", card, "TOPLEFT", 0, 0)
-    border:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", 0, 0)
-    border:SetColorTexture(0.3, 0.1, 0.1, 0.4)
+    local corners = AttachCornerDecorations(card)
 
     local tLabel = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     tLabel:SetPoint("TOP", card, "TOP", 0, -8)
@@ -183,59 +216,34 @@ local function CreateStatCard(parent, title, x, y, width, height)
     valLabel:SetPoint("CENTER", card, "CENTER", 0, -6)
     valLabel:SetText("0")
 
-    table.insert(registeredPanels, { bg = bg, border = border, kind = "card" })
+    table.insert(registeredPanels, { frame = card, corners = corners, kind = "card" })
 
     return valLabel
 end
 
 function HQTab:UpdateCardColors()
     local themePalette = ODD.UI.Dashboard and ODD.UI.Dashboard.GetActivePalette and ODD.UI.Dashboard:GetActivePalette()
-    local borderRGBA, modelBorderRGBA
+    local borderRGBA, highlightRGB
     if themePalette and themePalette.tabBorder then
-        borderRGBA = { themePalette.tabBorder[1], themePalette.tabBorder[2], themePalette.tabBorder[3], 0.60 }
-        modelBorderRGBA = { themePalette.tabBorder[1], themePalette.tabBorder[2], themePalette.tabBorder[3], 0.45 }
+        borderRGBA = { themePalette.tabBorder[1], themePalette.tabBorder[2], themePalette.tabBorder[3], 0.85 }
+        highlightRGB = themePalette.highlight or { borderRGBA[1], borderRGBA[2], borderRGBA[3] }
     else
-        borderRGBA = { 0.40, 0.10, 0.10, 0.55 }
-        modelBorderRGBA = { 0.30, 0.10, 0.10, 0.40 }
+        borderRGBA = { 0.45, 0.12, 0.12, 0.85 }
+        highlightRGB = { 0.90, 0.25, 0.25 }
     end
 
-    -- Fondos oscuros translúcidos con opacidad reducida (~0.60 - 0.70)
-    local cardBg = { 0.05, 0.05, 0.06, 0.68 }
-    local modelBg = { 0.04, 0.04, 0.05, 0.55 }
-    local barBg = { 0.14, 0.14, 0.16, 0.70 }
-
     for _, item in ipairs(registeredPanels) do
-        if item.kind == "card" then
-            if item.bg then
-                item.bg:SetColorTexture(cardBg[1], cardBg[2], cardBg[3], cardBg[4])
+        if item.frame and item.frame.SetBackdropBorderColor then
+            item.frame:SetBackdropBorderColor(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4])
+            item.frame:SetBackdropColor(0.0, 0.0, 0.0, (item.kind == "model") and 0.40 or 0.50)
+        end
+        if item.corners then
+            for _, cornerTex in ipairs(item.corners) do
+                cornerTex:SetVertexColor(highlightRGB[1], highlightRGB[2], highlightRGB[3], 0.95)
             end
-            if item.border and borderRGBA then
-                item.border:SetColorTexture(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4])
-            end
-        elseif item.kind == "model" then
-            if item.bg then
-                item.bg:SetColorTexture(modelBg[1], modelBg[2], modelBg[3], modelBg[4])
-            end
-            if item.border and modelBorderRGBA then
-                item.border:SetColorTexture(modelBorderRGBA[1], modelBorderRGBA[2], modelBorderRGBA[3], modelBorderRGBA[4])
-            end
-        elseif item.kind == "contract" then
-            if item.bg then
-                item.bg:SetColorTexture(cardBg[1], cardBg[2], cardBg[3], cardBg[4])
-            end
-            if item.border and borderRGBA then
-                item.border:SetColorTexture(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4])
-            end
-            if item.barBg then
-                item.barBg:SetColorTexture(barBg[1], barBg[2], barBg[3], barBg[4])
-            end
-        elseif item.kind == "profile" then
-            if item.bg then
-                item.bg:SetColorTexture(cardBg[1], cardBg[2], cardBg[3], 0.48)
-            end
-            if item.border and borderRGBA then
-                item.border:SetColorTexture(borderRGBA[1], borderRGBA[2], borderRGBA[3], borderRGBA[4] * 0.7)
-            end
+        end
+        if item.barBg then
+            item.barBg:SetColorTexture(0.12, 0.12, 0.14, 0.70)
         end
     end
 end
@@ -247,18 +255,21 @@ function HQTab:Create(parent)
     ODD.UI.Components:CreateSectionHeader(frame, "Panel General - Estadísticas de Desalojo", -10)
 
     -- Ficha del personaje local (lado izquierdo)
-    local profileBox = CreateFrame("Frame", nil, frame)
+    local profileBox = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     profileBox:SetSize(510, 48)
     profileBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -34)
-    local pBg = profileBox:CreateTexture(nil, "BACKGROUND")
-    pBg:SetAllPoints(profileBox)
-    pBg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
-
-    local pBorder = profileBox:CreateTexture(nil, "BORDER")
-    pBorder:SetPoint("TOPLEFT", profileBox, "TOPLEFT", 0, 0)
-    pBorder:SetPoint("BOTTOMRIGHT", profileBox, "BOTTOMRIGHT", 0, 0)
-    pBorder:SetColorTexture(0.25, 0.12, 0.08, 0.3)
-    table.insert(registeredPanels, { bg = pBg, border = pBorder, kind = "profile" })
+    profileBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 8,
+        edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 },
+    })
+    profileBox:SetBackdropColor(0.0, 0.0, 0.0, 0.45)
+    profileBox:SetBackdropBorderColor(0.40, 0.10, 0.10, 0.70)
+    local pCorners = AttachCornerDecorations(profileBox)
+    table.insert(registeredPanels, { frame = profileBox, corners = pCorners, kind = "profile" })
 
     pLabel = profileBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     pLabel:SetPoint("TOPLEFT", profileBox, "TOPLEFT", 12, -8)
@@ -271,21 +282,23 @@ function HQTab:Create(parent)
     -- ========================================================
     -- MODELO 3D NATIVO DEL PERSONAJE
     -- ========================================================
-    local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame)
+    local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame, "BackdropTemplate")
     modelFrame:SetSize(210, 220)
     modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -10)
     modelFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
 
-    -- Fondo y marco sutil para realzar el modelo 3D
-    local mBg = modelFrame:CreateTexture(nil, "BACKGROUND")
-    mBg:SetAllPoints(modelFrame)
-    mBg:SetColorTexture(0.06, 0.06, 0.06, 0.45)
-
-    local mBorder = modelFrame:CreateTexture(nil, "BORDER")
-    mBorder:SetPoint("TOPLEFT", modelFrame, "TOPLEFT", 0, 0)
-    mBorder:SetPoint("BOTTOMRIGHT", modelFrame, "BOTTOMRIGHT", 0, 0)
-    mBorder:SetColorTexture(0.25, 0.12, 0.08, 0.5)
-    table.insert(registeredPanels, { bg = mBg, border = mBorder, kind = "model" })
+    modelFrame:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 8,
+        edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 },
+    })
+    modelFrame:SetBackdropColor(0.0, 0.0, 0.0, 0.40)
+    modelFrame:SetBackdropBorderColor(0.40, 0.10, 0.10, 0.70)
+    local mCorners = AttachCornerDecorations(modelFrame)
+    table.insert(registeredPanels, { frame = modelFrame, corners = mCorners, kind = "model" })
 
     local mHint = modelFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     mHint:SetPoint("BOTTOM", modelFrame, "BOTTOM", 0, 4)
@@ -361,18 +374,21 @@ function HQTab:Create(parent)
     contractContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, contractSectionY - 22)
 
     for i = 1, 2 do
-        local cBox = CreateFrame("Frame", nil, contractContainer)
+        local cBox = CreateFrame("Frame", nil, contractContainer, "BackdropTemplate")
         cBox:SetSize(370, 86)
         cBox:SetPoint("TOPLEFT", contractContainer, "TOPLEFT", (i == 1) and 0 or 390, 0)
 
-        local cBg = cBox:CreateTexture(nil, "BACKGROUND")
-        cBg:SetAllPoints(cBox)
-        cBg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
-
-        local cBorder = cBox:CreateTexture(nil, "BORDER")
-        cBorder:SetPoint("TOPLEFT", cBox, "TOPLEFT", 0, 0)
-        cBorder:SetPoint("BOTTOMRIGHT", cBox, "BOTTOMRIGHT", 0, 0)
-        cBorder:SetColorTexture(0.3, 0.1, 0.1, 0.4)
+        cBox:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8X8",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true,
+            tileSize = 8,
+            edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 },
+        })
+        cBox:SetBackdropColor(0.0, 0.0, 0.0, 0.50)
+        cBox:SetBackdropBorderColor(0.40, 0.10, 0.10, 0.70)
+        local cCorners = AttachCornerDecorations(cBox)
 
         -- Fila 1: Badge de Zona / Clase (arriba a la izquierda)
         local badgeFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -392,7 +408,7 @@ function HQTab:Create(parent)
         local barBg = cBox:CreateTexture(nil, "BACKGROUND")
         barBg:SetPoint("BOTTOMLEFT", cBox, "BOTTOMLEFT", 12, 12)
         barBg:SetSize(240, 12)
-        barBg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+        barBg:SetColorTexture(0.12, 0.12, 0.14, 0.70)
         cBox.barBg = barBg
 
         local fill = cBox:CreateTexture(nil, "ARTWORK")
@@ -406,7 +422,7 @@ function HQTab:Create(parent)
         countFs:SetText("0 / 20 (0%)")
         cBox.countFs = countFs
 
-        table.insert(registeredPanels, { bg = cBg, border = cBorder, barBg = barBg, kind = "contract" })
+        table.insert(registeredPanels, { frame = cBox, corners = cCorners, barBg = barBg, kind = "contract" })
 
         contractCards[i] = cBox
     end
