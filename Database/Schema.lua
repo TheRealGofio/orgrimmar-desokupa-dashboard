@@ -21,7 +21,7 @@ Schema.DefaultGlobalDB = {
         enableGnomeRadar = true,        -- Alerta sonora/visual al detectar un gnomo enemigo cercano
         showHUD = false,                -- Mostrar el HUD compacto flotante en pantalla (estilo GRS)
         hudPos = nil,                   -- Posición guardada del HUD
-        theme = "classic",              -- Tema visual del marco: classic, molten, fel, frost, troll, druid
+        theme = "classic",              -- Tema visual del marco: classic, molten, fel, frost, troll, druid, paladin
         uiScale = 1.0,                  -- Escala personalizada del Dashboard (0.7 a 1.2)
     },
     profiles = {},     -- perfiles conocidos de hermandad indexados por GUID/nombre

@@ -64,6 +64,13 @@ local THEME_PALETTES = {
         accentHex = "FFFF7D0A",                   -- Naranja Druida clásico de WoW
         highlight = { 1.0, 0.49, 0.04 },
     },
+    paladin = {
+        name = "Luz Sagrada (Paladín)",
+        tabActive = { 0.55, 0.42, 0.10, 0.95 },   -- Oro Luz Sagrada radiante
+        tabBorder = { 0.85, 0.70, 0.18, 0.85 },   -- Borde dorado resplandeciente
+        accentHex = "FFFFE040",                   -- Amarillo brillante de la Luz Sagrada
+        highlight = { 1.0, 0.88, 0.25 },          -- Destello de la Luz
+    },
 }
 
 function Dashboard:GetActivePalette()
@@ -257,6 +264,7 @@ function Dashboard:Create()
         frost   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_frost.png",
         troll   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_troll.png",
         druid   = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_druid.png",
+        paladin = "Interface\\AddOns\\OrgrimmarDesokupaDashboard\\Media\\Art\\frame_paladin.png",
     }
     local texPath = THEME_TEXTURES[activeTheme] or THEME_TEXTURES.classic
     hordeFrameTex:SetTexture(texPath)

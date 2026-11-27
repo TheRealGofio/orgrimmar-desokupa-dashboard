@@ -63,6 +63,7 @@ function SettingsTab:Create(parent)
         { key = "frost",   name = "Hielo Rasganorte",color = "FF00CCFF" },
         { key = "troll",   name = "Vudú Trol",       color = "FFAA44FF" },
         { key = "druid",   name = "Espíritu Druida", color = "FFFF7D0A" },
+        { key = "paladin", name = "Luz Sagrada",     color = "FFFFE040" },
     }
 
     local themeDropdown = CreateFrame("Frame", "ODD_ThemeDropdownMenu", frame, "UIDropDownMenuTemplate")
