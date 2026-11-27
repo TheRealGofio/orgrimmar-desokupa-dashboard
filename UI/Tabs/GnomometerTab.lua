@@ -1,4 +1,4 @@
-﻿local addonName, addonTable = ...
+local addonName, addonTable = ...
 local ODD = addonTable.ODD or _G["ODD"]
 local L = addonTable.L
 
@@ -191,9 +191,13 @@ function GnomometerTab:Create(parent)
         GnomometerTab:Refresh()
     end)
 
-    local headerFrame = CreateFrame("Frame", nil, frame)
-    headerFrame:SetSize(760, 20)
-    headerFrame:SetPoint("TOPLEFT", lbHeader, "BOTTOMLEFT", 0, -6)
+    -- Marco contenedor con borde para toda la clasificación
+    local lbContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 296, true, 0.40)
+    lbContainer:SetPoint("TOPLEFT", lbHeader, "BOTTOMLEFT", 0, -4)
+
+    local headerFrame = CreateFrame("Frame", nil, lbContainer)
+    headerFrame:SetSize(750, 20)
+    headerFrame:SetPoint("TOPLEFT", lbContainer, "TOPLEFT", 6, -6)
 
     local colPos = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colPos:SetPoint("LEFT", headerFrame, "LEFT", 8, 0)
@@ -207,8 +211,8 @@ function GnomometerTab:Create(parent)
     colScore:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)
     colScore:SetText("Bajas  •  Puntos de Logro")
 
-    local scrollFrame = CreateFrame("ScrollFrame", "ODD_GnomeLeaderboardScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 265)
+    local scrollFrame = CreateFrame("ScrollFrame", "ODD_GnomeLeaderboardScrollFrame", lbContainer, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(746, 260)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
 
     scrollChild = CreateFrame("Frame", nil, scrollFrame)

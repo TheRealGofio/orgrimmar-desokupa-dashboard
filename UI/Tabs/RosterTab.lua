@@ -280,13 +280,9 @@ function RosterTab:Create(parent)
 
     ODD.UI.Components:CreateSectionHeader(frame, L["TAB_ROSTER"] .. " - Miembros de la Hermandad", -12)
 
-    -- Panel resumen de miembros
-    local summaryBox = CreateFrame("Frame", nil, frame)
-    summaryBox:SetSize(760, 32)
+    -- Panel resumen de miembros con borde de tema y florituras
+    local summaryBox = ODD.UI.Components:CreateSectionBox(frame, 760, 32, true, 0.45)
     summaryBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -36)
-    local sBg = summaryBox:CreateTexture(nil, "BACKGROUND")
-    sBg:SetAllPoints(summaryBox)
-    sBg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
 
     summaryLabel = summaryBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     summaryLabel:SetPoint("LEFT", summaryBox, "LEFT", 12, 0)
@@ -323,10 +319,14 @@ function RosterTab:Create(parent)
         RosterTab:Refresh()
     end)
 
+    -- Marco contenedor con borde para toda la lista de miembros
+    local listContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 286, true, 0.40)
+    listContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -106)
+
     -- Encabezados de la tabla
-    local headerFrame = CreateFrame("Frame", nil, frame)
-    headerFrame:SetSize(760, 18)
-    headerFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -110)
+    local headerFrame = CreateFrame("Frame", nil, listContainer)
+    headerFrame:SetSize(750, 18)
+    headerFrame:SetPoint("TOPLEFT", listContainer, "TOPLEFT", 6, -6)
 
     local colState = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colState:SetPoint("LEFT", headerFrame, "LEFT", 8, 0)
@@ -352,9 +352,9 @@ function RosterTab:Create(parent)
     colZone:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)
     colZone:SetText("Zona / Estado")
 
-    -- Tabla de Roster con Scroll
-    local scrollFrame = CreateFrame("ScrollFrame", "ODD_RosterScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 260)
+    -- Tabla de Roster con Scroll dentro del contenedor con borde
+    local scrollFrame = CreateFrame("ScrollFrame", "ODD_RosterScrollFrame", listContainer, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(746, 252)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
 
     rosterScrollChild = CreateFrame("Frame", nil, scrollFrame)

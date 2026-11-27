@@ -182,13 +182,9 @@ function PvPTab:Create(parent)
 
     ODD.UI.Components:CreateSectionHeader(frame, L["TAB_PVP"] .. " - Honor y Objetivos Prioritarios", -12)
 
-    -- Panel de Estadísticas de Honor
-    local honorBox = CreateFrame("Frame", nil, frame)
-    honorBox:SetSize(760, 42)
+    -- Panel de Estadísticas de Honor con borde de tema y florituras
+    local honorBox = ODD.UI.Components:CreateSectionBox(frame, 760, 42, true, 0.45)
     honorBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -38)
-    local hBg = honorBox:CreateTexture(nil, "BACKGROUND")
-    hBg:SetAllPoints(honorBox)
-    hBg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
 
     statLabels.today = honorBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     statLabels.today:SetPoint("LEFT", honorBox, "LEFT", 16, 0)
@@ -268,9 +264,13 @@ function PvPTab:Create(parent)
         end
     end)
 
-    local headerFrame = CreateFrame("Frame", nil, frame)
-    headerFrame:SetSize(760, 18)
-    headerFrame:SetPoint("TOPLEFT", nemHeader, "BOTTOMLEFT", 0, -6)
+    -- Marco contenedor con borde para toda la lista de Némesis
+    local nemContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 274, true, 0.40)
+    nemContainer:SetPoint("TOPLEFT", nemHeader, "BOTTOMLEFT", 0, -4)
+
+    local headerFrame = CreateFrame("Frame", nil, nemContainer)
+    headerFrame:SetSize(750, 18)
+    headerFrame:SetPoint("TOPLEFT", nemContainer, "TOPLEFT", 6, -6)
 
     local colStat = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colStat:SetPoint("LEFT", headerFrame, "LEFT", 8, 0)
@@ -288,9 +288,9 @@ function PvPTab:Create(parent)
     colLoc:SetPoint("RIGHT", headerFrame, "RIGHT", -46, 0)
     colLoc:SetText("Último Encuentro")
 
-    -- Tabla de Némesis con Scroll (cortando limpiamente antes de las pestañas inferiores)
-    local scrollFrame = CreateFrame("ScrollFrame", "ODD_NemesisScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 245)
+    -- Tabla de Némesis con Scroll dentro del contenedor estilizado
+    local scrollFrame = CreateFrame("ScrollFrame", "ODD_NemesisScrollFrame", nemContainer, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(746, 242)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
 
     nemesisScrollChild = CreateFrame("Frame", nil, scrollFrame)

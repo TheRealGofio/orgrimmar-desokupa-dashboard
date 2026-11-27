@@ -538,12 +538,18 @@ function SoundboardTab:Refresh()
             local border = CreateFrame("Frame", nil, btn, "BackdropTemplate")
             border:SetAllPoints(true)
             border:SetBackdrop({
+                bgFile = "Interface\\Buttons\\WHITE8X8",
                 edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile = true,
+                tileSize = 8,
                 edgeSize = 10,
                 insets = { left = 2, right = 2, top = 2, bottom = 2 },
             })
-            border:SetBackdropBorderColor(0.40, 0.25, 0.15, 0.7)
+            border:SetBackdropColor(0.0, 0.0, 0.0, 0.65)
             btn.border = border
+            if ODD.UI and ODD.UI.Components and ODD.UI.Components.RegisterThemedFrame then
+                ODD.UI.Components:RegisterThemedFrame(border, nil, 0.65)
+            end
 
             local badge = btn:CreateTexture(nil, "ARTWORK")
             badge:SetSize(24, 24)
@@ -574,8 +580,13 @@ function SoundboardTab:Refresh()
             btn.fav = fav
 
             btn:SetScript("OnEnter", function(self)
-                self.bg:SetColorTexture(0.28, 0.16, 0.12, 0.95)
-                self.border:SetBackdropBorderColor(0.85, 0.65, 0.20, 1.0)
+                self.bg:SetColorTexture(0.20, 0.20, 0.22, 0.95)
+                local p = ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard.GetActivePalette and ODD.UI.Dashboard:GetActivePalette()
+                if p and p.highlight then
+                    self.border:SetBackdropBorderColor(p.highlight[1], p.highlight[2], p.highlight[3], 1.0)
+                else
+                    self.border:SetBackdropBorderColor(1.0, 0.82, 0.0, 1.0)
+                end
                 GameTooltip:SetOwner(self, "ANCHOR_TOP")
                 GameTooltip:SetText(self.soundData.name, 1, 0.82, 0)
                 if self.soundData.desc and self.soundData.desc ~= "" then
@@ -587,7 +598,9 @@ function SoundboardTab:Refresh()
             end)
             btn:SetScript("OnLeave", function(self)
                 self.bg:SetColorTexture(0.14, 0.12, 0.12, 0.85)
-                self.border:SetBackdropBorderColor(0.40, 0.25, 0.15, 0.7)
+                if ODD.UI and ODD.UI.Components and ODD.UI.Components.ApplyThemeToFrame then
+                    ODD.UI.Components:ApplyThemeToFrame(self.border, nil, 0.65)
+                end
                 GameTooltip:Hide()
             end)
 

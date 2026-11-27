@@ -320,16 +320,15 @@ function HistoryTab:Create(parent)
     -- ========================================================
     local zoneHeader = ODD.UI.Components:CreateSectionHeader(frame, "Zonas Calientes de Desalojo (Top Áreas de Operación):", -54)
 
-    local zoneContainer = CreateFrame("Frame", nil, frame)
-    zoneContainer:SetSize(760, 46)
+    local zoneContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 52, true, 0.45)
     zoneContainer:SetPoint("TOPLEFT", zoneHeader, "BOTTOMLEFT", 0, -4)
 
     for i = 1, 4 do
         local zBox = CreateFrame("Frame", nil, zoneContainer)
         zBox:SetSize(360, 20)
 
-        local col = (i % 2 == 1) and 0 or 380
-        local row = (i <= 2) and 0 or -22
+        local col = (i % 2 == 1) and 8 or 388
+        local row = (i <= 2) and -5 or -27
         zBox:SetPoint("TOPLEFT", zoneContainer, "TOPLEFT", col, row)
 
         local nameFs = zBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -362,12 +361,12 @@ function HistoryTab:Create(parent)
     -- ========================================================
     -- BLOQUE 2: HISTORIAL CRONOLÓGICO DE DESAHUCIOS
     -- ========================================================
-    local histHeader = ODD.UI.Components:CreateSectionHeader(frame, "Historial de Desahucios Ejecutados:", -116)
+    local histHeader = ODD.UI.Components:CreateSectionHeader(frame, "Historial de Desahucios Ejecutados:", -122)
 
     -- Botones de filtrado
     local filterBox = CreateFrame("Frame", nil, frame)
     filterBox:SetSize(280, 20)
-    filterBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -116)
+    filterBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -122)
 
     local fLbl = filterBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     fLbl:SetPoint("LEFT", filterBox, "LEFT", 0, 0)
@@ -392,10 +391,14 @@ function HistoryTab:Create(parent)
     MakeFilterBtn("self", "Mis Bajas", 65, 65)
     MakeFilterBtn("guild", "Hermandad", 134, 75)
 
+    -- Marco contenedor con borde para toda la tabla de historial
+    local histContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 248, true, 0.40)
+    histContainer:SetPoint("TOPLEFT", histHeader, "BOTTOMLEFT", 0, -4)
+
     -- Cabecera de la tabla
-    local headerFrame = CreateFrame("Frame", nil, frame)
-    headerFrame:SetSize(760, 20)
-    headerFrame:SetPoint("TOPLEFT", histHeader, "BOTTOMLEFT", 0, -6)
+    local headerFrame = CreateFrame("Frame", nil, histContainer)
+    headerFrame:SetSize(750, 18)
+    headerFrame:SetPoint("TOPLEFT", histContainer, "TOPLEFT", 6, -6)
 
     local colTime = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colTime:SetPoint("LEFT", headerFrame, "LEFT", 6, 0)
@@ -417,9 +420,9 @@ function HistoryTab:Create(parent)
     colTags:SetPoint("RIGHT", headerFrame, "RIGHT", -30, 0)
     colTags:SetText("Estado / Modificador")
 
-    -- ScrollFrame de la tabla
-    local scrollFrame = CreateFrame("ScrollFrame", "ODD_HistoryScrollFrame", frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(760, 225)
+    -- ScrollFrame de la tabla dentro del contenedor estilizado
+    local scrollFrame = CreateFrame("ScrollFrame", "ODD_HistoryScrollFrame", histContainer, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(746, 216)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
 
     scrollChild = CreateFrame("Frame", nil, scrollFrame)
