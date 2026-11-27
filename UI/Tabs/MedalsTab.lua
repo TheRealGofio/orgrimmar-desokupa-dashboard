@@ -92,7 +92,16 @@ function MedalsTab:Refresh()
                     local m = self.medalData
                     local myPoints = tonumber(m.points) or 10
                     local achId = tostring(m.id or m.key or "ACH")
-                    local t = time()
+                    
+                    -- Si el logro está desbloqueado, usar su timestamp real (o el actual si no se guardó fecha anterior).
+                    -- Si NO está completado, t = 0 para indicar que es una consulta o que aún no se ha obtenido.
+                    local t = 0
+                    if m.completed then
+                        local charDB = ODD.Database and ODD.Database:GetChar()
+                        local unlockedTime = charDB and charDB.unlockedMedals and charDB.unlockedMedals[m.id]
+                        t = tonumber(unlockedTime) or time()
+                    end
+
                     -- Formato de texto ordinario limpio para el servidor de WoW:
                     -- Se envía sin pipes ni |Hitem para que el servidor jamás lo bloquee.
                     -- Los jugadores con ODD lo verán transformado en un enlace interactivo clickeable que abre el Modal.
