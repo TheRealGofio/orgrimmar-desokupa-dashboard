@@ -13,11 +13,11 @@ local tabButtons = {}
 local TAB_DEFS = {
     { name = "HQ", labelKey = "TAB_HQ", creator = function(p) return ODD.UI.HQTab:Create(p) end },
     { name = "Gnomometer", labelKey = "TAB_GNOMOMETER", creator = function(p) return ODD.UI.GnomometerTab:Create(p) end },
-    { name = "Medals", labelKey = "TAB_MEDALS", creator = function(p) return ODD.UI.MedalsTab:Create(p) end },
     { name = "PvP", labelKey = "TAB_PVP", creator = function(p) return ODD.UI.PvPTab:Create(p) end },
-    { name = "Soundboard", labelKey = "TAB_SOUNDBOARD", creator = function(p) return ODD.UI.SoundboardTab:Create(p) end },
+    { name = "Medals", labelKey = "TAB_MEDALS", creator = function(p) return ODD.UI.MedalsTab:Create(p) end },
     { name = "History", labelKey = "TAB_HISTORY", creator = function(p) return ODD.UI.HistoryTab:Create(p) end },
     { name = "Roster", labelKey = "TAB_ROSTER", creator = function(p) return ODD.UI.RosterTab:Create(p) end },
+    { name = "Soundboard", labelKey = "TAB_SOUNDBOARD", creator = function(p) return ODD.UI.SoundboardTab:Create(p) end },
     { name = "Settings", labelKey = "TAB_SETTINGS", creator = function(p) return ODD.UI.SettingsTab:Create(p) end },
 }
 
@@ -91,17 +91,17 @@ local function SwitchTab(tabIndex)
     end
     for i, btn in ipairs(tabButtons) do
         if i == tabIndex then
-            btn.bg:SetColorTexture(palette.tabActive[1], palette.tabActive[2], palette.tabActive[3], palette.tabActive[4])
+            if btn.SetBackdropColor then
+                btn:SetBackdropColor(palette.tabActive[1], palette.tabActive[2], palette.tabActive[3], palette.tabActive[4])
+                btn:SetBackdropBorderColor(palette.tabBorder[1], palette.tabBorder[2], palette.tabBorder[3], 0.95)
+            end
             btn.fs:SetTextColor(1, 1, 1, 1)
-            if btn.border then
-                btn.border:SetColorTexture(palette.tabBorder[1], palette.tabBorder[2], palette.tabBorder[3], palette.tabBorder[4])
-            end
         else
-            btn.bg:SetColorTexture(0.12, 0.12, 0.12, 0.85) -- Inactivo negro carbón
-            btn.fs:SetTextColor(0.8, 0.8, 0.8, 1)
-            if btn.border then
-                btn.border:SetColorTexture(0.2, 0.2, 0.2, 0.5)
+            if btn.SetBackdropColor then
+                btn:SetBackdropColor(0.10, 0.10, 0.12, 0.85) -- Inactivo negro carbón
+                btn:SetBackdropBorderColor(0.25, 0.25, 0.28, 0.50)
             end
+            btn.fs:SetTextColor(0.80, 0.80, 0.80, 1)
         end
     end
 end
@@ -203,28 +203,32 @@ function Dashboard:Create()
     contentFrame:SetFrameLevel(mainFrame:GetFrameLevel() + 2)
     Dashboard:EnableFrameDrag(contentFrame)
 
-    -- Generar botones de pestañas (ancho ajustado a 90px para 8 pestañas entre los postes)
+    -- Generar botones de pestañas con textura y borde nativo biselado estilo WoW (BackdropTemplate)
     local prevBtn = nil
     for i, def in ipairs(TAB_DEFS) do
-        local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame)
+        local btn = CreateFrame("Button", "ODD_TabBtn_" .. i, mainFrame, "BackdropTemplate")
         btn:SetID(i)
         btn:SetSize(90, 26)
         btn:SetFrameLevel(mainFrame:GetFrameLevel() + 10)
         
-        -- Textura de fondo mimetizada
-        local bg = btn:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints(btn)
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.85)
-        btn.bg = bg
+        btn:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8X8",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true,
+            tileSize = 8,
+            edgeSize = 10,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 },
+        })
+        btn:SetBackdropColor(0.10, 0.10, 0.12, 0.85)
+        btn:SetBackdropBorderColor(0.25, 0.25, 0.28, 0.50)
 
-        -- Borde sutil
-        local border = btn:CreateTexture(nil, "BORDER")
-        border:SetPoint("TOPLEFT", btn, "TOPLEFT", 0, 0)
-        border:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 0, 0)
-        border:SetColorTexture(0.3, 0.1, 0.1, 0.6)
-        btn.border = border
+        -- Resaltado hover nativo suave
+        local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints(btn)
+        highlight:SetColorTexture(1.0, 1.0, 1.0, 0.12)
+        btn:SetHighlightTexture(highlight)
 
-        -- Texto
+        -- Texto de la pestaña
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         fs:SetPoint("CENTER", btn, "CENTER", 0, 0)
         fs:SetText(L[def.labelKey] or def.name)
