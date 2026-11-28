@@ -252,12 +252,12 @@ function HQTab:Create(parent)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetAllPoints(parent)
 
-    ODD.UI.Components:CreateSectionHeader(frame, "Panel General - Estadísticas de Desalojo", -10)
+    ODD.UI.Components:CreateSectionHeader(frame, "Panel General - Estadísticas de Desalojo", -16)
 
     -- Ficha del personaje local (lado izquierdo)
     local profileBox = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    profileBox:SetSize(510, 48)
-    profileBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -34)
+    profileBox:SetSize(510, 52)
+    profileBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -42)
     profileBox:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -272,19 +272,19 @@ function HQTab:Create(parent)
     table.insert(registeredPanels, { frame = profileBox, corners = pCorners, kind = "profile" })
 
     pLabel = profileBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    pLabel:SetPoint("TOPLEFT", profileBox, "TOPLEFT", 12, -8)
+    pLabel:SetPoint("TOPLEFT", profileBox, "TOPLEFT", 12, -9)
     pLabel:SetText("Cargando perfil...")
 
     local oLabel = profileBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    oLabel:SetPoint("BOTTOMLEFT", profileBox, "BOTTOMLEFT", 12, 8)
+    oLabel:SetPoint("BOTTOMLEFT", profileBox, "BOTTOMLEFT", 12, 9)
     oLabel:SetText("Origen: " .. L["STATUS_LOCAL_OBSERVED"])
 
     -- ========================================================
     -- MODELO 3D NATIVO DEL PERSONAJE
     -- ========================================================
     local modelFrame = CreateFrame("PlayerModel", "ODD_HQPlayerModel", frame, "BackdropTemplate")
-    modelFrame:SetSize(210, 220)
-    modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -10)
+    modelFrame:SetSize(210, 240)
+    modelFrame:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -16)
     modelFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
 
     modelFrame:SetBackdrop({
@@ -339,21 +339,21 @@ function HQTab:Create(parent)
     -- Fila superior (3 tarjetas): Tus Bajas Totales | Bajas Hermandad | Puntos de Logro
     -- Fila inferior (2 tarjetas): Bajas de Hoy | Bajas de Esta Semana
     -- ========================================================
-    ODD.UI.Components:CreateSectionHeader(frame, "Resumen Global de Bajas y Logros:", -92)
+    ODD.UI.Components:CreateSectionHeader(frame, "Resumen Global de Bajas y Logros:", -106)
 
     local cardW = 164
-    local cardH = 60
+    local cardH = 64
     local cardGap = 9
 
-    -- Fila 1 (Y: -116)
-    statPersonalTotal = CreateStatCard(frame, "Tus Bajas Totales", 16, -116, cardW, cardH)
-    statGuildTotal = CreateStatCard(frame, "Bajas de Hermandad", 16 + (cardW + cardGap) * 1, -116, cardW, cardH)
-    statAchievePoints = CreateStatCard(frame, "Puntos de Logro", 16 + (cardW + cardGap) * 2, -116, cardW, cardH)
+    -- Fila 1 (Y: -132)
+    statPersonalTotal = CreateStatCard(frame, "Tus Bajas Totales", 16, -132, cardW, cardH)
+    statGuildTotal = CreateStatCard(frame, "Bajas de Hermandad", 16 + (cardW + cardGap) * 1, -132, cardW, cardH)
+    statAchievePoints = CreateStatCard(frame, "Puntos de Logro", 16 + (cardW + cardGap) * 2, -132, cardW, cardH)
 
-    -- Fila 2 (Y: -182)
+    -- Fila 2 (Y: -206)
     local cardW2 = 250
-    statTodayTotal = CreateStatCard(frame, "Bajas de Hoy", 16, -182, cardW2, 48)
-    statWeekTotal = CreateStatCard(frame, "Bajas de Esta Semana", 16 + cardW2 + 10, -182, cardW2, 48)
+    statTodayTotal = CreateStatCard(frame, "Bajas de Hoy", 16, -206, cardW2, 50)
+    statWeekTotal = CreateStatCard(frame, "Bajas de Esta Semana", 16 + cardW2 + 10, -206, cardW2, 50)
 
     if ODD.UI.Dashboard and ODD.UI.Dashboard.EnableFrameDrag then
         ODD.UI.Dashboard:EnableFrameDrag(profileBox)
@@ -362,7 +362,7 @@ function HQTab:Create(parent)
     -- ========================================================
     -- CONTRATOS SEMANALES DE HERMANDAD (OBJETIVOS DETERMINISTAS)
     -- ========================================================
-    local contractSectionY = -242
+    local contractSectionY = -276
     ODD.UI.Components:CreateSectionHeader(frame, "Contratos Semanales de Desalojo (Objetivos de Hermandad):", contractSectionY)
 
     contractTimerLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -370,12 +370,12 @@ function HQTab:Create(parent)
     contractTimerLabel:SetText("Reinicio en: --")
 
     local contractContainer = CreateFrame("Frame", nil, frame)
-    contractContainer:SetSize(760, 95)
+    contractContainer:SetSize(760, 102)
     contractContainer:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, contractSectionY - 22)
 
     for i = 1, 2 do
         local cBox = CreateFrame("Frame", nil, contractContainer, "BackdropTemplate")
-        cBox:SetSize(370, 86)
+        cBox:SetSize(370, 96)
         cBox:SetPoint("TOPLEFT", contractContainer, "TOPLEFT", (i == 1) and 0 or 390, 0)
 
         cBox:SetBackdrop({
@@ -392,13 +392,13 @@ function HQTab:Create(parent)
 
         -- Fila 1: Badge de Zona / Clase (arriba a la izquierda)
         local badgeFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        badgeFs:SetPoint("TOPLEFT", cBox, "TOPLEFT", 12, -9)
+        badgeFs:SetPoint("TOPLEFT", cBox, "TOPLEFT", 12, -10)
         badgeFs:SetText(i == 1 and "|cFF00FFCC[ZONA]|r" or "|cFFFF8000[CLASE]|r")
         cBox.badgeFs = badgeFs
 
         -- Fila 2: Nombre de la misión (debajo del badge, para que tenga todo el ancho)
         local titleFs = cBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        titleFs:SetPoint("TOPLEFT", badgeFs, "BOTTOMLEFT", 0, -4)
+        titleFs:SetPoint("TOPLEFT", badgeFs, "BOTTOMLEFT", 0, -5)
         titleFs:SetPoint("RIGHT", cBox, "RIGHT", -12, 0)
         titleFs:SetJustifyH("LEFT")
         titleFs:SetText("Cargando contrato...")
@@ -406,14 +406,14 @@ function HQTab:Create(parent)
 
         -- Fila 3: Barra de progreso y texto de bajas
         local barBg = cBox:CreateTexture(nil, "BACKGROUND")
-        barBg:SetPoint("BOTTOMLEFT", cBox, "BOTTOMLEFT", 12, 12)
-        barBg:SetSize(240, 12)
+        barBg:SetPoint("BOTTOMLEFT", cBox, "BOTTOMLEFT", 12, 14)
+        barBg:SetSize(240, 14)
         barBg:SetColorTexture(0.12, 0.12, 0.14, 0.70)
         cBox.barBg = barBg
 
         local fill = cBox:CreateTexture(nil, "ARTWORK")
         fill:SetPoint("LEFT", barBg, "LEFT", 0, 0)
-        fill:SetSize(0, 12)
+        fill:SetSize(0, 14)
         fill:SetColorTexture(0.85, 0.2, 0.1, 0.9)
         cBox.fill = fill
 
