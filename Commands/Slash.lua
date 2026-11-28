@@ -118,15 +118,38 @@ SlashCmdList["ODD"] = function(msg)
             local frame = ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard:Create()
             if frame then
                 if ODD._photoMode then
+                    -- Al emparentar a WorldFrame, heredamos la escala 1.0 de la pantalla completa (haciéndolo gigante).
+                    -- Multiplicamos por la escala efectiva de UIParent para mantener exactamente el mismo tamaño visual.
+                    local uScale = UIParent:GetEffectiveScale() or 1
                     frame:SetParent(WorldFrame)
+                    frame:ClearAllPoints()
+                    frame:SetPoint("CENTER", WorldFrame, "CENTER", 0, 0)
+                    local baseScale = (ODD.Database and ODD.Database:GetSetting("uiScale")) or 1.0
+                    frame:SetScale(baseScale * uScale)
                     frame:SetFrameStrata("HIGH")
-                    ODD:Log("|cFF00FF00Modo Foto ACTIVADO|r: El dashboard permanecerá visible al pulsar Alt+Z. (Usa /odd foto de nuevo para desactivar)")
+                    frame:Show()
+
+                    -- Registrar monitor de visibilidad: si el motor de WoW intenta ocultarlo por Alt+Z, forzar Show()
+                    if not ODD._photoHooked then
+                        ODD._photoHooked = true
+                        frame:HookScript("OnHide", function(self)
+                            if ODD._photoMode then
+                                self:Show()
+                            end
+                        end)
+                    end
+
+                    ODD:Log("|cFF00FF00Modo Foto ACTIVADO|r: El dashboard mantendrá su tamaño y permanecerá visible con Alt+Z.")
                 else
                     frame:SetParent(UIParent)
+                    frame:ClearAllPoints()
+                    frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+                    local baseScale = (ODD.Database and ODD.Database:GetSetting("uiScale")) or 1.0
+                    frame:SetScale(baseScale)
                     frame:SetFrameStrata("HIGH")
-                    ODD:Log("|cFFFF8000Modo Foto DESACTIVADO|r: El dashboard vuelve al comportamiento normal de UIParent.")
+                    frame:Show()
+                    ODD:Log("|cFFFF8000Modo Foto DESACTIVADO|r: El dashboard vuelve a UIParent.")
                 end
-                frame:Show()
             end
         elseif cmd == "mock" or cmd == "demo" then
             ODD:Log("El comando /odd mock ha sido retirado para proteger los datos reales del jugador.")
