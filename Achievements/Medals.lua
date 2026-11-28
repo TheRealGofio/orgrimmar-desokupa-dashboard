@@ -17,23 +17,28 @@ local MEDAL_DEFS = {
     { id = "gnome_100", name = "Terror de la Alianza", desc = "Abate a 100 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_BannerPVP_02", req = 100, points = 25 },
     { id = "gnome_250", name = "Exterminador Jefe", desc = "Abate a 250 gnomos en mundo abierto.", icon = "Interface\\Icons\\Ability_Warrior_SavageBlow", req = 250, points = 35 },
     { id = "gnome_500", name = "Leyenda de Orgrimmar Desokupa", desc = "Abate a 500 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Helmet_08", req = 500, points = 50 },
+    { id = "gnome_1000", name = "Gnomocidio Legendario", desc = "Abate a 1000 gnomos en mundo abierto.", icon = "Interface\\Icons\\INV_Misc_Head_Dragon_01", req = 1000, points = 75 },
 
-    -- 2. Especialistas por Clase (Cadena de clase: 1, 5, 10 de cada una)
+    -- 2. Especialistas por Clase (Cadena de clase: 1, 5, 10, 25 de cada una)
     { id = "class_mage_1", name = "Cortahechizos", desc = "Abate a un gnomo Mago.", icon = "Interface\\Icons\\Spell_Holy_MagicalSentry", reqClass = "MAGE", reqClassCount = 1, points = 5 },
     { id = "class_mage_5", name = "Disipador Nato", desc = "Abate a 5 gnomos Magos.", icon = "Interface\\Icons\\Spell_Arcane_Blast", reqClass = "MAGE", reqClassCount = 5, points = 10 },
     { id = "class_mage_10", name = "Extintor Arcano", desc = "Abate a 10 gnomos Magos.", icon = "Interface\\Icons\\Spell_Fire_Burnout", reqClass = "MAGE", reqClassCount = 10, points = 15 },
+    { id = "class_mage_25", name = "Colapso del Kirin Tor", desc = "Abate a 25 gnomos Magos.", icon = "Interface\\Icons\\Spell_Arcane_PortalDalaran", reqClass = "MAGE", reqClassCount = 25, points = 25 },
 
     { id = "class_warlock_1", name = "Pisa-diablillos", desc = "Abate a un gnomo Brujo.", icon = "Interface\\Icons\\Spell_Shadow_CurseOfTounges", reqClass = "WARLOCK", reqClassCount = 1, points = 5 },
     { id = "class_warlock_5", name = "Purga Demoníaca", desc = "Abate a 5 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_RainOfFire", reqClass = "WARLOCK", reqClassCount = 5, points = 10 },
     { id = "class_warlock_10", name = "Cazademonios Diminutos", desc = "Abate a 10 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_SoulLeech", reqClass = "WARLOCK", reqClassCount = 10, points = 15 },
+    { id = "class_warlock_25", name = "Exorcista de Bolsillo", desc = "Abate a 25 gnomos Brujos.", icon = "Interface\\Icons\\Spell_Shadow_SummonInfernal", reqClass = "WARLOCK", reqClassCount = 25, points = 25 },
 
     { id = "class_rogue_1", name = "Descubierto de las Sombras", desc = "Abate a un gnomo Pícaro.", icon = "Interface\\Icons\\Ability_Stealth", reqClass = "ROGUE", reqClassCount = 1, points = 5 },
     { id = "class_rogue_5", name = "Sentidos Aguzados", desc = "Abate a 5 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_EyeOfTheOwl", reqClass = "ROGUE", reqClassCount = 5, points = 10 },
     { id = "class_rogue_10", name = "Ni Te Escondas", desc = "Abate a 10 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_CheapShot", reqClass = "ROGUE", reqClassCount = 10, points = 15 },
+    { id = "class_rogue_25", name = "Luz de Bengala Permanente", desc = "Abate a 25 gnomos Pícaros.", icon = "Interface\\Icons\\Ability_Ambush", reqClass = "ROGUE", reqClassCount = 25, points = 25 },
 
     { id = "class_warrior_1", name = "Mordisco al Tobillo Evitado", desc = "Abate a un gnomo Guerrero.", icon = "Interface\\Icons\\Ability_Racial_Avatar", reqClass = "WARRIOR", reqClassCount = 1, points = 5 },
     { id = "class_warrior_5", name = "Escudo Roto", desc = "Abate a 5 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_ShieldBreak", reqClass = "WARRIOR", reqClassCount = 5, points = 10 },
     { id = "class_warrior_10", name = "Peso Pluma Fuera de Combate", desc = "Abate a 10 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_Revenge", reqClass = "WARRIOR", reqClassCount = 10, points = 15 },
+    { id = "class_warrior_25", name = "Aplastador de Hojalata", desc = "Abate a 25 gnomos Guerreros.", icon = "Interface\\Icons\\Ability_Warrior_DecisiveStrike", reqClass = "WARRIOR", reqClassCount = 25, points = 25 },
 
     { id = "class_all", name = "Desalojo Interdisciplinar", desc = "Abate al menos a un gnomo de cada clase (Mago, Brujo, Pícaro y Guerrero).", icon = "Interface\\Icons\\INV_Misc_Book_09", reqAllClasses = true, points = 20 },
 
@@ -46,26 +51,62 @@ local MEDAL_DEFS = {
     { id = "gnome_high_level", name = "Peligro en Miniatura", desc = "Abate a un gnomo de nivel 50 o superior.", icon = "Interface\\Icons\\Ability_Creature_Cursed_04", reqHighLevel = 50, points = 15 },
     { id = "gnome_skull", name = "David contra Goliat al Revés", desc = "Abate a un gnomo de nivel calavera (??) o de nivel 60.", icon = "Interface\\Icons\\Spell_Shadow_DeathScream", reqSkull = true, points = 25 },
 
-    -- 5. Caza Territorial
+    -- 5. Caza Territorial General
     { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3, points = 10 },
     { id = "gnome_zones_5", name = "Limpieza Territorial", desc = "Abate gnomos en al menos 5 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map08", reqZones = 5, points = 15 },
     { id = "gnome_zones_10", name = "Desokupa Global", desc = "Abate gnomos en al menos 10 zonas diferentes de Azeroth.", icon = "Interface\\Icons\\INV_Misc_Spyglass_02", reqZones = 10, points = 25 },
-    { id = "gnome_horde_turf", name = "¡A mi casa no entras!", desc = "Abate a un gnomo dentro de Durotar o Los Baldíos.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqHordeTurf = true, points = 10 },
-    { id = "gnome_stv", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZoneName = "Tuercespina", reqZoneCount = 5, points = 15 },
-    { id = "gnome_hillsbrad", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZoneName = "Trabalomas", reqZoneCount = 5, points = 15 },
+
+    -- Cadenas Progresivas por Zona (1, 5, 10, 25 bajas)
+    -- A) Vega de Tuercespina / Stranglethorn Vale
+    { id = "zone_stv_1", name = "Turista en Tuercespina", desc = "Abate a 1 gnomo en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_Pet_Cat", reqZonePattern = "stv", reqZoneCount = 1, points = 5 },
+    { id = "zone_stv_5", name = "Safari en Tuercespina", desc = "Abate a 5 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_TrueShot", reqZonePattern = "stv", reqZoneCount = 5, points = 10 },
+    { id = "zone_stv_10", name = "Cazador de Bahía del Botín", desc = "Abate a 10 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_AimedShot", reqZonePattern = "stv", reqZoneCount = 10, points = 15 },
+    { id = "zone_stv_25", name = "Señor de la Selva Desokupa", desc = "Abate a 25 gnomos en Vega de Tuercespina.", icon = "Interface\\Icons\\Ability_Hunter_BeastCall", reqZonePattern = "stv", reqZoneCount = 25, points = 25 },
+
+    -- B) Laderas de Trabalomas / Hillsbrad Foothills
+    { id = "zone_hillsbrad_1", name = "Espía en Costasur", desc = "Abate a 1 gnomo en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_DeathPact", reqZonePattern = "hillsbrad", reqZoneCount = 1, points = 5 },
+    { id = "zone_hillsbrad_5", name = "Trabalomas No se Negocia", desc = "Abate a 5 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Ability_Warrior_Cleave", reqZonePattern = "hillsbrad", reqZoneCount = 5, points = 10 },
+    { id = "zone_hillsbrad_10", name = "Pesadilla de Molino Tarren", desc = "Abate a 10 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\Spell_Shadow_CurseOfMannoroth", reqZonePattern = "hillsbrad", reqZoneCount = 10, points = 15 },
+    { id = "zone_hillsbrad_25", name = "Pacificador de Trabalomas", desc = "Abate a 25 gnomos en Laderas de Trabalomas.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqZonePattern = "hillsbrad", reqZoneCount = 25, points = 25 },
+
+    -- C) Los Baldíos / Barrens & Durotar
+    { id = "zone_barrens_1", name = "¡A mi casa no entras!", desc = "Abate a 1 gnomo en Los Baldíos o Durotar.", icon = "Interface\\Icons\\INV_BannerPVP_01", reqZonePattern = "barrens", reqZoneCount = 1, points = 5 },
+    { id = "zone_barrens_5", name = "Patrulla del Cruce", desc = "Abate a 5 gnomos en Los Baldíos o Durotar.", icon = "Interface\\Icons\\Ability_Warrior_Charge", reqZonePattern = "barrens", reqZoneCount = 5, points = 10 },
+    { id = "zone_barrens_10", name = "Guardián de los Baldíos", desc = "Abate a 10 gnomos en Los Baldíos o Durotar.", icon = "Interface\\Icons\\Ability_Warrior_ShieldWall", reqZonePattern = "barrens", reqZoneCount = 10, points = 15 },
+    { id = "zone_barrens_25", name = "Muralla Infranqueable", desc = "Abate a 25 gnomos en Los Baldíos o Durotar.", icon = "Interface\\Icons\\INV_Misc_Bone_08", reqZonePattern = "barrens", reqZoneCount = 25, points = 25 },
+
+    -- D) Tierras Altas de Arathi / Arathi Highlands
+    { id = "zone_arathi_1", name = "Frontera de Arathi", desc = "Abate a 1 gnomo en Tierras Altas de Arathi.", icon = "Interface\\Icons\\INV_Spear_05", reqZonePattern = "arathi", reqZoneCount = 1, points = 5 },
+    { id = "zone_arathi_5", name = "Disputa en Sentinela", desc = "Abate a 5 gnomos en Tierras Altas de Arathi.", icon = "Interface\\Icons\\Ability_Warrior_BattleShout", reqZonePattern = "arathi", reqZoneCount = 5, points = 10 },
+    { id = "zone_arathi_10", name = "Control de Tierras Altas", desc = "Abate a 10 gnomos en Tierras Altas de Arathi.", icon = "Interface\\Icons\\INV_Sword_27", reqZonePattern = "arathi", reqZoneCount = 10, points = 15 },
+    { id = "zone_arathi_25", name = "Conquistador de Arathi", desc = "Abate a 25 gnomos en Tierras Altas de Arathi.", icon = "Interface\\Icons\\INV_BannerPVP_02", reqZonePattern = "arathi", reqZoneCount = 25, points = 25 },
+
+    -- E) Tanaris & Las Mil Agujas / Thousand Needles
+    { id = "zone_tanaris_1", name = "Espejismo en Gadgetzan", desc = "Abate a 1 gnomo en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\Spell_Fire_Sunfire", reqZonePattern = "tanaris", reqZoneCount = 1, points = 5 },
+    { id = "zone_tanaris_5", name = "Fiebre del Oro Negro", desc = "Abate a 5 gnomos en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\INV_Pick_02", reqZonePattern = "tanaris", reqZoneCount = 5, points = 10 },
+    { id = "zone_tanaris_10", name = "Dunas Libres de Gnomos", desc = "Abate a 10 gnomos en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\Spell_Nature_Earthquake", reqZonePattern = "tanaris", reqZoneCount = 10, points = 15 },
+    { id = "zone_tanaris_25", name = "Azote del Desierto", desc = "Abate a 25 gnomos en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\INV_Weapon_ShortBlade_12", reqZonePattern = "tanaris", reqZoneCount = 25, points = 25 },
+
+    -- Zonas Clásicas Especiales
     { id = "gnome_home", name = "Visita a Domicilio", desc = "Abate a un gnomo en Dun Morogh o en las puertas de Gnomeregan.", icon = "Interface\\Icons\\Spell_Frost_FrostWard", reqHome = true, points = 20 },
     { id = "gnome_ports", name = "Control Portuario", desc = "Abate a un gnomo en Bahía del Botín o Trinquete.", icon = "Interface\\Icons\\Spell_Frost_SummonWaterElemental", reqPorts = true, points = 15 },
 
     -- 6. Situaciones Especiales y Racha
     { id = "gnome_eating", name = "Pisotón Desprevenido", desc = "Abate a un gnomo mientras esté comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Misc_Fork&Knife", reqEating = 1, points = 10 },
+    { id = "gnome_eating_5", name = "Corte de Suministros", desc = "Abate a 5 gnomos mientras estén comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Drink_06", reqEating = 5, points = 20 },
+
     { id = "gnome_mounted", name = "Pisa-flores", desc = "Abate a un gnomo que se desplace en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider", reqMounted = 1, points = 15 },
+    { id = "gnome_mounted_5", name = "Desmontando el Chiringuito", desc = "Abate a 5 gnomos montados en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider_Green", reqMounted = 5, points = 25 },
+
     { id = "gnome_quick_double", name = "Doble Desahucio", desc = "Abate a 2 gnomos con menos de 60 segundos de diferencia.", icon = "Interface\\Icons\\Ability_Rogue_Sprint", reqQuickDiff = 60, points = 20 },
     { id = "gnome_quick_triple", name = "Desokupación Exprés", desc = "Abate a 3 gnomos en menos de 5 minutos.", icon = "Interface\\Icons\\Spell_Nature_BloodLust", reqTripleDiff = 300, points = 30 },
     { id = "gnome_session_5", name = "Jornada Laboral Completa", desc = "Abate a 5 gnomos durante una misma sesión de juego.", icon = "Interface\\Icons\\INV_Misc_Coin_01", reqSessionKills = 5, points = 15 },
+    { id = "gnome_session_10", name = "Horas Extra Desokupa", desc = "Abate a 10 gnomos durante una misma sesión de juego.", icon = "Interface\\Icons\\INV_Misc_Coin_02", reqSessionKills = 10, points = 25 },
 
     -- 7. Cooperación de Hermandad
     { id = "gnome_guild_group", name = "Cuadrilla de Desahucio", desc = "Abate a un gnomo estando en grupo con al menos un compañero de la hermandad.", icon = "Interface\\Icons\\Spell_Holy_PrayerOfSpirit", reqGuildGroup = 1, points = 10 },
     { id = "gnome_guild_group_10", name = "Comité de Desahucio Masivo", desc = "Abate a 10 gnomos estando en grupo con compañeros de hermandad.", icon = "Interface\\Icons\\INV_BannerPVP_03", reqGuildGroup = 10, points = 25 },
+    { id = "gnome_guild_group_25", name = "Desahucio Sindical", desc = "Abate a 25 gnomos en grupo de hermandad.", icon = "Interface\\Icons\\INV_Banner_03", reqGuildGroup = 25, points = 35 },
 
     -- 8. Partidas PvP
     { id = "bg_10", name = "Veterano de Batalla", desc = "Participa en 10 Campos de Batalla observados.", icon = "Interface\\Icons\\Achievement_BG_winWSG", reqBG = 10, points = 15 },
@@ -121,6 +162,9 @@ function Medals:GetPlayerMedals()
     local hasPorts = false
     local stvKills = 0
     local hillsbradKills = 0
+    local barrensKills = 0
+    local arathiKills = 0
+    local tanarisKills = 0
     local eatingKills = 0
     local mountedKills = 0
     local guildGroupKills = 0
@@ -142,6 +186,7 @@ function Medals:GetPlayerMedals()
             local zLower = r.zone:lower()
             if zLower:find("durotar") or zLower:find("baldíos") or zLower:find("baldios") or zLower:find("barrens") then
                 hasHordeTurf = true
+                barrensKills = barrensKills + 1
             end
             if zLower:find("dun morogh") or zLower:find("gnomeregan") then
                 hasHome = true
@@ -154,6 +199,12 @@ function Medals:GetPlayerMedals()
             end
             if zLower:find("trabalomas") or zLower:find("hillsbrad") then
                 hillsbradKills = hillsbradKills + 1
+            end
+            if zLower:find("arathi") then
+                arathiKills = arathiKills + 1
+            end
+            if zLower:find("tanaris") or zLower:find("agujas") or zLower:find("needles") then
+                tanarisKills = tanarisKills + 1
             end
         end
         if r.wasEating then
@@ -190,6 +241,58 @@ function Medals:GetPlayerMedals()
             end
             if IsGrayLevel(myLevel, r.victimLevel) then
                 grayKills = grayKills + 1
+            end
+        end
+    end
+
+    -- Integrar acumuladores de por vida de gnomes.stats (para soportar metas altas >= 25 sin estar limitados por records de 50)
+    local stats = gnomes and gnomes.stats
+    if stats then
+        if stats.eating and stats.eating > eatingKills then
+            eatingKills = stats.eating
+        end
+        if stats.mounted and stats.mounted > mountedKills then
+            mountedKills = stats.mounted
+        end
+        if stats.guildGroup and stats.guildGroup > guildGroupKills then
+            guildGroupKills = stats.guildGroup
+        end
+        if stats.skullOr60 and stats.skullOr60 > 0 then
+            hasSkull = true
+        end
+        if stats.classes then
+            for c, cnt in pairs(stats.classes) do
+                if cnt > (classCounts[c] or 0) then
+                    classCounts[c] = cnt
+                end
+            end
+        end
+        if stats.zones then
+            for z, cnt in pairs(stats.zones) do
+                killedZones[z] = true
+                local zL = z:lower()
+                if (zL:find("tuercespina") or zL:find("stranglethorn")) and cnt > stvKills then
+                    stvKills = cnt
+                end
+                if (zL:find("trabalomas") or zL:find("hillsbrad")) and cnt > hillsbradKills then
+                    hillsbradKills = cnt
+                end
+                if (zL:find("durotar") or zL:find("baldíos") or zL:find("baldios") or zL:find("barrens")) and cnt > barrensKills then
+                    barrensKills = cnt
+                    hasHordeTurf = true
+                end
+                if zL:find("arathi") and cnt > arathiKills then
+                    arathiKills = cnt
+                end
+                if (zL:find("tanaris") or zL:find("agujas") or zL:find("needles")) and cnt > tanarisKills then
+                    tanarisKills = cnt
+                end
+                if zL:find("dun morogh") or zL:find("gnomeregan") then
+                    hasHome = true
+                end
+                if zL:find("botín") or zL:find("botin") or zL:find("booty bay") or zL:find("trinquete") or zL:find("ratchet") then
+                    hasPorts = true
+                end
             end
         end
     end
@@ -241,6 +344,22 @@ function Medals:GetPlayerMedals()
             progress = hasHordeTurf and 1 or 0
             maxReq = 1
             completed = (progress >= 1)
+        elseif def.reqZonePattern then
+            local count = 0
+            if def.reqZonePattern == "stv" then
+                count = stvKills
+            elseif def.reqZonePattern == "hillsbrad" then
+                count = hillsbradKills
+            elseif def.reqZonePattern == "barrens" then
+                count = barrensKills
+            elseif def.reqZonePattern == "arathi" then
+                count = arathiKills
+            elseif def.reqZonePattern == "tanaris" then
+                count = tanarisKills
+            end
+            progress = count
+            maxReq = def.reqZoneCount or 1
+            completed = (progress >= maxReq)
         elseif def.reqZoneName then
             local count = (def.reqZoneName == "Tuercespina") and stvKills or hillsbradKills
             progress = count

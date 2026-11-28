@@ -483,6 +483,32 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
 
     table.insert(gnomes.records, killRecord)
 
+    -- Actualizar acumuladores persistentes de por vida (stats) para que ningún logro se pierda por límite de registros
+    gnomes.stats = gnomes.stats or {}
+    gnomes.stats.zones = gnomes.stats.zones or {}
+    local zName = killRecord.zone or "Desconocida"
+    gnomes.stats.zones[zName] = (gnomes.stats.zones[zName] or 0) + 1
+
+    if victimClass then
+        gnomes.stats.classes = gnomes.stats.classes or {}
+        local cUpper = victimClass:upper()
+        gnomes.stats.classes[cUpper] = (gnomes.stats.classes[cUpper] or 0) + 1
+    end
+
+    if wasEating then
+        gnomes.stats.eating = (gnomes.stats.eating or 0) + 1
+    end
+    if wasMounted then
+        gnomes.stats.mounted = (gnomes.stats.mounted or 0) + 1
+    end
+    if inGuildGroup then
+        gnomes.stats.guildGroup = (gnomes.stats.guildGroup or 0) + 1
+    end
+    local vLvlNum = tonumber(victimLevel)
+    if victimLevel == "??" or (vLvlNum and (vLvlNum <= 0 or vLvlNum >= 60)) then
+        gnomes.stats.skullOr60 = (gnomes.stats.skullOr60 or 0) + 1
+    end
+
     -- Mantener un máximo de 50 registros detallados en SavedVariables (los contadores totales kills nunca bajan)
     local MAX_DETAILED_RECORDS = 50
     if #gnomes.records > MAX_DETAILED_RECORDS then

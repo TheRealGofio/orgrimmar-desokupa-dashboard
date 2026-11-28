@@ -49,6 +49,7 @@ Schema.DefaultCharacterDB = {
         gnomes = {
             kills = 0,
             records = {},
+            stats = {}, -- contadores persistentes e incrementales de por vida: zones = {}, classes = {}, eating = 0, mounted = 0, guildGroup = 0, lvl60 = 0
         },
         pvp = {
             matches = {},
