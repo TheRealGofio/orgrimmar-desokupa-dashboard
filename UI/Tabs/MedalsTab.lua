@@ -186,9 +186,6 @@ function MedalsTab:Refresh()
         row:Show()
     end
 
-        row:Show()
-    end
-
     medalsScrollChild:SetHeight(math.max(1, #medals * rowHeight))
 end
 
