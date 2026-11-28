@@ -82,7 +82,7 @@ local MEDAL_DEFS = {
     { id = "zone_arathi_25", name = "Conquistador de Arathi", desc = "Abate a 25 gnomos en Tierras Altas de Arathi.", icon = "Interface\\Icons\\INV_BannerPVP_02", reqZonePattern = "arathi", reqZoneCount = 25, points = 25 },
 
     -- E) Tanaris & Las Mil Agujas / Thousand Needles
-    { id = "zone_tanaris_1", name = "Espejismo en Gadgetzan", desc = "Abate a 1 gnomo en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\Spell_Fire_Sunfire", reqZonePattern = "tanaris", reqZoneCount = 1, points = 5 },
+    { id = "zone_tanaris_1", name = "Espejismo en Gadgetzan", desc = "Abate a 1 gnomo en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\Spell_Fire_Immolation", reqZonePattern = "tanaris", reqZoneCount = 1, points = 5 },
     { id = "zone_tanaris_5", name = "Fiebre del Oro Negro", desc = "Abate a 5 gnomos en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\INV_Pick_02", reqZonePattern = "tanaris", reqZoneCount = 5, points = 10 },
     { id = "zone_tanaris_10", name = "Dunas Libres de Gnomos", desc = "Abate a 10 gnomos en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\Spell_Nature_Earthquake", reqZonePattern = "tanaris", reqZoneCount = 10, points = 15 },
     { id = "zone_tanaris_25", name = "Azote del Desierto", desc = "Abate a 25 gnomos en Tanaris o Las Mil Agujas.", icon = "Interface\\Icons\\INV_Weapon_ShortBlade_12", reqZonePattern = "tanaris", reqZoneCount = 25, points = 25 },
@@ -96,7 +96,7 @@ local MEDAL_DEFS = {
     { id = "gnome_eating_5", name = "Corte de Suministros", desc = "Abate a 5 gnomos mientras estén comiendo o bebiendo.", icon = "Interface\\Icons\\INV_Drink_06", reqEating = 5, points = 20 },
 
     { id = "gnome_mounted", name = "Pisa-flores", desc = "Abate a un gnomo que se desplace en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider", reqMounted = 1, points = 15 },
-    { id = "gnome_mounted_5", name = "Desmontando el Chiringuito", desc = "Abate a 5 gnomos montados en Mecazancudo.", icon = "Interface\\Icons\\Ability_Mount_MechaStrider_Green", reqMounted = 5, points = 25 },
+    { id = "gnome_mounted_5", name = "Desmontando el Chiringuito", desc = "Abate a 5 gnomos montados en Mecazancudo.", icon = "Interface\\Icons\\INV_Misc_Gear_01", reqMounted = 5, points = 25 },
 
     { id = "gnome_quick_double", name = "Doble Desahucio", desc = "Abate a 2 gnomos con menos de 60 segundos de diferencia.", icon = "Interface\\Icons\\Ability_Rogue_Sprint", reqQuickDiff = 60, points = 20 },
     { id = "gnome_quick_triple", name = "Desokupación Exprés", desc = "Abate a 3 gnomos en menos de 5 minutos.", icon = "Interface\\Icons\\Spell_Nature_BloodLust", reqTripleDiff = 300, points = 30 },
