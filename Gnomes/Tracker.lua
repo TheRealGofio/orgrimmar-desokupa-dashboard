@@ -61,6 +61,29 @@ local function ClassifyRace(raceTokenOrFile, localizedRaceName)
     return nil
 end
 
+-- Helper seguro para extraer el nivel o identificar nivel calavera (??)
+local function ExtractUnitLevel(token)
+    if not token or not UnitExists(token) then return "??" end
+    local okLvl, rawLevel = pcall(UnitLevel, token)
+    if okLvl and not ODD.API.Forever:IsSecret(rawLevel) then
+        local numLvl = tonumber(rawLevel)
+        if numLvl then
+            if numLvl <= 0 or numLvl == -1 then
+                return "??"
+            else
+                return numLvl
+            end
+        end
+    end
+    if type(UnitClassification) == "function" then
+        local okClas, classif = pcall(UnitClassification, token)
+        if okClas and classif and (classif == "worldboss" or classif:find("boss")) then
+            return "??"
+        end
+    end
+    return "??"
+end
+
 -- Actualiza la caché de mascota activa del jugador
 local function UpdatePetIdentity()
     if not UnitExists("pet") then return end
@@ -106,8 +129,7 @@ function Tracker:CheckTargetAuras()
     local name = fullName
     local okClass, _, rawClass = pcall(UnitClass, "target")
     local classFile = ODD.API.Forever:SanitizeText(rawClass)
-    local okLvl, rawLevel = pcall(UnitLevel, "target")
-    local level = ODD.API.Forever:SanitizeNumber(rawLevel) or "??"
+    local level = ExtractUnitLevel("target")
 
     targetGnomeCache[guid] = {
         name = name or "Gnomo desconocido",
@@ -197,8 +219,7 @@ function Tracker:GetTargetInfo(unitToken, unitGUID)
         end
         local okClass, _, rawClass = pcall(UnitClass, token)
         local classFile = ODD.API.Forever:SanitizeText(rawClass)
-        local okLvl, rawLevel = pcall(UnitLevel, token)
-        local level = ODD.API.Forever:SanitizeNumber(rawLevel) or "??"
+        local level = ExtractUnitLevel(token)
 
         if isGnome then
             if safeG then
@@ -605,8 +626,7 @@ function Tracker:InspectUnit(token)
     local name = fullName
     local okClass, _, rawClass = pcall(UnitClass, token)
     local classFile = ODD.API.Forever:SanitizeText(rawClass)
-    local okLvl, rawLevel = pcall(UnitLevel, token)
-    local level = ODD.API.Forever:SanitizeNumber(rawLevel) or "??"
+    local level = ExtractUnitLevel(token)
 
     targetGnomeCache[guid] = {
         name = name or "Gnomo desconocido",

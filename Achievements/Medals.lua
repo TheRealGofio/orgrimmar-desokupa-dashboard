@@ -180,10 +180,10 @@ function Medals:GetPlayerMedals()
             end
         end
 
-        if r.victimLevel == "??" then
+        local lvlNum = tonumber(r.victimLevel)
+        if r.victimLevel == "??" or (lvlNum and lvlNum <= 0) then
             hasSkull = true
         else
-            local lvlNum = tonumber(r.victimLevel)
             if lvlNum and lvlNum > maxVictimLevel then
                 maxVictimLevel = lvlNum
             end
