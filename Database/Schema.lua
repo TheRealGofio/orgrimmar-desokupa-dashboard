@@ -31,7 +31,8 @@ Schema.DefaultGlobalDB = {
     },
     syncMeta = {
         lastSyncTimestamp = 0,
-    }
+    },
+    guildHistory = {}, -- historial colectivo de desahucios de hermandad (locales + remotos P2P, hasta 50 registros)
 }
 
 Schema.DefaultCharacterDB = {

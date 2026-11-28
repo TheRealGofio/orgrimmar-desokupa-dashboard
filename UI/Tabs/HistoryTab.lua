@@ -44,10 +44,21 @@ function HistoryTab:OnRemoteKillReceived(data, senderName)
         victimLevel = data.vl or "??",
         zone = data.z or "Mundo Abierto",
         totalKills = data.tk or 1,
-        timestamp = time(),
+        timestamp = data.t or time(),
         isSelf = false,
     }
     table.insert(remoteKillsCache, 1, entry) -- Insertar al principio
+
+    -- Guardar también de forma persistente en ODDDB.guildHistory para no perder los desahucios de hermandad
+    local globalDB = ODD.Database:GetGlobal()
+    if globalDB then
+        globalDB.guildHistory = globalDB.guildHistory or {}
+        table.insert(globalDB.guildHistory, 1, entry)
+        while #globalDB.guildHistory > 50 do
+            table.remove(globalDB.guildHistory)
+        end
+        _G["ODDDB"] = globalDB
+    end
 
     -- Mantener un máximo de 100 registros en sesión
     if #remoteKillsCache > 100 then
@@ -111,8 +122,34 @@ end
 -- Recopila y ordena la lista de bajas para el historial
 local function GetEvictionsList()
     local evictions = {}
+    local seenUnique = {}
 
-    -- 1. Bajas locales verificadas
+    local function MakeKey(r)
+        return string.format("%s:%s:%s:%s:%s", tostring(r.killerName), tostring(r.victimName), tostring(r.victimClass), tostring(r.zone), tostring(r.timestamp))
+    end
+
+    -- 1. Bajas remotas/persistentes de hermandad desde ODDDB.guildHistory
+    local globalDB = ODD.Database:GetGlobal()
+    if globalDB and globalDB.guildHistory then
+        for _, r in ipairs(globalDB.guildHistory) do
+            local k = MakeKey(r)
+            if not seenUnique[k] then
+                seenUnique[k] = true
+                table.insert(evictions, r)
+            end
+        end
+    end
+
+    -- 2. Bajas remotas en búfer de sesión (por si acaban de llegar en directo)
+    for _, r in ipairs(remoteKillsCache) do
+        local k = MakeKey(r)
+        if not seenUnique[k] then
+            seenUnique[k] = true
+            table.insert(evictions, r)
+        end
+    end
+
+    -- 3. Bajas locales verificadas del personaje
     local charDB = ODD.Database:GetChar()
     local myName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
     local _, myClass = UnitClass("player")
@@ -120,7 +157,7 @@ local function GetEvictionsList()
     local records = (gnomes and gnomes.records) or {}
 
     for _, r in ipairs(records) do
-        table.insert(evictions, {
+        local localEntry = {
             killerName = myName,
             killerClass = myClass or "WARRIOR",
             victimName = r.victimName or "Gnomo",
@@ -132,12 +169,12 @@ local function GetEvictionsList()
             inGuildGroup = r.inGuildGroup,
             timestamp = r.timestamp or 0,
             isSelf = true,
-        })
-    end
-
-    -- 2. Bajas remotas recibidas por P2P
-    for _, r in ipairs(remoteKillsCache) do
-        table.insert(evictions, r)
+        }
+        local k = MakeKey(localEntry)
+        if not seenUnique[k] then
+            seenUnique[k] = true
+            table.insert(evictions, localEntry)
+        end
     end
 
     -- Ordenar cronológicamente descendente (lo más nuevo arriba)
@@ -361,12 +398,12 @@ function HistoryTab:Create(parent)
     -- ========================================================
     -- BLOQUE 2: HISTORIAL CRONOLÓGICO DE DESAHUCIOS
     -- ========================================================
-    local histHeader = ODD.UI.Components:CreateSectionHeader(frame, "Historial de Desahucios Ejecutados:", -122)
+    local histHeader = ODD.UI.Components:CreateSectionHeader(frame, "Historial de Desahucios Ejecutados:", -138)
 
     -- Botones de filtrado
     local filterBox = CreateFrame("Frame", nil, frame)
     filterBox:SetSize(280, 20)
-    filterBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -122)
+    filterBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -138)
 
     local fLbl = filterBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     fLbl:SetPoint("LEFT", filterBox, "LEFT", 0, 0)
@@ -391,9 +428,9 @@ function HistoryTab:Create(parent)
     MakeFilterBtn("self", "Mis Bajas", 65, 65)
     MakeFilterBtn("guild", "Hermandad", 134, 75)
 
-    -- Marco contenedor con borde para toda la tabla de historial
-    local histContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 248, true, 0.40)
-    histContainer:SetPoint("TOPLEFT", histHeader, "BOTTOMLEFT", 0, -4)
+    -- Marco contenedor con borde para toda la tabla de historial (con holgura de separación)
+    local histContainer = ODD.UI.Components:CreateSectionBox(frame, 760, 240, true, 0.40)
+    histContainer:SetPoint("TOPLEFT", histHeader, "BOTTOMLEFT", 0, -6)
 
     -- Cabecera de la tabla
     local headerFrame = CreateFrame("Frame", nil, histContainer)
@@ -422,7 +459,7 @@ function HistoryTab:Create(parent)
 
     -- ScrollFrame de la tabla dentro del contenedor estilizado
     local scrollFrame = CreateFrame("ScrollFrame", "ODD_HistoryScrollFrame", histContainer, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(746, 216)
+    scrollFrame:SetSize(746, 208)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -4)
 
     scrollChild = CreateFrame("Frame", nil, scrollFrame)

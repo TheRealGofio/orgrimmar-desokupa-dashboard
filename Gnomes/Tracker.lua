@@ -518,6 +518,31 @@ function Tracker:RecordVerifiedKill(targetGUID, victimName, victimClass, victimL
     -- Guardado persistente
     _G["ODDCharacterDB"] = charDB
 
+    -- Guardar también en el historial global compartido de hermandad (para que perdure entre sesiones)
+    local globalDB = ODD.Database:GetGlobal()
+    if globalDB then
+        globalDB.guildHistory = globalDB.guildHistory or {}
+        local pName = (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Tú"
+        local _, pClass = UnitClass("player")
+        table.insert(globalDB.guildHistory, 1, {
+            killerName = pName,
+            killerClass = pClass or "WARRIOR",
+            victimName = killRecord.victimName,
+            victimClass = killRecord.victimClass,
+            victimLevel = killRecord.victimLevel,
+            zone = killRecord.zone,
+            wasEating = killRecord.wasEating,
+            wasMounted = killRecord.wasMounted,
+            inGuildGroup = killRecord.inGuildGroup,
+            timestamp = killRecord.timestamp,
+            isSelf = true,
+        })
+        while #globalDB.guildHistory > 50 do
+            table.remove(globalDB.guildHistory)
+        end
+        _G["ODDDB"] = globalDB
+    end
+
     -- Guardar de inmediato en el perfil global de la cuenta para sincronizar alters
     if ODD.Guild and ODD.Guild.Profiles and ODD.Guild.Profiles.SaveToGlobalProfiles then
         pcall(function() ODD.Guild.Profiles:SaveToGlobalProfiles() end)
