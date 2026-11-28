@@ -44,7 +44,7 @@ local MEDAL_DEFS = {
 
     -- 4. Hazañas de Nivel Alto
     { id = "gnome_high_level", name = "Peligro en Miniatura", desc = "Abate a un gnomo de nivel 50 o superior.", icon = "Interface\\Icons\\Ability_Creature_Cursed_04", reqHighLevel = 50, points = 15 },
-    { id = "gnome_skull", name = "David contra Goliat al Revés", desc = "Abate a un gnomo de nivel calavera (??).", icon = "Interface\\Icons\\Spell_Shadow_DeathScream", reqSkull = true, points = 25 },
+    { id = "gnome_skull", name = "David contra Goliat al Revés", desc = "Abate a un gnomo de nivel calavera (??) o de nivel 60.", icon = "Interface\\Icons\\Spell_Shadow_DeathScream", reqSkull = true, points = 25 },
 
     -- 5. Caza Territorial
     { id = "gnome_zones_3", name = "Desokupador Itinerante", desc = "Abate gnomos en al menos 3 zonas diferentes.", icon = "Interface\\Icons\\INV_Misc_Map02", reqZones = 3, points = 10 },
@@ -181,10 +181,11 @@ function Medals:GetPlayerMedals()
         end
 
         local lvlNum = tonumber(r.victimLevel)
-        if r.victimLevel == "??" or (lvlNum and lvlNum <= 0) then
+        if r.victimLevel == "??" or (lvlNum and (lvlNum <= 0 or lvlNum >= 60)) then
             hasSkull = true
-        else
-            if lvlNum and lvlNum > maxVictimLevel then
+        end
+        if lvlNum and lvlNum > 0 then
+            if lvlNum > maxVictimLevel then
                 maxVictimLevel = lvlNum
             end
             if IsGrayLevel(myLevel, r.victimLevel) then
