@@ -112,6 +112,22 @@ SlashCmdList["ODD"] = function(msg)
             for k, v in pairs(caps) do
                 print(string.format("  - %s: |cFF00FF00%s|r", k, tostring(v)))
             end
+        elseif cmd == "photo" or cmd == "foto" or cmd == "screenshot" then
+            local isPhoto = ODD._photoMode or false
+            ODD._photoMode = not isPhoto
+            local frame = ODD.UI and ODD.UI.Dashboard and ODD.UI.Dashboard:Create()
+            if frame then
+                if ODD._photoMode then
+                    frame:SetParent(WorldFrame)
+                    frame:SetFrameStrata("HIGH")
+                    ODD:Log("|cFF00FF00Modo Foto ACTIVADO|r: El dashboard permanecerá visible al pulsar Alt+Z. (Usa /odd foto de nuevo para desactivar)")
+                else
+                    frame:SetParent(UIParent)
+                    frame:SetFrameStrata("HIGH")
+                    ODD:Log("|cFFFF8000Modo Foto DESACTIVADO|r: El dashboard vuelve al comportamiento normal de UIParent.")
+                end
+                frame:Show()
+            end
         elseif cmd == "mock" or cmd == "demo" then
             ODD:Log("El comando /odd mock ha sido retirado para proteger los datos reales del jugador.")
         elseif cmd == "version" then
