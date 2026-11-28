@@ -58,8 +58,21 @@ function MedalsTab:Refresh()
             desc:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 40, 2)
             row.desc = desc
 
+            -- Barra de progreso visual para logros en curso
+            local barBg = row:CreateTexture(nil, "BACKGROUND", nil, 1)
+            barBg:SetPoint("RIGHT", row, "RIGHT", -12, 0)
+            barBg:SetSize(140, 14)
+            barBg:SetColorTexture(0.08, 0.08, 0.10, 0.85)
+            row.barBg = barBg
+
+            local barFill = row:CreateTexture(nil, "ARTWORK")
+            barFill:SetPoint("LEFT", barBg, "LEFT", 0, 0)
+            barFill:SetSize(0, 14)
+            barFill:SetColorTexture(0.85, 0.45, 0.10, 0.90) -- Naranja/Dorado
+            row.barFill = barFill
+
             local prog = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            prog:SetPoint("RIGHT", row, "RIGHT", -16, 0)
+            prog:SetPoint("CENTER", barBg, "CENTER", 0, 0)
             row.prog = prog
 
             -- Soporte para Shift + Clic (Compartir en chat)
@@ -68,11 +81,15 @@ function MedalsTab:Refresh()
                 self.bg:SetColorTexture(0.3, 0.3, 0.1, 0.5)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 if self.medalData then
-                    local m = self.medalData
-                    GameTooltip:AddLine(m.name, 1, 0.82, 0)
-                    GameTooltip:AddLine(m.desc, 1, 1, 1, true)
-                    GameTooltip:AddLine(string.format("Puntos de Logro: %d pts", m.points or 10), 0, 1, 0.8)
-                    GameTooltip:AddLine(m.completed and "|cFF00FF00Logro Completado|r" or "|cFFFF8000En progreso|r")
+                    local md = self.medalData
+                    GameTooltip:AddLine(md.name, 1, 0.82, 0)
+                    GameTooltip:AddLine(md.desc, 1, 1, 1, true)
+                    GameTooltip:AddLine(string.format("Puntos de Logro: %d pts", md.points or 10), 0, 1, 0.8)
+                    if md.completed then
+                        GameTooltip:AddLine("|cFF00FF00Logro Completado|r")
+                    else
+                        GameTooltip:AddLine(string.format("|cFFFF8000En progreso: %d / %d (%.0f%%)|r", md.progress, md.maxReq, (md.maxReq > 0 and (md.progress / md.maxReq * 100) or 0)))
+                    end
                     GameTooltip:AddLine("Shift + Clic: Compartir en chat", 0.6, 0.6, 0.6)
                 end
                 GameTooltip:Show()
@@ -89,23 +106,21 @@ function MedalsTab:Refresh()
             end)
             row:SetScript("OnMouseUp", function(self, button)
                 if IsShiftKeyDown() and self.medalData then
-                    local m = self.medalData
-                    local myPoints = tonumber(m.points) or 10
-                    local achId = tostring(m.id or m.key or "ACH")
+                    local md = self.medalData
+                    local myPoints = tonumber(md.points) or 10
+                    local achId = tostring(md.id or md.key or "ACH")
+                    local curProg = tonumber(md.progress) or 0
+                    local maxGoal = tonumber(md.maxReq) or 1
                     
-                    -- Si el logro está desbloqueado, usar su timestamp real (o el actual si no se guardó fecha anterior).
-                    -- Si NO está completado, t = 0 para indicar que es una consulta o que aún no se ha obtenido.
                     local t = 0
-                    if m.completed then
+                    if md.completed then
                         local charDB = ODD.Database and ODD.Database:GetChar()
-                        local unlockedTime = charDB and charDB.unlockedMedals and charDB.unlockedMedals[m.id]
+                        local unlockedTime = charDB and charDB.unlockedMedals and charDB.unlockedMedals[md.id]
                         t = tonumber(unlockedTime) or time()
                     end
 
-                    -- Formato de texto ordinario limpio para el servidor de WoW:
-                    -- Se envía sin pipes ni |Hitem para que el servidor jamás lo bloquee.
-                    -- Los jugadores con ODD lo verán transformado en un enlace interactivo clickeable que abre el Modal.
-                    local shareText = string.format("{ODD:%s:%d:%d} [%s]", achId, myPoints, t, m.name or "Logro")
+                    -- Formato interactivo: {ODD:id:pts:time:prog:maxReq} [Nombre]
+                    local shareText = string.format("{ODD:%s:%d:%d:%d:%d} [%s]", achId, myPoints, t, curProg, maxGoal, md.name or "Logro")
 
                     local inGuild = IsInGuild and IsInGuild()
                     local editBox = ChatEdit_ChooseBoxForSend and ChatEdit_ChooseBoxForSend()
@@ -140,17 +155,36 @@ function MedalsTab:Refresh()
         row.icon:SetTexture(m.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
         row.desc:SetText(m.desc)
 
+        local totalBarWidth = 140
+        local pct = math.min(1, math.max(0, (m.maxReq > 0) and (m.progress / m.maxReq) or 0))
+
         if m.completed then
             row.bg:SetColorTexture(0.1, 0.28, 0.1, 0.45)
             row.title:SetText(string.format("|cFFFFD100%s|r  |cFF00FF00[Completado]|r  |cFF00FFCC(%d pts)|r", m.name, m.points or 10))
-            row.prog:SetText(string.format("|cFF00FF00%d / %d|r", m.progress, m.maxReq))
+            row.barBg:Show()
+            row.barFill:Show()
+            row.barFill:SetWidth(totalBarWidth)
+            row.barFill:SetColorTexture(0.15, 0.65, 0.15, 0.90) -- Verde completado
+            row.prog:SetText(string.format("|cFFFFFFFF%d / %d|r", m.maxReq, m.maxReq))
             row.icon:SetDesaturated(false)
         else
             row.bg:SetColorTexture(0.12, 0.12, 0.12, 0.35)
-            row.title:SetText(string.format("|cFF888888%s|r  |cFF557788(%d pts)|r", m.name, m.points or 10))
-            row.prog:SetText(string.format("|cFF888888%d / %d|r", m.progress, m.maxReq))
+            row.title:SetText(string.format("|cFFCCCCCC%s|r  |cFF88AACC(%d pts)|r", m.name, m.points or 10))
+            row.barBg:Show()
+            row.barFill:Show()
+            row.barFill:SetWidth(math.floor(totalBarWidth * pct))
+            if m.progress > 0 then
+                row.barFill:SetColorTexture(0.85, 0.45, 0.10, 0.90) -- Naranja en progreso
+                row.prog:SetText(string.format("|cFFFFD100%d / %d|r", m.progress, m.maxReq))
+            else
+                row.barFill:SetWidth(0)
+                row.prog:SetText(string.format("|cFF7777770 / %d|r", m.maxReq))
+            end
             row.icon:SetDesaturated(true)
         end
+
+        row:Show()
+    end
 
         row:Show()
     end

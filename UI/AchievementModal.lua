@@ -11,7 +11,7 @@ local function EnsureModalFrame()
     if modalFrame then return modalFrame end
 
     modalFrame = CreateFrame("Frame", "ODD_AchievementModalFrame", UIParent, "BackdropTemplate")
-    modalFrame:SetSize(490, 138)
+    modalFrame:SetSize(490, 168)
     modalFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 80)
     modalFrame:SetFrameStrata("DIALOG")
     modalFrame:SetClampedToScreen(true)
@@ -75,14 +75,36 @@ local function EnsureModalFrame()
     descFs:SetText("Descripción del logro.")
     modalFrame.descFs = descFs
 
+    -- Barra de progreso visual dentro del modal
+    local barContainer = CreateFrame("Frame", nil, modalFrame)
+    barContainer:SetSize(450, 18)
+    barContainer:SetPoint("TOPLEFT", descFs, "BOTTOMLEFT", 0, -10)
+    modalFrame.barContainer = barContainer
+
+    local barBg = barContainer:CreateTexture(nil, "BACKGROUND")
+    barBg:SetAllPoints(barContainer)
+    barBg:SetColorTexture(0.12, 0.12, 0.14, 0.90)
+    modalFrame.barBg = barBg
+
+    local barFill = barContainer:CreateTexture(nil, "ARTWORK")
+    barFill:SetPoint("LEFT", barContainer, "LEFT", 0, 0)
+    barFill:SetSize(0, 18)
+    barFill:SetColorTexture(0.85, 0.45, 0.10, 0.95)
+    modalFrame.barFill = barFill
+
+    local barText = barContainer:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    barText:SetPoint("CENTER", barContainer, "CENTER", 0, 0)
+    barText:SetText("0 / 10 (0%)")
+    modalFrame.barText = barText
+
     -- Línea divisoria sutil antes del pie
     local divider = modalFrame:CreateTexture(nil, "ARTWORK")
-    divider:SetPoint("BOTTOMLEFT", modalFrame, "BOTTOMLEFT", 16, 32)
-    divider:SetPoint("BOTTOMRIGHT", modalFrame, "BOTTOMRIGHT", -16, 32)
+    divider:SetPoint("BOTTOMLEFT", modalFrame, "BOTTOMLEFT", 16, 34)
+    divider:SetPoint("BOTTOMRIGHT", modalFrame, "BOTTOMRIGHT", -16, 34)
     divider:SetHeight(1)
     divider:SetColorTexture(1, 0.82, 0, 0.25)
 
-    -- Pie: "Conseguido por [Jugador] el [Fecha / Hora]"
+    -- Pie: "Conseguido por [Jugador] el [Fecha / Hora]" o progreso
     local footerFs = modalFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     footerFs:SetPoint("BOTTOMLEFT", modalFrame, "BOTTOMLEFT", 18, 12)
     footerFs:SetPoint("BOTTOMRIGHT", modalFrame, "BOTTOMRIGHT", -18, 12)
@@ -108,7 +130,7 @@ local function EnsureModalFrame()
 end
 
 -- Muestra el modal detallado del logro estilo Retail
-function Modal:Show(medalId, playerName, timestamp, points)
+function Modal:Show(medalId, playerName, timestamp, points, currentProg, maxGoal)
     local f = EnsureModalFrame()
 
     local medalDef = ODD.Achievements and ODD.Achievements.Medals and ODD.Achievements.Medals:GetMedalByID(medalId)
@@ -125,11 +147,36 @@ function Modal:Show(medalId, playerName, timestamp, points)
     local pName = playerName or (ODD.API and ODD.API.Forever and ODD.API.Forever:GetFullName("player")) or UnitName("player") or "Compañero"
     
     local ts = tonumber(timestamp) or 0
-    if ts > 0 then
-        local dateStr = date("%d/%m/%Y a las %H:%M", ts)
+    local prog = tonumber(currentProg)
+    local goal = tonumber(maxGoal)
+
+    -- Si no vienen prog o goal por chat, intentar deducir el progreso local si es propio o existe la definición
+    if not prog and medalDef then
+        goal = medalDef.req or medalDef.reqClassCount or medalDef.reqZoneCount or medalDef.reqGray or medalDef.reqEating or medalDef.reqMounted or medalDef.reqGuildGroup or medalDef.reqSessionKills or medalDef.reqBG or 1
+        if ts > 0 then
+            prog = goal
+        else
+            prog = 0
+        end
+    end
+
+    goal = (goal and goal > 0) and goal or 1
+    prog = prog or (ts > 0 and goal or 0)
+    prog = math.min(prog, goal)
+
+    local totalWidth = 450
+    local pct = math.min(1, math.max(0, prog / goal))
+    f.barFill:SetWidth(math.floor(totalWidth * pct))
+
+    if ts > 0 or prog >= goal then
+        local dateStr = (ts > 0) and date("%d/%m/%Y a las %H:%M", ts) or "Recientemente"
+        f.barFill:SetColorTexture(0.15, 0.65, 0.15, 0.95) -- Verde completado
+        f.barText:SetText(string.format("|cFFFFFFFFCompletado (%d / %d)|r", goal, goal))
         f.footerFs:SetText(string.format("Conseguido por |cFFFFD100%s|r el |cFF888888%s|r", pName, dateStr))
     else
-        f.footerFs:SetText(string.format("Logro compartido por |cFFFFD100%s|r (|cFFFF8000Aún no desbloqueado|r)", pName))
+        f.barFill:SetColorTexture(0.85, 0.45, 0.10, 0.95) -- Naranja en curso
+        f.barText:SetText(string.format("|cFFFFD100Progreso: %d / %d (%.0f%%)|r", prog, goal, pct * 100))
+        f.footerFs:SetText(string.format("Compartido por |cFFFFD100%s|r (|cFFFF8000En progreso: %d/%d|r)", pName, prog, goal))
     end
 
     f:Show()

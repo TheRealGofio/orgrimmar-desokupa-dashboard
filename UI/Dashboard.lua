@@ -333,25 +333,29 @@ function ODD.UI:Initialize()
         ODD.UI.ItemRefHooked = true
         hooksecurefunc("SetItemRef", function(link, text, button)
             if not link then return end
-            local linkType, id, medalId, points, playerName, timestamp = strsplit(":", link)
+            local linkType, id, medalId, points, playerName, timestamp, curProg, maxGoal = strsplit(":", link)
             if linkType == "item" and id == "ODDACH" then
-                -- Clic en enlace de logro interactivo: |Hitem:ODDACH:medalId:points:playerName:timestamp|h
+                -- Clic en enlace de logro interactivo: |Hitem:ODDACH:medalId:points:playerName:timestamp:curProg:maxGoal|h
                 if ODD.UI and ODD.UI.AchievementModal and ODD.UI.AchievementModal.Show then
-                    ODD.UI.AchievementModal:Show(medalId, playerName, tonumber(timestamp), tonumber(points))
+                    ODD.UI.AchievementModal:Show(medalId, playerName, tonumber(timestamp), tonumber(points), tonumber(curProg), tonumber(maxGoal))
                 end
             end
         end)
     end
 
-    -- Filtro de chat nativo: intercepta {ODD:achId:pts:time} [Nombre] y lo convierte en enlace interactivo local
+    -- Filtro de chat nativo: intercepta {ODD:achId:pts:time:prog:maxReq} [Nombre] y lo convierte en enlace interactivo local
     if not ODD.UI.ChatFilterRegistered and type(ChatFrame_AddMessageEventFilter) == "function" then
         ODD.UI.ChatFilterRegistered = true
         local function ODD_ChatLinkFilter(self, event, msg, sender, ...)
             if msg and msg:find("{ODD:") then
                 local cleanSender = sender and Ambiguate(sender, "none") or "Compañero"
-                -- Reemplazar {ODD:id:pts:time} [Nombre] por el hipervínculo interactivo local
-                local newMsg = msg:gsub("{ODD:([%w_]+):(%d+):(%d+)}%s*%[([^%]]+)%]", function(achId, pts, t, achName)
-                    return string.format("|cFF00FFCC|Hitem:ODDACH:%s:%s:%s:%s|h[%s]|h|r", achId, pts, cleanSender, t, achName)
+                -- 1. Intentar patrón completo con progreso: {ODD:id:pts:time:prog:maxReq} [Nombre]
+                local newMsg = msg:gsub("{ODD:([%w_]+):(%d+):(%d+):(%d+):(%d+)}%s*%[([^%]]+)%]", function(achId, pts, t, prog, goal, achName)
+                    return string.format("|cFF00FFCC|Hitem:ODDACH:%s:%s:%s:%s:%s:%s|h[%s]|h|r", achId, pts, cleanSender, t, prog, goal, achName)
+                end)
+                -- 2. Compatibilidad con patrón clásico previo de 3 argumentos: {ODD:id:pts:time} [Nombre]
+                newMsg = newMsg:gsub("{ODD:([%w_]+):(%d+):(%d+)}%s*%[([^%]]+)%]", function(achId, pts, t, achName)
+                    return string.format("|cFF00FFCC|Hitem:ODDACH:%s:%s:%s:%s:0:0|h[%s]|h|r", achId, pts, cleanSender, t, achName)
                 end)
                 return false, newMsg, sender, ...
             end
